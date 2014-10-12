@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css' />
+    <link type="text/css" rel="stylesheet" href="/js/jquery/ui/jquery-ui.min.css" />
+    <link rel="stylesheet" href="/css/glyphicons.css" />
+    <link rel="stylesheet" href="/css/halflings.css" />
+    <link rel="stylesheet" href="/css/social.css" />
+    <link rel="stylesheet" href="/css/filetypes.css" />
+    <link type="text/css" rel="stylesheet" href="/css/site.css" />
+    <link type="text/css" rel="stylesheet" href="/css/jquery/timepicker.css" />
+
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="/js/modernizr.js"></script>
+    <script src="/js/moment.js"></script>
+    <script src="/js/underscore-min.js"></script>
+    <script type="text/javascript"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54&sensor=true&libraries=geometry,places">
+    </script>
+    <script type="text/javascript" src="/js/jsatlas.js"></script>
+    <script type="text/javascript" src="/js/jquery/ui/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/js/jquery/ui/external/timepicker.js"></script>
+
+    <!--facebook SDK-->
+    <script>
+        (function (d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) { return; }
+            js = d.createElement(s); js.id = id;
+            js.src = "//connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+    </script>
+
+    <script type="text/javascript">
+        $(function () {
+            $('.jsatlas').jsatlas();
+        });
+    </script>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <span class="logo-title">wieg<span class="glyph glyphicons play_button"></span>s</span>
+        </div>
+        <div class="user-controls">
+            <div class="map-search">
+                <input type="text" class="searchbox autocomplete" data-type="place" placeholder="Search for Place or Event..." />
+                <span class="glyph glyphicons search"></span>
+            </div>
+            <div class="filter">
+                <span class="glyph glyphicons filter"></span>
+            </div>
+            <div class="menu">
+                <span class="glyph halflings align-justify"></span>
+            </div>
+        </div>
+        <div class="day-select">
+            <span class="prev glyph glyphicons chevron-left disabled"></span>
+            <span class="current">Today</span>
+            <span class="next glyph glyphicons chevron-right"></span>
+        </div>
+    </div>
+    <div class="container">
+        <div class="jsatlas"></div>
+        <div class="detail-overlay">
+            <div class="overlay-header">
+                <span class="overlay-exit glyphicons chevron-right"></span>
+                <span class="going glyph halflings unchecked"></span>
+                <span class="overlay-title"></span>
+            </div>
+            <div class="overlay-body">
+                <div class="first-page">
+                    <div class="main-menu">
+                    </div>
+                    <div class="event-detail">
+                    </div>
+                    <div class="filters"></div>
+                </div>
+                <div class="second-page"></div>
+                <div class="third-page"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

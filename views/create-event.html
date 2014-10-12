@@ -1,0 +1,69 @@
+﻿<div class="box">
+    <span class="heading">Create an Event</span>
+    <br />
+    <br />
+    <form name="CreateEvent" action="/event/create" method="post">
+        <input type="hidden" name="city" value="Bellingham" />
+        <input type="hidden" name="state" value="WA" />
+        <input type="hidden" name="zip" value="98225" />
+
+        <div class="form-label">
+            Place
+        </div>
+        <div class="form-input">
+            <select name="place">
+                <option value="">- select a place -</option>
+            </select>
+        </div>
+        <div class="form-label">
+            Event Title
+        </div>
+        <div class="form-input">
+            <input type="text" name="name" value="" />
+        </div>
+        <div class="form-label">
+            Description
+        </div>
+        <div class="form-input">
+            <textarea name="desc" rows="3"></textarea>
+        </div>
+        <div class="form-label">
+            Start
+        </div>
+        <div class="form-input">
+            <input type="text" class="datepicker" name="start" value="" />
+        </div>
+        <div class="form-label">
+            End
+        </div>
+        <div class="form-input">
+            <input type="text" class="datepicker" name="end" value="" />
+        </div>
+        <div class="form-label">
+            Privacy
+        </div>
+        <div class="form-input">
+            <select name="privacy">
+                <option value="public" selected="selected">public event</option>
+                <option value="private">my connections</option>
+                <option value="invite">by invite</option>
+            </select>
+        </div>
+        <div class="form-label">
+        </div>
+        <div class="form-input">
+            <label>
+                <input type="radio" name="intensity_variable" value="start" checked="checked" />
+                should try to show up at start
+            </label>
+            <label>
+                <input type="radio" name="intensity_variable" value="end" />
+                can show up anytime before end
+            </label>
+        </div>
+        <div class="row">
+            <p class="error"></p>
+            <input type="button" class="create-btn" value="Create Event" />
+        </div>
+    </form>
+</div>

@@ -1,0 +1,10 @@
+music		glyphicons music
+drinks		glyphicons beer or celebration
+food		glyphicons cutlery
+movies		glyphicons film
+animals		glyphicons dog
+games 		glyphicons playing_dices
+books		glyphicons book
+gaming 		glyphicons headset or gamepad
+birthday	glyphicons birthday_cake
+sports 		glyphicons soccer_ball
