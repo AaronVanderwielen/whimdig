@@ -64,6 +64,8 @@
 				userPlaces: '/places/user',
 				searchAllPlaces: '/places/searchAll',
 				// events
+				events: '/event',
+				eventsForSpan: '/event/span',
 				eventAddUser: '/event/addUser',
 				eventRemoveUser: '/event/removeUser',
 				eventCreate: '/event/create',
@@ -71,7 +73,7 @@
 				renderTemplate: '/template'
 			},
 			templates = {},
-			currentDay = 0,
+			currentSpan = 0,
 			reAuthAttempts = 0,
 			sizing = {
 				count: 0
@@ -206,52 +208,55 @@
 				}
 			},
 			drawEvent = function (event) {
-				var colorArray = colorByTime(event[event.intensity_variable]),
-					circleSize = getEventCircleSize(event),
-					c = {
-						id: event._id,
-						strokeColor: arrayToRGB(getShade(colorArray, -20)),
-						strokeOpacity: 1,
-						strokeWeight: getEventCircleSize(event) / 10,
-						fillColor: arrayToRGB(colorArray),
-						fillOpacity: settings.blurOpacity,
-						map: gMap,
-						center: new google.maps.LatLng(event.place.loc.coordinates[1], event.place.loc.coordinates[0]),
-						radius: circleSize
-					};
+				// only draw event if it is in the selected time window
+				if (withinSelectedSpan(event) && !circleData[event._id]) {
+					var colorArray = colorByTime(event[event.intensity_variable]),
+						circleSize = getEventCircleSize(event),
+						c = {
+							id: event._id,
+							strokeColor: arrayToRGB(getShade(colorArray, -20)),
+							strokeOpacity: 1,
+							strokeWeight: getEventCircleSize(event) / 10,
+							fillColor: arrayToRGB(colorArray),
+							fillOpacity: settings.blurOpacity,
+							map: gMap,
+							center: new google.maps.LatLng(event.place.loc.coordinates[1], event.place.loc.coordinates[0]),
+							radius: circleSize
+						};
 
-				circle = new google.maps.Circle(c);
+					circle = new google.maps.Circle(c);
 
-				event.color = colorArray;
-				event.circle = circle;
-				circleData[circle.id] = event;
-				circleData.count++;
+					event.color = colorArray;
+					event.circle = circle;
+					circleData[circle.id] = event;
+					circleData.count++;
 
-				// init sizing
-				sizing[circle.id] = {
-					event: null,
-					waver: {
-						trigger: false,
-						sw: 1
+					// init sizing
+					sizing[circle.id] = {
+						event: null,
+						waver: {
+							trigger: false,
+							sw: 1
+						}
 					}
+					sizing.count++;
+
+					circleSizeTo(circle, circleSize, 1.2, .9);
+
+					google.maps.event.addListener(circle, 'mouseover', function (e) {
+						focusCircle.call(this, e);
+					});
+
+					google.maps.event.addListener(circle, 'mouseout', function (e) {
+						if (this !== selectedEvent) {
+							blurCircle.call(this, e);
+						}
+					});
+
+					google.maps.event.addListener(circle, 'click', function (e) {
+						circleClick.call(this, e);
+					});
 				}
-				sizing.count++;
-
-				circleSizeTo(circle, circleSize, 1.2, .9);
-
-				google.maps.event.addListener(circle, 'mouseover', function (e) {
-					focusCircle.call(this, e);
-				});
-
-				google.maps.event.addListener(circle, 'mouseout', function (e) {
-					if (this !== selectedEvent) {
-						blurCircle.call(this, e);
-					}
-				});
-
-				google.maps.event.addListener(circle, 'click', function (e) {
-					circleClick.call(this, e);
-				});
 			},
 			focusCircle = function (e) {
 				var circle = this,
@@ -361,11 +366,16 @@
 					hoursTillStart = Math.round((localDate.getTime() - now.getTime()) / 1000 / 60 / 60),
 					c = [
 						[255, 0, 0],
+						[255, 0, 0],
+						[255, 69, 0],
 						[255, 69, 0],
 						[255, 215, 0],
 						[255, 215, 0],
 						[173, 255, 47],
+						[173, 255, 47],
 						[0, 255, 127],
+						[0, 255, 127],
+						[0, 255, 212],
 						[0, 255, 212],
 						[0, 255, 255]
 					],
@@ -441,11 +451,22 @@
 
 				// destroy old event ui and data
 				if (circleData.count > 0) {
-					var numDestroyed = 0;
-					for (var d in circleData) {
-						if (d !== "count") {
-							circleSizeTo(circleData[d].circle, 0, .7, null, 50, function () {
-								circleData[d].circle.setMap(null);
+					// get new events
+					loadEventsInSpan(function (data) {
+						// destroy old
+						var numDestroyed = 0,
+							dataIds = _.map(data, function (d) {
+								return d._id;
+							}),
+							destroy = _.filter(circleData, function (i, cD) {
+								return cD !== "count" && !_.some(dataIds, function (d) { return d === cD; });
+							});
+
+						for (var d in destroy) {
+							var dId = destroy[d]._id;
+
+							circleSizeTo(circleData[dId].circle, 0, .7, null, 50, function () {
+								circleData[dId].circle.setMap(null);
 								numDestroyed++;
 
 								if (numDestroyed === circleData.count) {
@@ -455,26 +476,35 @@
 									circleData = {
 										count: 0
 									};
-									// get new events
-									$.get('/events', { day: currentDay }, function (response) {
-										drawEvents(response);
-									});
 								}
+								if (selectedEvent === circleData[dId].circle) {
+									blurCircle.call(circleData[dId].circle);
+									selectedEvent = null;
+									setMenuDetail();
+								}
+								delete circleData[dId];
+								circleData.count--;
 							});
-						}
-					}
-				}
-				else {
-					// get new events
-					$.get('/event', { day: currentDay }, function (response) {
-						if (response.success) {
-							drawEvents(response.body);
-						}
-						else if (response.statusCode === 401) {
-							reAuthenticate(loadEvents);
 						}
 					});
 				}
+				else {
+					// get new events
+					loadEventsInSpan();
+				}
+			},
+			loadEventsInSpan = function (callback) {
+				$.get(urls.eventsForSpan, { span: currentSpan }, function (response) {
+					if (response.success) {
+						drawEvents(response.body);
+						if (callback) {
+							callback(response.body);
+						}
+					}
+					else if (response.statusCode === 401) {
+						reAuthenticate(loadEvents);
+					}
+				});
 			},
 			getUserEvents = function (callback) {
 				$.get('/event/userEvents', function (response) {
@@ -565,42 +595,42 @@
 					switchOverlay(overlayFilters, "Event Filters");
 				});
 				headerDaySelectPrev.off('click').on('click', function (e) {
-					gotoPrevDay();
+					gotoPrevSpan();
 				});
 				headerDaySelectNext.off('click').on('click', function (e) {
-					gotoNextDay();
+					gotoNextSpan();
 				});
 			},
-			gotoPrevDay = function () {
-				if (currentDay === 0) {
+			gotoPrevSpan = function () {
+				if (currentSpan === 0) {
 					return false;
 				}
 				else {
-					currentDay--;
+					currentSpan--;
 					headerDaySelectNext.removeClass('disabled');
-					if (currentDay === 0) {
-						headerDaySelectCurrent.html('Today');
+					if (currentSpan === 0) {
+						headerDaySelectCurrent.html('12 hour');
 						headerDaySelectPrev.addClass('disabled');
 					}
 					else {
-						headerDaySelectCurrent.html('Tomorrow');
+						headerDaySelectCurrent.html('24 hour');
 					}
 					loadEvents();
 				}
 			},
-			gotoNextDay = function () {
-				if (currentDay === 2) {
+			gotoNextSpan = function () {
+				if (currentSpan === 2) {
 					return false;
 				}
 				else {
-					currentDay++;
+					currentSpan++;
 					headerDaySelectPrev.removeClass('disabled');
-					if (currentDay === 2) {
-						headerDaySelectCurrent.html('The Next Day');
+					if (currentSpan === 2) {
+						headerDaySelectCurrent.html('48 hour');
 						headerDaySelectNext.addClass('disabled');
 					}
 					else {
-						headerDaySelectCurrent.html('Tomorrow');
+						headerDaySelectCurrent.html('24 hour');
 					}
 					loadEvents();
 				}
@@ -939,14 +969,14 @@
 											gotoSecondPage();
 										}
 									}
-								});								
+								});
 							});
 
 							resultsDiv.append(place);
 						}
 					}
 				});
-			};
+			},
 			getUserPlaces = function (callback) {
 				$.ajax({
 					url: urls.userPlaces,
@@ -992,6 +1022,15 @@
 				$(html).dialog(opts);
 			},
 			// utility
+			withinSelectedSpan = function (event) {
+				var now = moment(),
+					hours = currentSpan === 0 ? 12 : (currentSpan === 1 ? 24 : 48),
+					high = moment().add(hours, 'h'),
+					startDate = moment(event.start),
+					endDate = moment(event.end);
+
+				return startDate.isBefore(high) && endDate.isAfter(now);
+			},
 			bindUi = function (div) {
 				div.find('.datepicker').each(function () {
 					var input = $(this);

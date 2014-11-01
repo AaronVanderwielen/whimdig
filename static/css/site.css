@@ -173,13 +173,14 @@ input[type="button"]:hover {
   float: right;
   position: relative;
   top: 5px;
-  margin: 0 1%;
+  margin: 0 2%;
 }
 .header .day-select .current {
-  width: 90px;
+  width: 70px;
   text-align: center;
   display: inline-block;
   font-size: 14px;
+  font-weight: bold;
 }
 .detail-overlay {
   overflow-y: scroll;
