@@ -25,7 +25,6 @@ body,
 
 body {
     margin: 0;
-    min-width: 420px;
 }
 
 input[type="text"], textarea, select {
@@ -116,7 +115,6 @@ button, input[type="button"] {
     position: fixed;
     z-index: 3;
     width: 100%;
-    min-width: 420px;
     height: 55px;
     background-color: @darker;
     padding: 10px 1%;
@@ -147,7 +145,7 @@ button, input[type="button"] {
         }
     }
 
-    > .logo {
+    > .site-logo {
         float: left;
         font-size: 24px;
         font-weight: bold;
@@ -209,8 +207,12 @@ button, input[type="button"] {
             text-align: center;
             display: inline-block;
             font-size: 14px;
-			font-weight: bold;
+            font-weight: bold;
         }
+    }
+
+    #login-popup-hack {
+		float: right;
     }
 }
 
@@ -722,7 +724,6 @@ button, input[type="button"] {
         }
     }
 }
-
 
 @media all and (max-width: 640px) {
 

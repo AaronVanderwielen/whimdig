@@ -83,6 +83,7 @@
 			},
 			datetimeFormat = 'ddd h:mm a',
 			timeFormat = 'h:mm tt',
+			isMobileDevice = navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) != null,
 			// elements
 			container = $('.container'),
 			//// header 
@@ -107,8 +108,7 @@
 			overlayMenu = overlayFirstPage.find('.main-menu'),
 			overlayEvent = overlayFirstPage.find('.event-detail'),
 			overlayFilters = overlayFirstPage.find('.filters'),
-			// methods
-			//// map actions
+			// map actions
 			initializeMap = function () {
 				var mapOptions = {
 					center: new google.maps.LatLng(settings.initialCenter.lat, settings.initialCenter.lng),
@@ -344,7 +344,7 @@
 
 				GoogleMap.setCenter(newCenter);
 			},
-			//// circle utility
+			// circle utility
 			getEventCircleSize = function (cData) {
 				return cData.users.length * 20;
 			},
@@ -389,7 +389,7 @@
 			arrayToRGB = function (c) {
 				return String.format("rgb({0}, {1}, {2})", c[0], c[1], c[2]);
 			},
-			//// map API calls
+			// map API calls
 			applySearchHandlers = function () {
 				var searches = $('.map-search');
 
@@ -416,7 +416,7 @@
 					console.log(response);
 				});
 			},
-			//// session/data
+			// session/data
 			reAuthenticate = function (callback, callbackArgs) {
 				console.log("attempting to re-authenticate");
 				fbInitLogin(callback, callbackArgs);
@@ -426,7 +426,10 @@
 				$.post('/account/authenticate/', auth, function (response) {
 					// load user-related events
 					if (response.body) {
-						user = response.body;
+						getFriends(function (friends) {
+							user = response.body;
+							user.friends = friends;
+						});
 						callback.apply(this, callbackArgs);
 					}
 					else {
@@ -555,14 +558,14 @@
 					}
 				});
 			},
-			//// facebook authentication
+			// facebook api
+			//// authentication
 			initAuthentication = function () {
 				FB.init({
 					appId: '655662931197377',
 					cookie: true,
 					version: 'v2.0'
 				});
-
 				fbInitLogin(loadEvents);
 			},
 			fbInitLogin = function (callback, callbackArgs) {
@@ -575,18 +578,51 @@
 						initializeUser(data, callback, callbackArgs);
 					}
 					else {
-						FB.login(function (response) {
-							var data = {
-								token: response.authResponse.accessToken,
-								id: response.authResponse.userID
-							}
+						if (isMobileDevice) {
+							var loginPopupHack = $('<button id="login-popup-hack">Login</button>');
 
-							initializeUser(data, callback, callbackArgs);
-						}, { scope: 'public_profile,email,user_friends' });
+							loginPopupHack.off('click').on('click', function () {
+								fbLoginPrompt(data, callback, callbackArgs);
+							});
+
+							header.find('> div:not(".site-logo")').hide();
+							header.append(loginPopupHack);
+						}
+						else {
+							fbLoginPrompt(data, callback, callbackArgs);
+						}
 					}
 				});
 			},
-			//// header
+			fbLoginPrompt = function (data, callback, callbackArgs) {
+				FB.login(function (response) {
+					var data = {
+						token: response.authResponse.accessToken,
+						id: response.authResponse.userID
+					}
+
+					initializeUser(data, callback, callbackArgs);
+				}, { scope: 'public_profile,email,user_friends' });
+			},
+			//// friends
+			getFriends = function (callback) {
+				FB.api('/me/friends', { fields: 'name,id,picture' }, function (response) {
+					//{
+					//	data: Array[2], 
+					//		id: "xyz",
+					//		name: "Eliz",
+					//		picture: {
+					//			data: {
+					//				is_silhouette: false,
+					//				url: "http://"
+					//			}
+					//		}
+					//	summary: { total_count: 245 }
+					//}					
+					callback(response.data);
+				});
+			},
+			// header
 			applyHeaderHandlers = function () {
 				headerMenuBtn.off('click').on('click', function (e) {
 					setMenuDetail();
@@ -635,7 +671,7 @@
 					loadEvents();
 				}
 			},
-			//// overlay
+			// overlay
 			exitOverlay = function () {
 				if (selectedEvent) {
 					blurCircle.call(selectedEvent);
@@ -722,7 +758,7 @@
 				overlayExit.addClass('chevron-left');
 				overlayExit.off('click').on('click', gotoSecondPage);
 			},
-			////// event detail
+			//// event detail
 			applyGoingHandlers = function (cData) {
 				var connections = overlayEvent.find('.connection-info'),
 					numAttending = connections.find('.num-attending');
@@ -743,7 +779,7 @@
 					if (overlayGoing.hasClass('green')) {
 						removeEventUser(cData._id, function (response) {
 							if (response.success) {
-								var indexOfUser = cData.users.indexOf(user._id),
+								var indexOfUser = cData.users.indexOf(user.facebook_id),
 									size = getEventCircleSize(cData);
 
 								// remove locally
@@ -764,7 +800,7 @@
 						addEventUser(cData._id, function (response) {
 							if (response.success) {
 								// add locally
-								cData.users.push(user._id);
+								cData.users.push(user.facebook_id);
 								var size = getEventCircleSize(cData);
 
 								overlayGoing.removeClass('unchecked');
@@ -790,12 +826,14 @@
 						where = overlayEvent.find('.where'),
 						what = overlayEvent.find('.what'),
 						connections = overlayEvent.find('.connection-info'),
-						numAttending = connections.find('.num-attending');
+						numAttending = connections.find('.num-attending'),
+						friendCount = connections.find('.friend-count'),
+						friendsList = connections.find('.friend-list');
 
 					// make sure cData.users exists
 					if (cData.users) {
 						// initialize 'going' checkbox by checking if user is in event.users on client
-						if (_.some(cData.users, function (u) { return u === user._id; })) {
+						if (_.some(cData.users, function (u) { return u === user.facebook_id; })) {
 							overlayGoing.removeClass('unchecked');
 							overlayGoing.addClass('check');
 							overlayGoing.addClass('green');
@@ -820,29 +858,63 @@
 						applyGoingHandlers(cData);
 						numAttending.html(cData.users.length);
 
+						// friends
+						var attendingFriends = _.filter(user.friends, function (f) {
+							if (_.some(cData.users, function (u) { return u === f.id; })) {
+								return f;
+							}
+						});
+						friendCount.html(attendingFriends.length);
+						for (var f in attendingFriends) {
+							var friend = attendingFriends[f],
+								url = friend.picture.data.url,
+								pic = $('<img src="' + url + '">');
+
+							// show friend picture in friendListDiv
+							friendsList.append(pic);
+						}
+
+						// center the event's circle
 						gMap.setCenter(cData.circle.center);
 						gMap.panBy(overlay.width() / 2, 0);
 					});
 				});
 			},
-			////// main menu
+			//// main menu
 			setMenuDetail = function () {
-				getTemplate('main-menu', function (template) {
-					overlayMenu.html(template);
-					applyMenuHandlers();
+				if (user) {
+					getTemplate('main-menu', function (template) {
+						overlayMenu.html(template);
+						applyMenuHandlers();
 
-					getUserEvents(function (response) {
-						var data = response.body,
-							eventsDiv = overlayMenu.find('.schedule .events');
+						getUserEvents(function (response) {
+							var data = response.body,
+								eventsDiv = overlayMenu.find('.schedule .events');
 
-						renderMenuEvents(data, function (html) {
-							eventsDiv.html(html);
-							applyMenuScheduleEventHandlers();
+							renderMenuEvents(data, function (html) {
+								eventsDiv.html(html);
+								applyMenuScheduleEventHandlers();
+							});
+
+							switchOverlay(overlayMenu, user.first_name + " " + user.last_name);
 						});
 
-						switchOverlay(overlayMenu, user.first_name + " " + user.last_name);
+						// display friends
+						var friendCountSpan = overlayMenu.find('.fb-connections .friend-count'),
+							friendListDiv = overlayMenu.find('.fb-connections .friend-list');
+
+						friendCountSpan.html(user.friends.length + " friend" + (user.friends > 1 ? "s" : ""));
+
+						for (var f in user.friends) {
+							var friend = user.friends[f],
+								url = friend.picture.data.url,
+								pic = $('<img src="' + url + '">');
+
+							// show friend picture in friendListDiv
+							friendListDiv.append(pic);
+						}
 					});
-				});
+				}
 			},
 			applyMenuHandlers = function () {
 				var createEventBtn = overlayMenu.find('.create-event');
@@ -988,8 +1060,8 @@
 					}
 				});
 			},
-			////// filters
-			//// views
+			//// filters
+			// views
 			getTemplate = function (template, callback) {
 				if (!templates[template]) {
 					// template hasn't been loaded by server yet, load and cache locally
@@ -1087,6 +1159,10 @@
 			overlayExit.on('click', exitOverlay);
 			bindUi($('body'));
 			window.fbAsyncInit = initAuthentication;
+
+			$('.site-logo').click(function () {
+				window.location.reload();
+			});
 		};
 	};
 

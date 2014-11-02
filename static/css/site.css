@@ -9,7 +9,6 @@ body,
 }
 body {
   margin: 0;
-  min-width: 420px;
 }
 input[type="text"],
 textarea,
@@ -101,7 +100,6 @@ input[type="button"]:hover {
   position: fixed;
   z-index: 3;
   width: 100%;
-  min-width: 420px;
   height: 55px;
   background-color: #444444;
   padding: 10px 1%;
@@ -127,21 +125,21 @@ input[type="button"]:hover {
 .header .glyph.disabled {
   cursor: default;
 }
-.header > .logo {
+.header > .site-logo {
   float: left;
   font-size: 24px;
   font-weight: bold;
   cursor: pointer;
   padding: 5px 3px;
 }
-.header > .logo > .logo-title {
+.header > .site-logo > .logo-title {
   top: -5px;
   position: relative;
 }
-.header > .logo .glyph::before {
+.header > .site-logo .glyph::before {
   font-size: 16px;
 }
-.header > .logo .glyph {
+.header > .site-logo .glyph {
   top: 1px;
   margin: 0;
   padding: 8px;
@@ -181,6 +179,9 @@ input[type="button"]:hover {
   display: inline-block;
   font-size: 14px;
   font-weight: bold;
+}
+.header #login-popup-hack {
+  float: right;
 }
 .detail-overlay {
   overflow-y: scroll;
