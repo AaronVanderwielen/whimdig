@@ -366,8 +366,6 @@
 					hoursTillStart = Math.round((localDate.getTime() - now.getTime()) / 1000 / 60 / 60),
 					c = [
 						[255, 0, 0],
-						[255, 0, 0],
-						[255, 69, 0],
 						[255, 69, 0],
 						[255, 215, 0],
 						[255, 215, 0],
@@ -425,11 +423,8 @@
 				// check our db for this user, if doesn't exist, create
 				$.post('/account/authenticate/', auth, function (response) {
 					// load user-related events
-					if (response.body) {
-						getFriends(function (friends) {
-							user = response.body;
-							user.friends = friends;
-						});
+					if (response.success) {
+						user = response.body;
 						callback.apply(this, callbackArgs);
 					}
 					else {
@@ -603,24 +598,6 @@
 
 					initializeUser(data, callback, callbackArgs);
 				}, { scope: 'public_profile,email,user_friends' });
-			},
-			//// friends
-			getFriends = function (callback) {
-				FB.api('/me/friends', { fields: 'name,id,picture' }, function (response) {
-					//{
-					//	data: Array[2], 
-					//		id: "xyz",
-					//		name: "Eliz",
-					//		picture: {
-					//			data: {
-					//				is_silhouette: false,
-					//				url: "http://"
-					//			}
-					//		}
-					//	summary: { total_count: 245 }
-					//}					
-					callback(response.data);
-				});
 			},
 			// header
 			applyHeaderHandlers = function () {
@@ -860,15 +837,14 @@
 
 						// friends
 						var attendingFriends = _.filter(user.friends, function (f) {
-							if (_.some(cData.users, function (u) { return u === f.id; })) {
+							if (_.some(cData.users, function (u) { return u === f.facebook_id; })) {
 								return f;
 							}
 						});
-						friendCount.html(attendingFriends.length);
+						friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends > 1 ? "s" : ""));
 						for (var f in attendingFriends) {
 							var friend = attendingFriends[f],
-								url = friend.picture.data.url,
-								pic = $('<img src="' + url + '">');
+								pic = $('<img src="' + friend.picture_url + '">');
 
 							// show friend picture in friendListDiv
 							friendsList.append(pic);
@@ -907,8 +883,7 @@
 
 						for (var f in user.friends) {
 							var friend = user.friends[f],
-								url = friend.picture.data.url,
-								pic = $('<img src="' + url + '">');
+								pic = $('<img src="' + friend.picture_url + '">');
 
 							// show friend picture in friendListDiv
 							friendListDiv.append(pic);

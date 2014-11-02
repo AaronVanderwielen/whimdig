@@ -7,6 +7,7 @@
 	ControllerBundle = require('controller-bundle'),
 	ControllerData = require('controller-data'),
 	BusinessLogic = require('business-logic'),
+	FB = require('facebook'),
 	Session = require('express-session'),
 	MongoStore = require('connect-mongo')(Session),
 	Server = require('mongodb').Server,
@@ -16,7 +17,7 @@
 	app = Express(),
 	mongoClient = new MongoClient(new Server('localhost', 27017, { 'native_parser': true })),
 	db = mongoClient.db('wiegos'),
-	bl = new BusinessLogic({db: db, objectID: ObjectID}, Https, u),
+	bl = new BusinessLogic({db: db, objectID: ObjectID}, Https, u, FB),
 	cBundle = new ControllerBundle();
 
 // initialize static file directory
