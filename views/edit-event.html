@@ -37,46 +37,12 @@
                 <div class="label">select tags</div>
                 <input type="hidden" name="tags" value="" />
                 <div class="options">
-                    <div class="option" data-value="music">
-                        <span class="glyph glyphicons music"></span>
-                        <span class="option-text">Music</span>
-                    </div>
-                    <div class="option" data-value="beer">
-                        <span class="glyph glyphicons beer"></span>
-                        <span class="option-text">Alcohol</span>
-                    </div>
-                    <div class="option" data-value="food">
-                        <span class="glyph glyphicons cutlery"></span>
-                        <span class="option-text">Food</span>
-                    </div>
-                    <div class="option" data-value="pets">
-                        <span class="glyph glyphicons dog"></span>
-                        <span class="option-text">Pets</span>
-                    </div>
-                    <div class="option" data-value="games">
-                        <span class="glyph glyphicons playing_dices"></span>
-                        <span class="option-text">Games</span>
-                    </div>
-                    <div class="option" data-value="books">
-                        <span class="glyph glyphicons book"></span>
-                        <span class="option-text">Books</span>
-                    </div>
-                    <div class="option" data-value="video-games">
-                        <span class="glyph glyphicons gamepad"></span>
-                        <span class="option-text">Video Games</span>
-                    </div>
-                    <div class="option" data-value="sports">
-                        <span class="glyph glyphicons soccer_ball"></span>
-                        <span class="option-text">Sports</span>
-                    </div>
-                    <div class="option" data-value="birthday">
-                        <span class="glyph glyphicons birthday_cake"></span>
-                        <span class="option-text">Birthday</span>
-                    </div>
-                    <div class="option" data-value="movie">
-                        <span class="glyph glyphicons film"></span>
-                        <span class="option-text">Movie/TV</span>
-                    </div>
+                    {% for tag in model %}
+                        <div class="option" data-value="{{ tag.name }}">
+                            <span class="glyph glyphicons {{ tag.glyph}}"></span>
+                            <span class="option-text">{{ tag.label }}</span>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

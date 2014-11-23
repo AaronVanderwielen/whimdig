@@ -4,6 +4,14 @@
             <div class="when"></div>
         </div>
         <div class="where selectable"></div>
+        <div class="event-tags">
+            {% for tag in model.tags %}
+                <div class="tag">
+                    <span class="glyph glyphicons {{ tag.glyph}}" data-name="{{ tag.name }}"></span>
+                    <span class="tag-label">{{ tag.label }}</span>
+                </div>
+            {% endfor %}
+        </div>
         <div class="what"></div>
     </div>
     <div class="connections box">

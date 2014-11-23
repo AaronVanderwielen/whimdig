@@ -1,44 +1,9 @@
 ﻿<div class="set-filters">
-    <div class="set-filter">
-        <span class="glyph glyphicons music" data-value="music"></span>
-        <span class="filter-text">Music</span>
-    </div>
-    <div class="set-filter">
-        <span class="glyph glyphicons beer" data-value="alcohol"></span>
-        <span class="filter-text">Alcohol</span>
-    </div>
-    <div class="set-filter">
-        <span class="glyph glyphicons cutlery" data-value="food"></span>
-        <span class="filter-text">Food</span>
-    </div>
-    <div class="set-filter">
-        <span class="glyph glyphicons dog" data-value="pets"></span>
-        <span class="filter-text">Pets</span>
-    </div>
-    <div class="set-filter">
-        <span class="glyph glyphicons playing_dices" data-value="games"></span>
-        <span class="filter-text">Games</span>
-    </div>
-    <div class="set-filter">
-        <span class="glyph glyphicons book" data-value="books"></span>
-        <span class="filter-text">Books</span>
-    </div>
-    <div class="set-filter">
-        <span class="glyph glyphicons gamepad" data-value="video-games"></span>
-        <span class="filter-text">Video Games</span>
-    </div>
-    <div class="set-filter">
-        <span class="glyph glyphicons soccer_ball" data-value="sports"></span>
-        <span class="filter-text">Sports</span>
-    </div>
-    <div class="set-filter">
-        <span class="glyph glyphicons birthday_cake" data-value="birthday"></span>
-        <span class="filter-text">Birthday</span>
-    </div>
-    <div class="set-filter">
-        <span class="glyph glyphicons film" data-value="movie"></span>
-        <span class="filter-text">Movie/TV</span>
-    </div>
-
+    {% for tag in model %}
+        <div class="tag">
+            <span class="glyph glyphicons {{ tag.glyph}}" data-name="{{ tag.name }}"></span>
+            <span class="tag-label">{{ tag.label }}</span>
+        </div>
+    {% endfor %}
     <button class="apply-filters">Update Events</button>
 </div>

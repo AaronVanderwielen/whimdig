@@ -75,6 +75,7 @@
 				eventCreate: '/event/create',
 				eventUpdate: '/event/update',
 				eventDelete: '/event/remove',
+				tags: '/event/tags',
 				// views
 				renderTemplate: '/template'
 			},
@@ -88,7 +89,7 @@
 			circleData = {
 				count: 0
 			},
-			filters = ['music', 'beer', 'food', 'pets', 'games', 'books', 'video-games', 'sports', 'birthday', 'movie' ],
+			filters = [],
 			datetimeCasualFormat = 'ddd h:mm a',
 			datetimeStrictFormat = 'MM/DD/YYYY h:mm a',
 			timeFormat = 'h:mm tt',
@@ -851,7 +852,10 @@
 				});
 			},
 			setEventDetail = function (event, div) {
-				getTemplate('event-detail', function (template) {
+				var model = jQuery.extend(true, {}, event);
+				delete model.circle; // circular reference.. PUN!
+
+				getTemplate('event-detail', model, function (template) {
 					div.html(template);
 
 					var body = div.find('.event-body'),
@@ -911,7 +915,7 @@
 				});
 			},
 			setPastEventDetail = function (event, div) {
-				getTemplate('past-event-detail', function (template) {
+				getTemplate('past-event-detail', null, function (template) {
 					div.html(template);
 
 					var body = div.find('.event-body'),
@@ -958,7 +962,7 @@
 				}
 
 				if (user) {
-					getTemplate('main-menu', function (template) {
+					getTemplate('main-menu', null, function (template) {
 						var username = user.first_name + " " + (user.last_name && user.last_name.length > 0 ? user.last_name.substring(0, 1) : "");
 						overlayGoing.hide();
 						showOverlay(username);
@@ -1012,25 +1016,29 @@
 					var eId = $(this).data('id'),
 						cData = circleData[eId];
 
-					gMap.setCenter(new google.maps.LatLng(cData.place.loc.coordinates[1], cData.place.loc.coordinates[0]));
-					gMap.panBy(overlay.width() / 2, 0);
-					circleClick.call(cData.circle, e);
+					if (cData) {
+						gMap.setCenter(new google.maps.LatLng(cData.place.loc.coordinates[1], cData.place.loc.coordinates[0]));
+						gMap.panBy(overlay.width() / 2, 0);
+						circleClick.call(cData.circle, e);
+					}
 				});
 			},
 			////// create event
 			createEventHandler = function (e) {
-				getTemplate("create-event", function (html) {
-					var page = navigatePage(1);
-					page.html(html);
-					bindUi(page);
+				getAllEventTags(function (tags) {
+					getTemplate("create-event", tags, function (html) {
+						var page = navigatePage(1);
+						page.html(html);
+						bindUi(page);
 
-					// create submit click handler
-					page.find('input[type="button"]').off('click').on('click', createEvent);
+						// create submit click handler
+						page.find('input[type="button"]').off('click').on('click', createEvent);
 
-					// load in user's places
-					getUserPlaces(function (places) {
-						var select = page.find('select[name="place"]');
-						userPlacesHandler(places, select);
+						// load in user's places
+						getUserPlaces(function (places) {
+							var select = page.find('select[name="place"]');
+							userPlacesHandler(places, select);
+						});
 					});
 				});
 			},
@@ -1086,15 +1094,15 @@
 							var page = navigatePage(1);
 							placeSelect.val('');
 							placeSelect.selectmenu('refresh');
-							getTemplate('add-user-place', function (template) {
+							getTemplate('add-user-place', null, function (template) {
 								page.html(template);
 								page.find('input[type=button]').off('click').on('click', function (e) {
 									addUserPlaceHandler(function (op) {
 										placeSelect.append(op);
 										placeSelect.selectmenu("refresh");
 										// go back to previous page
-
-									})
+										navigatePage(-1);
+									});
 								});
 							});
 						}
@@ -1131,7 +1139,7 @@
 					}
 				});
 			},
-			addUserPlaceClick = function (e, callback) {
+			addUserPlaceClick = function (callback) {
 				var placeId = $(this).data('id'),
 					name = $(this).data('name');
 
@@ -1188,20 +1196,22 @@
 				var eventId = $(this).data('id');
 
 				getUserEvent(eventId, function (event) {
-					getTemplate("edit-event", function (html) {
-						// load in user's places
-						getUserPlaces(function (places) {
-							page = navigatePage(1);
-							page.html(html);
+					getAllEventTags(function (tags) {
+						getTemplate("edit-event", tags, function (html) {
+							// load in user's places
+							getUserPlaces(function (places) {
+								page = navigatePage(1);
+								page.html(html);
 
-							var select = page.find('select[name="place"]');
-							userPlacesHandler(places, select);
-							bindModelToForm(event, page);
-							bindUi(page);
+								var select = page.find('select[name="place"]');
+								userPlacesHandler(places, select);
+								bindModelToForm(event, page);
+								bindUi(page);
 
-							// create submit click handler
-							page.find('.glyph.remove').off('click').on('click', deleteEvent);
-							page.find('input[type="button"]').off('click').on('click', saveEvent);
+								// create submit click handler
+								page.find('.glyph.remove').off('click').on('click', deleteEvent);
+								page.find('input[type="button"]').off('click').on('click', saveEvent);
+							});
 						});
 					});
 				})
@@ -1291,56 +1301,77 @@
 				});
 			},
 			//// filters
+			setDefaultFilters = function () {
+				var tags = getAllEventTags(function (tags) {
+					filters = _.map(tags, function (t) { return t.name; });
+				});
+			},
 			setFiltersView = function () {
-				getTemplate('set-filters', function (template) {
-					overlayGoing.hide();
-					showOverlay("Filter Events");
-					var page = navigatePage(0);
-					page.html(template);
+				var tags = getAllEventTags(function (tags) {
+					getTemplate('set-filters', tags, function (template) {
+						overlayGoing.hide();
+						showOverlay("Filter Events");
+						var page = navigatePage(0);
+						page.html(template);
 
-					page.find('.set-filter').each(function () {
-						var div = $(this),
-							filter = div.find('span'),
-							fType = filter.data('filter');
-
-						// check if not active, set disabled
-						if (!_.some(filters, function (f) { return f === fType; })) {
-							div.addClass('disabled');
-						}
-
-						// on click
-						div.off('click').on('click', function (e) {
+						page.find('.tag').each(function () {
 							var div = $(this),
 								filter = div.find('span'),
-								fType = filter.data('filter');
+								fType = filter.data('name');
 
-							if (div.hasClass('disabled')) {
-								filters.push(fType);
-								div.removeClass('disabled');
-							}
-							else {
-								var fIndex = filters.indexOf(fType);
-								if (fIndex >= 0) {
-									filters.splice(fIndex, 1);
-								}
+							// check if not active, set disabled
+							if (!_.some(filters, function (f) { return f === fType; })) {
 								div.addClass('disabled');
 							}
-						});
-					});					
 
-					page.find('.apply-filters').off('click').on('click', function (e) {
-						loadEvents(exitOverlay);
+							// on click
+							div.off('click').on('click', function (e) {
+								var div = $(this),
+									filter = div.find('span'),
+									fType = filter.data('name');
+
+								if (div.hasClass('disabled')) {
+									filters.push(fType);
+									div.removeClass('disabled');
+								}
+								else {
+									var fIndex = filters.indexOf(fType);
+									if (fIndex >= 0) {
+										filters.splice(fIndex, 1);
+									}
+									div.addClass('disabled');
+								}
+							});
+						});
+
+						page.find('.apply-filters').off('click').on('click', function (e) {
+							loadEvents(exitOverlay);
+						});
 					});
 				});
 			},
+			getAllEventTags = function (callback) {
+				$.ajax({
+					url: urls.tags,
+					type: 'GET',
+					success: function (response) {
+						if (response.success) {
+							callback(response.body);
+						}
+					}
+				});
+			},			
 			// views
-			getTemplate = function (template, callback) {
+			getTemplate = function (template, modelData, callback) {
+				if (modelData) {
+					modelData = JSON.stringify(modelData);
+				}
 				if (!templates[template]) {
 					// template hasn't been loaded by server yet, load and cache locally
 					$.ajax({
 						url: urls.renderTemplate,
 						type: 'GET',
-						data: { template: template },
+						data: { template: template, model: modelData },
 						success: function (html) {
 							templates[template] = html;
 							callback(templates[template]);
@@ -1352,7 +1383,7 @@
 				}
 			},
 			renderEventList = function (eventData, callback) {
-				getTemplate("event-list-item", function (template) {
+				getTemplate("event-list-item", null, function (template) {
 					var div = $('<div class="event-list"></div>'),
 						formatted = "";
 					for (var event in eventData) {
@@ -1455,6 +1486,7 @@
 			initializeMap();
 			applyHeaderHandlers();
 			applySearchHandlers();
+			setDefaultFilters();
 			overlayExit.on('click', exitOverlay);
 			bindUi($('body'));
 			window.fbAsyncInit = initAuthentication;

@@ -337,36 +337,36 @@ input[type="button"]:hover {
   width: 100%;
   padding: 0 10px;
 }
-.detail-overlay .overlay-body .set-filters .set-filter {
+.detail-overlay .overlay-body .set-filters .tag {
   display: block;
   padding: 10px 0;
   cursor: pointer;
 }
-.detail-overlay .overlay-body .set-filters .set-filter .glyph {
+.detail-overlay .overlay-body .set-filters .tag .glyph {
   padding: 25px;
 }
-.detail-overlay .overlay-body .set-filters .set-filter .glyph::before {
+.detail-overlay .overlay-body .set-filters .tag .glyph::before {
   font-size: 50px;
 }
-.detail-overlay .overlay-body .set-filters .set-filter:not(.disabled) .glyph::before {
+.detail-overlay .overlay-body .set-filters .tag:not(.disabled) .glyph::before {
   color: #005588;
 }
-.detail-overlay .overlay-body .set-filters .set-filter:not(.disabled) .filter-text {
+.detail-overlay .overlay-body .set-filters .tag:not(.disabled) .tag-label {
   color: #005588;
 }
-.detail-overlay .overlay-body .set-filters .set-filter.disabled .glyph::before {
+.detail-overlay .overlay-body .set-filters .tag.disabled .glyph::before {
   color: #cccccc;
 }
-.detail-overlay .overlay-body .set-filters .set-filter.disabled .filter-text {
+.detail-overlay .overlay-body .set-filters .tag.disabled .tag-label {
   color: #cccccc;
 }
-.detail-overlay .overlay-body .set-filters .set-filter.disabled:hover .glyph::before {
+.detail-overlay .overlay-body .set-filters .tag.disabled:hover .glyph::before {
   color: #21b4ff;
 }
-.detail-overlay .overlay-body .set-filters .set-filter:hover .filter-text {
+.detail-overlay .overlay-body .set-filters .tag:hover .tag-label {
   color: #21b4ff;
 }
-.detail-overlay .overlay-body .set-filters .set-filter::after {
+.detail-overlay .overlay-body .set-filters .tag::after {
   content: " ";
   display: table;
   clear: both;
@@ -382,8 +382,26 @@ input[type="button"]:hover {
 .detail-overlay .overlay-body .event-detail .event-info .where .place {
   color: #005588;
 }
-.detail-overlay .overlay-body .event-detail .event-info .what {
-  margin-top: 5px;
+.detail-overlay .overlay-body .event-detail .event-info .event-tags .tag {
+  display: inline-block;
+  padding: 10px 0;
+  margin-right: 10px;
+}
+.detail-overlay .overlay-body .event-detail .event-info .event-tags .tag .glyph {
+  padding: 15px;
+}
+.detail-overlay .overlay-body .event-detail .event-info .event-tags .tag .glyph::before {
+  font-size: 30px;
+  color: #005588;
+}
+.detail-overlay .overlay-body .event-detail .event-info .event-tags .tag .tag-label {
+  display: none;
+  color: #005588;
+}
+.detail-overlay .overlay-body .event-detail .event-info .event-tags .tag::after {
+  content: " ";
+  display: table;
+  clear: both;
 }
 .detail-overlay .overlay-body .event-detail .reviews .review .rating {
   margin-bottom: -5px;

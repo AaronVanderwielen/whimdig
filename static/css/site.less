@@ -89,24 +89,24 @@ button, input[type="button"] {
 }
 
 .multi {
-	width: 100%;
+    width: 100%;
     border-radius: 2px;
     border: 1px solid @turq;
     color: white;
     margin: 10px 0;
 
-	.label {
-		background-color: @turq;
-		padding: 10px;
-		font-size: 14px;
-		cursor: pointer;
-	}
+    .label {
+        background-color: @turq;
+        padding: 10px;
+        font-size: 14px;
+        cursor: pointer;
+    }
 
     .options {
-		background-color: #fff;
-		display: none;
-		max-height: 300px;
-		overflow-y: scroll;
+        background-color: #fff;
+        display: none;
+        max-height: 300px;
+        overflow-y: scroll;
 
         .option {
             display: block;
@@ -121,10 +121,10 @@ button, input[type="button"] {
                 }
             }
 
-			&:not(.selected) {
+            &:not(.selected) {
 
                 .glyph::before {
-					color: @light;
+                    color: @light;
                 }
 
                 .option-text {
@@ -134,7 +134,7 @@ button, input[type="button"] {
 
             &.selected {
                 .glyph::before {
-					color: @turq;
+                    color: @turq;
                 }
 
                 .option-text {
@@ -405,7 +405,7 @@ button, input[type="button"] {
 
         .set-filters {
 
-            .set-filter {
+            .tag {
                 display: block;
                 padding: 10px 0;
                 cursor: pointer;
@@ -426,7 +426,7 @@ button, input[type="button"] {
                         }
                     }
 
-                    .filter-text {
+                    .tag-label {
                         color: @turq;
                     }
                 }
@@ -440,7 +440,7 @@ button, input[type="button"] {
                         }
                     }
 
-                    .filter-text {
+                    .tag-label {
                         color: @light;
                     }
 
@@ -452,13 +452,13 @@ button, input[type="button"] {
                 }
 
                 &:hover {
-                    .filter-text {
+                    .tag-label {
                         color: @blue-accent;
                     }
                 }
             }
 
-            .set-filter::after {
+            .tag::after {
                 content: " ";
                 display: table;
                 clear: both;
@@ -486,8 +486,35 @@ button, input[type="button"] {
                     }
                 }
 
+                .event-tags {
+                    .tag {
+                        display: inline-block;
+                        padding: 10px 0;
+						margin-right: 10px;
+
+                        .glyph {
+                            padding: 15px;
+
+                            &::before {
+                                font-size: 30px;
+                                color: @turq;
+                            }
+                        }
+
+                        .tag-label {
+							display: none;
+                            color: @turq;
+                        }
+                    }
+
+                    .tag::after {
+                        content: " ";
+                        display: table;
+                        clear: both;
+                    }
+                }
+
                 .what {
-                    margin-top: 5px;
                 }
             }
 
@@ -828,7 +855,7 @@ button, input[type="button"] {
                         }
                     }
 
-					.filter-text {
+                    .filter-text {
                         display: none;
                     }
                 }
