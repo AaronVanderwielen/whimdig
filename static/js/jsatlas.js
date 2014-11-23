@@ -2,7 +2,7 @@
 	String.format = function (format) {
 		var args = Array.prototype.slice.call(arguments, 1);
 		return format.replace(/{(\d+)}/g, function (match, number) {
-			return typeof args[number] != 'undefined'
+			return typeof args[number] !== undefined
               ? args[number]
               : match
 			;
@@ -13,16 +13,16 @@
 (function ($, window) {
 	var jsAtlas = function (element) {
 		var obj = this,
-            div = element,
-            gMap,
-            settings = {
-            	key: "AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54",
-            	initialZoom: 16,
-            	initialCenter: {
-            		lat: 48.745555,
-            		lng: -122.478132,
-            	},
-            	styleArray: [
+			div = element,
+			gMap,
+			settings = {
+				key: "AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54",
+				initialZoom: 16,
+				initialCenter: {
+					lat: 48.745555,
+					lng: -122.478132,
+				},
+				styleArray: [
 					{
 						stylers: [
 							{ hue: "#00aaff" },
@@ -33,26 +33,26 @@
 							{ weight: 3 }
 						]
 					},
-                    {
-                    	featureType: "poi",
-                    	stylers: [{ visibility: "off" }]
-                    },
-                    {
-                    	featureType: "landscape",
-                    	stylers: [{ visibility: "on" }]
-                    },
-                    {
-                    	featureType: "water",
-                    	stylers: [{ visibility: "on" }]
-                    },
-                    {
-                    	featureType: "road.local",
-                    	stylers: [{ visibility: "on" }]
-                    }
-            	],
-            	focusOpacity: .7,
-            	blurOpacity: .5
-            },
+					{
+						featureType: "poi",
+						stylers: [{ visibility: "off" }]
+					},
+					{
+						featureType: "landscape",
+						stylers: [{ visibility: "on" }]
+					},
+					{
+						featureType: "water",
+						stylers: [{ visibility: "on" }]
+					},
+					{
+						featureType: "road.local",
+						stylers: [{ visibility: "on" }]
+					}
+				],
+				focusOpacity: 0.7,
+				blurOpacity: 0.5
+			},
 			user,
             selectedEvent,
 			urls = {
@@ -64,16 +64,23 @@
 				userPlaces: '/places/user',
 				searchAllPlaces: '/places/searchAll',
 				// events
-				events: '/event',
+				event: '/event',
+				eventList: '/event/list',
 				eventsForSpan: '/event/span',
+				userEvents: '/event/userEvents',
+				userOwnedEvents: '/event/userOwnedEvents',
+				userPastEvents: '/event/userPastEvents',
 				eventAddUser: '/event/addUser',
 				eventRemoveUser: '/event/removeUser',
 				eventCreate: '/event/create',
+				eventUpdate: '/event/update',
+				eventDelete: '/event/remove',
 				// views
 				renderTemplate: '/template'
 			},
 			templates = {},
 			currentSpan = 0,
+			paging = 0,
 			reAuthAttempts = 0,
 			sizing = {
 				count: 0
@@ -81,9 +88,11 @@
 			circleData = {
 				count: 0
 			},
-			datetimeFormat = 'ddd h:mm a',
+			filters = ['music', 'beer', 'food', 'pets', 'games', 'books', 'video-games', 'sports', 'birthday', 'movie' ],
+			datetimeCasualFormat = 'ddd h:mm a',
+			datetimeStrictFormat = 'MM/DD/YYYY h:mm a',
 			timeFormat = 'h:mm tt',
-			isMobileDevice = navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) != null,
+			isMobileDevice = navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
 			// elements
 			container = $('.container'),
 			//// header 
@@ -102,12 +111,6 @@
 			overlayTitle = overlayHeader.find('> .overlay-title'),
 			overlayGoing = overlayHeader.find('> .going'),
 			overlayBody = overlay.find('.overlay-body'),
-			overlayFirstPage = overlayBody.find('.first-page'),
-			overlaySecondPage = overlayBody.find('.second-page'),
-			overlayThirdPage = overlayBody.find('.third-page'),
-			overlayMenu = overlayFirstPage.find('.main-menu'),
-			overlayEvent = overlayFirstPage.find('.event-detail'),
-			overlayFilters = overlayFirstPage.find('.filters'),
 			// map actions
 			initializeMap = function () {
 				var mapOptions = {
@@ -180,7 +183,7 @@
 						sizingRunning = true;
 
 						var sizeTo = el.radius + (sizing[el.id].waver.sw * (el.radius / 20)),
-							rate = sizing[el.id].waver.sw === 1 ? 1.01 : .99;
+							rate = sizing[el.id].waver.sw === 1 ? 1.01 : 0.99;
 
 						circleSizeTo(el, sizeTo, rate, null, 100, function () {
 							sizing[el.id].waver.sw = sizing[el.id].waver.sw > 0 ? -1 : 1;
@@ -238,10 +241,10 @@
 							trigger: false,
 							sw: 1
 						}
-					}
+					};
 					sizing.count++;
 
-					circleSizeTo(circle, circleSize, 1.2, .9);
+					circleSizeTo(circle, circleSize, 1.2, 0.9);
 
 					google.maps.event.addListener(circle, 'mouseover', function (e) {
 						focusCircle.call(this, e);
@@ -258,6 +261,18 @@
 					});
 				}
 			},
+			refreshCircle = function (id) {
+				getUserEvent(id, function (event) {
+					if (circleData[event._id]) {
+						destroyCdata(event._id, 0, function() {
+							drawEvent(event);
+						});
+					}
+					else {
+						drawEvent(event);
+					}
+				});
+			},			
 			focusCircle = function (e) {
 				var circle = this,
 					ref = circleData[circle.id],
@@ -301,8 +316,7 @@
 					zIndex: 0,
 					fillOpacity: settings.blurOpacity,
 					fillColor: arrayToRGB(ref.color),
-					strokeColor: arrayToRGB(getShade(ref.color, -20)),
-					fillOpacity: settings.blurOpacity
+					strokeColor: arrayToRGB(getShade(ref.color, -20))
 				});
 			},
 			circleClick = function (e) {
@@ -315,8 +329,11 @@
 
 				selectedEvent = clicked;
 
+				focusCircle.call(this);
 				highlightCircle.call(this);
-				setEventDetail(this.id);
+				showOverlay(circleData[this.id].name);
+				var page = navigatePage(0);
+				setEventDetail(circleData[this.id], page);
 			},
 			offsetCenter = function (latlng, offsetx, offsety) {
 
@@ -333,7 +350,7 @@
 				);
 
 				var worldCoordinateCenter = GoogleMap.getProjection().fromLatLngToPoint(latlng);
-				var pixelOffset = new google.maps.Point((offsetx / scale) || 0, (offsety / scale) || 0)
+				var pixelOffset = new google.maps.Point((offsetx / scale) || 0, (offsety / scale) || 0);
 
 				var worldCoordinateNewCenter = new google.maps.Point(
 					worldCoordinateCenter.x - pixelOffset.x,
@@ -349,7 +366,7 @@
 				return cData.users.length * 20;
 			},
 			getShade = function (rgb, delta) {
-				var newRGB = new Array();
+				var newRGB = [];
 				for (var i in rgb) {
 					if (delta > 0) {
 						newRGB[i] = rgb[i] + delta <= 255 ? rgb[i] + delta : 255;
@@ -432,22 +449,7 @@
 					}
 				});
 			},
-			loadEvents = function () {
-				// destroy old event sizing handlers
-				if (sizing.count > 0) {
-					for (var s in sizing) {
-						if (s !== "count") {
-							if (sizing[s].event) {
-								window.clearTimeout(sizing[s].event);
-							}
-							if (sizing[s].waver.event) {
-								window.clearTimeout(sizing[s].waver.event);
-							}
-						}
-					};
-				}
-
-				// destroy old event ui and data
+			loadEvents = function (callback) {
 				if (circleData.count > 0) {
 					// get new events
 					loadEventsInSpan(function (data) {
@@ -462,37 +464,66 @@
 
 						for (var d in destroy) {
 							var dId = destroy[d]._id;
-
-							circleSizeTo(circleData[dId].circle, 0, .7, null, 50, function () {
-								circleData[dId].circle.setMap(null);
-								numDestroyed++;
-
-								if (numDestroyed === circleData.count) {
-									sizing = {
-										count: 0
-									};
-									circleData = {
-										count: 0
-									};
-								}
-								if (selectedEvent === circleData[dId].circle) {
-									blurCircle.call(circleData[dId].circle);
-									selectedEvent = null;
-									setMenuDetail();
-								}
-								delete circleData[dId];
-								circleData.count--;
-							});
+							destroyCdata(dId, numDestroyed);
+						}
+						if (callback) {
+							callback();
 						}
 					});
 				}
 				else {
 					// get new events
-					loadEventsInSpan();
+					loadEventsInSpan(callback);
 				}
 			},
+			destroySizing = function () {
+				if (sizing.count > 0) {
+					for (var s in sizing) {
+						if (s !== "count") {
+							if (sizing[s].event) {
+								window.clearTimeout(sizing[s].event);
+							}
+							if (sizing[s].waver.event) {
+								window.clearTimeout(sizing[s].waver.event);
+							}
+						}
+					}
+				}
+			},
+			destroyCdata = function (dId, numDestroyed, callback) {
+				// destroy old event sizing handlers
+				destroySizing();
+
+				circleSizeTo(circleData[dId].circle, 0, 0.7, null, 50, function () {
+					circleData[dId].circle.setMap(null);
+					numDestroyed++;
+
+					if (numDestroyed === circleData.count) {
+						sizing = {
+							count: 0
+						};
+						circleData = {
+							count: 0
+						};
+					}
+					else {
+						circleData.count--;
+					}
+
+					if (selectedEvent && circleData[dId] && selectedEvent === circleData[dId].circle) {
+						blurCircle.call(circleData[dId].circle);
+						selectedEvent = null;
+						exitOverlay();
+					}
+
+					delete circleData[dId];
+					if (callback) {
+						callback();
+					}
+				});
+			},			
 			loadEventsInSpan = function (callback) {
-				$.get(urls.eventsForSpan, { span: currentSpan }, function (response) {
+				$.get(urls.eventsForSpan, { span: currentSpan, filters: filters }, function (response) {
 					if (response.success) {
 						drawEvents(response.body);
 						if (callback) {
@@ -504,13 +535,43 @@
 					}
 				});
 			},
+			getUserEvent = function (id, callback) {
+				$.get(urls.event, { eventId: id }, function (response) {
+					if (response.success) {
+						callback(response.body);
+					}
+					else if (response.statusCode === 401) {
+						reAuthenticate(getUserEvent, [callback]);
+					}
+				});
+			},
 			getUserEvents = function (callback) {
-				$.get('/event/userEvents', function (response) {
+				$.get(urls.userEvents, function (response) {
 					if (response.success) {
 						callback(response);
 					}
 					else if (response.statusCode === 401) {
 						reAuthenticate(getUserEvents, [callback]);
+					}
+				});
+			},
+			getUserOwnedEvents = function (callback) {
+				$.get(urls.userOwnedEvents, function (response) {
+					if (response.success) {
+						callback(response.body);
+					}
+					else if (response.statusCode === 401) {
+						reAuthenticate(getUserOwnedEvents, [callback]);
+					}
+				});
+			},
+			getUserPastEvents = function (callback) {
+				$.get(urls.userPastEvents, function (response) {
+					if (response.success) {
+						callback(response.body);
+					}
+					else if (response.statusCode === 401) {
+						reAuthenticate(getUserPastEvents, [callback]);
 					}
 				});
 			},
@@ -569,7 +630,7 @@
 						var data = {
 							token: auth.authResponse.accessToken,
 							id: auth.authResponse.userID
-						}
+						};
 						initializeUser(data, callback, callbackArgs);
 					}
 					else {
@@ -584,17 +645,17 @@
 							header.append(loginPopupHack);
 						}
 						else {
-							fbLoginPrompt(data, callback, callbackArgs);
+							fbLoginPrompt(callback, callbackArgs);
 						}
 					}
 				});
 			},
-			fbLoginPrompt = function (data, callback, callbackArgs) {
+			fbLoginPrompt = function (callback, callbackArgs) {
 				FB.login(function (response) {
 					var data = {
 						token: response.authResponse.accessToken,
 						id: response.authResponse.userID
-					}
+					};
 
 					initializeUser(data, callback, callbackArgs);
 				}, { scope: 'public_profile,email,user_friends' });
@@ -605,7 +666,7 @@
 					setMenuDetail();
 				});
 				headerFilterBtn.off('click').on('click', function (e) {
-					switchOverlay(overlayFilters, "Event Filters");
+					setFiltersView();
 				});
 				headerDaySelectPrev.off('click').on('click', function (e) {
 					gotoPrevSpan();
@@ -649,95 +710,91 @@
 				}
 			},
 			// overlay
+			showOverlay = function (headerTitle) {
+				overlayTitle.html(headerTitle);
+				container.addClass('show-overlay');
+			},
 			exitOverlay = function () {
 				if (selectedEvent) {
 					blurCircle.call(selectedEvent);
 					selectedEvent = null;
 				}
-				clearOverlays();
 				container.removeClass('show-overlay');
-			},
-			switchOverlay = function (to, headerTitle, callback) {
-				container.addClass('show-overlay');
-
-				clearOverlays(function () {
-					if (callback) {
-						callback();
-					}
-					overlayTitle.html(headerTitle);
-					overlayHeader.fadeIn();
-					to.fadeIn();
+				currentPage().animate({ width: 0, padding: 0 }, 200, function () {
+					overlayBody.find('.page').remove();
 				});
 			},
-			clearOverlays = function (callback) {
-				var finished = 0,
-					count = 4;
+			navigatePage = function (dir) {
+				var lastPage = overlayBody.find('.page.page' + paging),
+					showProps = {
+						width: '100%',
+						padding: '0px 10px'
+					},
+					hideProps = {
+						width: 0,
+						padding: 0
+					},
+					speed = 200;
 
-				// header
-				overlayHeader.fadeOut(200, function () {
-					finished++;
-					if (finished === count && callback) {
-						callback();
-					}
-				});
+				if (paging + dir < 0) {
+					return;
+				}
 
-				// event detail
-				overlayGoing.off('mouseover').off('mouseleave').off('click');
-				overlayEvent.fadeOut(200, function () {
-					overlayGoing.hide();
-					gotoFirstPage();
-					finished++;
-					if (finished === count && callback) {
-						callback();
-					}
-				});
+				if (dir === 0) {
+					var newPage = $(String.format('<div class="page page{0}"></div>', 0));
+					// clear all pages
+					overlayBody.find('.page').remove();
+					// append new base page
+					overlayBody.append(newPage);
+					newPage.css('float', 'right');
+					paging = 0;
+					overlayBody.find('.page.page' + paging).animate(showProps, speed);
+				}
+				else {
+					if (dir < 0) {
+						// user hit back button, hide then remove the next page
+						lastPage.css('float', 'right'); // swipe --->
+						lastPage.animate(hideProps, speed, function () {
+							$(this).remove();
+						});
 
-				// main menu
-				overlayMenu.find('.schedule .events').off('click');
-				overlayMenu.fadeOut(200, function () {
-					finished++;
-					if (finished === count && callback) {
-						callback();
+						// previous page coming back
+						var prevPage = overlayBody.find(String.format('.page.page{0}', paging + dir));
+						prevPage.css('float', 'left');
+						prevPage.animate(showProps, speed);
 					}
-				});
+					else {
+						// user is navigating to the next page, hide prev page, create new
+						lastPage.css('float', 'left'); // swipe <---
+						lastPage.animate(hideProps, speed);
+						var newPage = $(String.format('<div class="page page{0}"></div>', paging + dir));
+						overlayBody.append(newPage);
+						newPage.animate(showProps, speed);
+					}
+					paging += dir;
+				}
 
-				// filters
-				overlayFilters.fadeOut(200, function () {
-					finished++;
-					if (finished === count && callback) {
-						callback();
-					}
-				});
+				if (paging === 0) {
+					overlayExit.removeClass('chevron-left');
+					overlayExit.addClass('chevron-right');
+					overlayExit.off('click').on('click', exitOverlay);
+				}
+				else {
+					overlayExit.removeClass('chevron-right');
+					overlayExit.addClass('chevron-left');
+					overlayExit.off('click').on('click', function (e) {
+						navigatePage(-1);
+					});
+				}
+
+				return currentPage();
 			},
-			gotoFirstPage = function () {
-				overlayBody.removeClass('paged');
-				overlayBody.removeClass('two');
-				overlayBody.removeClass('three');
-				overlayExit.removeClass('chevron-left');
-				overlayExit.addClass('chevron-right');
-				overlayExit.off('click').on('click', exitOverlay);
-				overlaySecondPage.html('');
-			},
-			gotoSecondPage = function () {
-				overlayBody.removeClass('three');
-				overlayBody.addClass('paged');
-				overlayBody.addClass('two');
-				overlayExit.removeClass('chevron-right');
-				overlayExit.addClass('chevron-left');
-				overlayExit.off('click').on('click', gotoFirstPage);
-				overlayThirdPage.html('');
-			},
-			gotoThirdPage = function () {
-				overlayBody.removeClass('two');
-				overlayBody.addClass('three');
-				overlayBody.addClass('paged');
-				overlayExit.removeClass('chevron-right');
-				overlayExit.addClass('chevron-left');
-				overlayExit.off('click').on('click', gotoSecondPage);
+			currentPage = function () {
+				return overlayBody.find('> .page.page' + paging);
 			},
 			//// event detail
-			applyGoingHandlers = function (cData) {
-				var connections = overlayEvent.find('.connection-info'),
+			applyGoingHandlers = function (cData, div) {
+				var connections = div.find('.connection-info'),
 					numAttending = connections.find('.num-attending');
 
 				overlayGoing.off('mouseover').on('mouseover', function () {
@@ -766,10 +823,10 @@
 								overlayGoing.removeClass('green');
 								overlayGoing.addClass('unchecked');
 								clearSizing(cData._id);
-								circleSizeTo(cData.circle, size, .9, null, 50, function () {
+								circleSizeTo(cData.circle, size, 0.9, null, 50, function () {
 									setWaver(cData.circle);
 								});
-								numAttending.html(parseInt(cData.users.length));
+								numAttending.html(parseInt(cData.users.length, 10));
 							}
 						});
 					}
@@ -787,30 +844,29 @@
 								circleSizeTo(cData.circle, size, 1.1, null, 50, function () {
 									setWaver(cData.circle);
 								});
-								numAttending.html(parseInt(cData.users.length));
+								numAttending.html(parseInt(cData.users.length, 10));
 							}
 						});
 					}
 				});
 			},
-			setEventDetail = function (id) {
+			setEventDetail = function (event, div) {
 				getTemplate('event-detail', function (template) {
-					overlayEvent.html(template);
+					div.html(template);
 
-					var cData = circleData[id],
-						body = overlayEvent.find('.event-body'),
-						when = overlayEvent.find('.when'),
-						where = overlayEvent.find('.where'),
-						what = overlayEvent.find('.what'),
-						connections = overlayEvent.find('.connection-info'),
+					var body = div.find('.event-body'),
+						when = div.find('.when'),
+						where = div.find('.where'),
+						what = div.find('.what'),
+						connections = div.find('.connection-info'),
 						numAttending = connections.find('.num-attending'),
 						friendCount = connections.find('.friend-count'),
 						friendsList = connections.find('.friend-list');
 
 					// make sure cData.users exists
-					if (cData.users) {
+					if (event.users) {
 						// initialize 'going' checkbox by checking if user is in event.users on client
-						if (_.some(cData.users, function (u) { return u === user.facebook_id; })) {
+						if (_.some(event.users, function (u) { return u === user.facebook_id; })) {
 							overlayGoing.removeClass('unchecked');
 							overlayGoing.addClass('check');
 							overlayGoing.addClass('green');
@@ -822,62 +878,108 @@
 						}
 					}
 
-					switchOverlay(overlayEvent, cData.name, function () {
-						// apply event detail to template
-						when.html(moment(cData.start).format(datetimeFormat) + " - " + moment(cData.end).format(datetimeFormat));
-						when.append($(String.format('<div class="intensity">{0}</div>', cData.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
-						where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', cData.place.name, cData.place.vicinity));
-						where.data('created-by', cData.created_by);
-						what.html(cData.desc);
+					// apply event detail to template
+					when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
+					when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
+					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
+					where.data('created-by', event.created_by);
+					what.html(event.desc);
 
-						// going checkbox event handlers
-						overlayGoing.show();
-						applyGoingHandlers(cData);
-						numAttending.html(cData.users.length);
+					// going checkbox event handlers
+					overlayGoing.show();
+					applyGoingHandlers(event, div);
+					numAttending.html(event.users.length);
 
-						// friends
-						var attendingFriends = _.filter(user.friends, function (f) {
-							if (_.some(cData.users, function (u) { return u === f.facebook_id; })) {
-								return f;
-							}
-						});
-						friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends > 1 ? "s" : ""));
-						for (var f in attendingFriends) {
-							var friend = attendingFriends[f],
-								pic = $('<img src="' + friend.picture_url + '">');
-
-							// show friend picture in friendListDiv
-							friendsList.append(pic);
+					// friends
+					var attendingFriends = _.filter(user.friends, function (f) {
+						if (_.some(event.users, function (u) { return u === f.facebook_id; })) {
+							return f;
 						}
-
-						// center the event's circle
-						gMap.setCenter(cData.circle.center);
-						gMap.panBy(overlay.width() / 2, 0);
 					});
+					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends > 1 ? "s" : ""));
+					for (var f in attendingFriends) {
+						var friend = attendingFriends[f],
+							pic = $('<img src="' + friend.picture_url + '">');
+
+						// show friend picture in friendListDiv
+						friendsList.append(pic);
+					}
+
+					// center the event's circle
+					gMap.setCenter(event.circle.center);
+					gMap.panBy(overlay.width() / 2, 0);
+				});
+			},
+			setPastEventDetail = function (event, div) {
+				getTemplate('past-event-detail', function (template) {
+					div.html(template);
+
+					var body = div.find('.event-body'),
+						when = div.find('.when'),
+						where = div.find('.where'),
+						what = div.find('.what'),
+						connections = div.find('.connection-info'),
+						numAttending = connections.find('.num-attending'),
+						friendCount = connections.find('.friend-count'),
+						friendsList = connections.find('.friend-list');
+
+					overlayGoing.hide();
+
+					// apply event detail to template
+					when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
+					when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
+					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
+					where.data('created-by', event.created_by);
+					what.html(event.desc);
+
+					numAttending.html(event.users.length);
+
+					// friends
+					var attendingFriends = _.filter(user.friends, function (f) {
+						if (_.some(event.users, function (u) { return u === f.facebook_id; })) {
+							return f;
+						}
+					});
+					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends > 1 ? "s" : ""));
+					for (var f in attendingFriends) {
+						var friend = attendingFriends[f],
+							pic = $('<img src="' + friend.picture_url + '">');
+
+						// show friend picture in friendListDiv
+						friendsList.append(pic);
+					}
 				});
 			},
 			//// main menu
 			setMenuDetail = function () {
+				if (selectedEvent && circleData[selectedEvent.id]) {
+					blurCircle.call(circleData[selectedEvent.id].circle);
+					selectedEvent = null;
+				}
+
 				if (user) {
 					getTemplate('main-menu', function (template) {
-						overlayMenu.html(template);
+						var username = user.first_name + " " + (user.last_name && user.last_name.length > 0 ? user.last_name.substring(0, 1) : "");
+						overlayGoing.hide();
+						showOverlay(username);
+						var page = navigatePage(0);
+						page.html(template);
+
 						applyMenuHandlers();
 
 						getUserEvents(function (response) {
 							var data = response.body,
-								eventsDiv = overlayMenu.find('.schedule .events');
+								eventsDiv = page.find('.schedule .scheduled-events');
 
-							renderMenuEvents(data, function (html) {
+							renderEventList(data, function (html) {
 								eventsDiv.html(html);
 								applyMenuScheduleEventHandlers();
 							});
-
-							switchOverlay(overlayMenu, user.first_name + " " + user.last_name);
 						});
 
 						// display friends
-						var friendCountSpan = overlayMenu.find('.fb-connections .friend-count'),
-							friendListDiv = overlayMenu.find('.fb-connections .friend-list');
+						var friendCountSpan = page.find('.fb-connections .friend-count'),
+							friendListDiv = page.find('.fb-connections .friend-list');
 
 						friendCountSpan.html(user.friends.length + " friend" + (user.friends > 1 ? "s" : ""));
 
@@ -892,24 +994,20 @@
 				}
 			},
 			applyMenuHandlers = function () {
-				var createEventBtn = overlayMenu.find('.create-event');
-				createEventBtn.off('click').on('click', function (e) {
-					getTemplate("create-event", function (html) {
-						overlaySecondPage.html(html);
-						bindUi(overlaySecondPage);
-						gotoSecondPage();
+				var page = currentPage(),
+					createEventBtn = page.find('.create-event'),
+					manageEventsBtn = page.find('.manage-events'),
+					pastEventsBtn = page.find('.past-events');
 
-						// create submit click handler
-						overlaySecondPage.find('input[type="button"]').off('click').on('click', createEvent);
-
-						// load in user's places
-						getUserPlaces(userPlacesHandler);
-					});
+				createEventBtn.off('click').on('click', createEventHandler);
+				manageEventsBtn.off('click').on('click', function (e) {
+					manageEventsHandler(1);
 				});
+				pastEventsBtn.off('click').on('click', pastEventsHandler);
 			},
 			applyMenuScheduleEventHandlers = function () {
 				// clicking an event in schedule
-				var menuScheduleEvents = overlayMenu.find('.schedule .events .event');
+				var menuScheduleEvents = currentPage().find('.schedule .event-list .event');
 				menuScheduleEvents.off('click').on('click', function (e) {
 					var eId = $(this).data('id'),
 						cData = circleData[eId];
@@ -919,8 +1017,25 @@
 					circleClick.call(cData.circle, e);
 				});
 			},
+			////// create event
+			createEventHandler = function (e) {
+				getTemplate("create-event", function (html) {
+					var page = navigatePage(1);
+					page.html(html);
+					bindUi(page);
+
+					// create submit click handler
+					page.find('input[type="button"]').off('click').on('click', createEvent);
+
+					// load in user's places
+					getUserPlaces(function (places) {
+						var select = page.find('select[name="place"]');
+						userPlacesHandler(places, select);
+					});
+				});
+			},
 			createEvent = function (e) {
-				var form = overlaySecondPage.find('form'),
+				var form = $(this).parents('form:first'),
 					formData = form.serialize();
 
 				// clear previous errors, if any
@@ -936,7 +1051,8 @@
 							var newEvent = response.body[0];
 							drawEvent(newEvent);
 							highlightCircle.call(circleData[newEvent._id].circle);
-							setEventDetail(newEvent._id);
+							var page = navigatePage(-1);
+							setEventDetail(newEvent, page);
 						}
 						else {
 							var errorHtml = "";
@@ -951,9 +1067,8 @@
 					}
 				});
 			},
-			userPlacesHandler = function (places) {
-				var placeSelect = overlaySecondPage.find('select[name="place"]'),
-					newOption = $('<option value="new">- add another place -</option>');
+			userPlacesHandler = function (places, placeSelect) {
+				var newOption = $('<option value="new">- add another place -</option>');
 
 				// add options
 				if (places) {
@@ -968,19 +1083,29 @@
 				placeSelect.selectmenu({
 					change: function () {
 						if ($(this).val() === "new") {
-							gotoThirdPage();
+							var page = navigatePage(1);
 							placeSelect.val('');
+							placeSelect.selectmenu('refresh');
 							getTemplate('add-user-place', function (template) {
-								overlayThirdPage.html(template);
-								overlayThirdPage.find('input[type=button]').off('click').on('click', addUserPlaceHandler);
+								page.html(template);
+								page.find('input[type=button]').off('click').on('click', function (e) {
+									addUserPlaceHandler(function (op) {
+										placeSelect.append(op);
+										placeSelect.selectmenu("refresh");
+										// go back to previous page
+
+									})
+								});
 							});
 						}
 					}
 				});
+				placeSelect.selectmenu('refresh');
 			},
-			addUserPlaceHandler = function () {
-				var placeName = overlayThirdPage.find('input[name="place"]').val(),
-					resultsDiv = overlayThirdPage.find('.results');
+			addUserPlaceHandler = function (callback) {
+				var page = currentPage(),
+					placeName = page.find('input[name="place"]').val(),
+					resultsDiv = page.find('.results');
 
 				resultsDiv.html('');
 
@@ -997,29 +1122,32 @@
 						for (var p in response.body) {
 							var place = $(String.format('<div class="result selectable" data-id="{0}" data-name="{1}"><div class="heading">{1}</div><span>{2}</span></div>', response.body[p]._id, response.body[p].name, response.body[p].vicinity));
 
-							place.off('click').on('click', function () {
-								var placeId = $(this).data('id'),
-									name = $(this).data('name');
-								// add place to user
-								$.ajax({
-									url: urls.userPlaces,
-									type: 'POST',
-									data: { placeId: placeId },
-									success: function (response) {
-										if (response.success) {
-											var placeSelect = overlaySecondPage.find('select[name="place"]'),
-												place = response.body;
-
-											placeSelect.append(String.format('<option value="{0}" selected="selected">{1}</option>', placeId, name));
-											placeSelect.selectmenu("refresh");
-
-											gotoSecondPage();
-										}
-									}
-								});
+							place.off('click').on('click', function (e) {
+								addUserPlaceClick.call(this, callback);
 							});
 
 							resultsDiv.append(place);
+						}
+					}
+				});
+			},
+			addUserPlaceClick = function (e, callback) {
+				var placeId = $(this).data('id'),
+					name = $(this).data('name');
+
+				// add place to user
+				$.ajax({
+					url: urls.userPlaces,
+					type: 'POST',
+					data: { placeId: placeId },
+					success: function (response) {
+						if (response.success) {
+							var place = response.body,
+								newOption = $(String.format('<option value="{0}" selected="selected">{1}</option>', placeId, name));
+
+							if (callback) {
+								callback(newOption);
+							}
 						}
 					}
 				});
@@ -1035,7 +1163,176 @@
 					}
 				});
 			},
+			////// manage events
+			manageEventsHandler = function (dir) {
+				getUserOwnedEvents(function (userOwned) {
+					if (userOwned.length > 0) {
+						renderEventList(userOwned, function (html) {
+							var list = $('<div class="event-list"></div>');
+
+							list.html(html);
+							var page = navigatePage(dir);
+							page.html(list);
+
+							// event click needs to load event detail
+							page.find('.event').off('click').on('click', editEventHandler);
+						});
+					}
+					else {
+						var page = navigatePage(dir);
+						page.html('<p>You have not created any events.</p>');
+					}
+				});
+			},
+			editEventHandler = function (e) {
+				var eventId = $(this).data('id');
+
+				getUserEvent(eventId, function (event) {
+					getTemplate("edit-event", function (html) {
+						// load in user's places
+						getUserPlaces(function (places) {
+							page = navigatePage(1);
+							page.html(html);
+
+							var select = page.find('select[name="place"]');
+							userPlacesHandler(places, select);
+							bindModelToForm(event, page);
+							bindUi(page);
+
+							// create submit click handler
+							page.find('.glyph.remove').off('click').on('click', deleteEvent);
+							page.find('input[type="button"]').off('click').on('click', saveEvent);
+						});
+					});
+				})
+			},			
+			saveEvent = function (e) {
+				var form = $(this).parents('form:first'),
+					formData = form.serialize();
+
+				// clear previous errors, if any
+				form.find('input, select, textarea').removeClass('error');
+				form.find('.error').html('');
+
+				$.ajax({
+					url: urls.eventUpdate,
+					type: 'POST',
+					data: formData,
+					success: function (response) {
+						if (response.success) {
+							manageEventsHandler(-1);
+							refreshCircle(response.body);
+						}
+						else {
+							var errorHtml = "";
+							// display error messages
+							for (var i in response.body) {
+								var input = form.find('[name="' + i + '"]');
+								input.addClass('error');
+								errorHtml = response.body[i];
+							}
+							form.find('.error').html(errorHtml);
+						}
+					}
+				});
+			},
+			deleteEvent = function (e) {
+				var form = currentPage().find('form:visible'),
+					eventId = form.find('input[name="_id"]').val();
+
+				// clear previous errors, if any
+				form.find('input, select, textarea').removeClass('error');
+				form.find('.error').html('');
+
+				$.ajax({
+					url: urls.eventDelete,
+					type: 'POST',
+					data: { eventId: eventId },
+					success: function (response) {
+						if (response.success) {
+							manageEventsHandler(-1);
+						}
+						else {
+							var errorHtml = "";
+							// display error messages
+							for (var i in response.body) {
+								var input = form.find('[name="' + i + '"]');
+								input.addClass('error');
+								errorHtml = response.body[i];
+							}
+							form.find('.error').html(errorHtml);
+						}
+					}
+				});
+			},
+			////// past events
+			pastEventsHandler = function (e) {
+				getUserPastEvents(function (pastEvents) {
+					if (pastEvents.length > 0) {
+						renderEventList(pastEvents, function (html) {
+							var page = navigatePage(1);
+							page.append(html);
+
+							// event click needs to load event detail
+							page.find('.event').off('click').on('click', function (e) {
+								var eventId = $(this).data('id');
+
+								getUserEvent(eventId, function (event) {
+									page = navigatePage(1);
+									setPastEventDetail(event, page);
+								})
+							});
+						});
+					}
+					else {
+						var page = navigatePage(1);
+						page.html('<p>You have not gone to any events.</p>');
+					}
+				});
+			},
 			//// filters
+			setFiltersView = function () {
+				getTemplate('set-filters', function (template) {
+					overlayGoing.hide();
+					showOverlay("Filter Events");
+					var page = navigatePage(0);
+					page.html(template);
+
+					page.find('.set-filter').each(function () {
+						var div = $(this),
+							filter = div.find('span'),
+							fType = filter.data('filter');
+
+						// check if not active, set disabled
+						if (!_.some(filters, function (f) { return f === fType; })) {
+							div.addClass('disabled');
+						}
+
+						// on click
+						div.off('click').on('click', function (e) {
+							var div = $(this),
+								filter = div.find('span'),
+								fType = filter.data('filter');
+
+							if (div.hasClass('disabled')) {
+								filters.push(fType);
+								div.removeClass('disabled');
+							}
+							else {
+								var fIndex = filters.indexOf(fType);
+								if (fIndex >= 0) {
+									filters.splice(fIndex, 1);
+								}
+								div.addClass('disabled');
+							}
+						});
+					});					
+
+					page.find('.apply-filters').off('click').on('click', function (e) {
+						loadEvents(exitOverlay);
+					});
+				});
+			},
 			// views
 			getTemplate = function (template, callback) {
 				if (!templates[template]) {
@@ -1054,15 +1351,17 @@
 					callback(templates[template]);
 				}
 			},
-			renderMenuEvents = function (eventData, callback) {
-				getTemplate("menu-events", function (template) {
-					var formatted = "";
+			renderEventList = function (eventData, callback) {
+				getTemplate("event-list-item", function (template) {
+					var div = $('<div class="event-list"></div>'),
+						formatted = "";
 					for (var event in eventData) {
 						var e = eventData[event];
-						var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeFormat), moment(e.end).format(datetimeFormat), e.place.name);
+						var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e.place.name);
 						formatted += eHtml;
 					}
-					callback(formatted);
+					div.html(formatted);
+					callback(div);
 				});
 			},
 			popup = function (html, opts) {
@@ -1078,6 +1377,28 @@
 
 				return startDate.isBefore(high) && endDate.isAfter(now);
 			},
+			bindModelToForm = function (model, form) {
+				for (var p in model) {
+					var input = form.find(String.format('[name="{0}"]', p));
+
+					if (p === "start" || p === "end") {
+						// parse date
+						model[p] = moment(model[p]).format(datetimeStrictFormat);
+					}
+					else if (p === "place") {
+						model[p] = model[p]._id;
+					}
+					
+					input.val(model[p]);
+				}
+
+				form.find('.multi').each(function () {
+					var multi = $(this).data('multi');
+					if (multi) {
+						multi.refreshByInput();
+					}
+				});
+			},
 			bindUi = function (div) {
 				div.find('.datepicker').each(function () {
 					var input = $(this);
@@ -1092,7 +1413,8 @@
 				div.find('select').each(function () {
 					var input = $(this);
 					if (!input.data('bound')) {
-						div.find('select').selectmenu();
+						input.selectmenu();
+						input.selectmenu('refresh');
 						input.data('bound', true);
 					}
 				});
@@ -1125,6 +1447,8 @@
 						}
 					}
 				});
+
+				div.find('.multi').multi();
 			};
 
 		this.init = function () {
@@ -1138,6 +1462,8 @@
 			$('.site-logo').click(function () {
 				window.location.reload();
 			});
+
+			div.data('jsatlas', obj);
 		};
 	};
 

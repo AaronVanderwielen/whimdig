@@ -57,19 +57,82 @@ label {
 }
 button,
 input[type="button"] {
-  border-radius: 5px;
+  width: 100%;
+  border-radius: 2px;
   border: 1px solid #005588;
-  background-color: #0094ff;
+  background-color: #005588;
+  opacity: .75;
   color: white;
-  padding: 5px 10px;
+  padding: 10px;
+  margin: 10px 0;
+  text-align: center;
   font-size: 14px;
   cursor: pointer;
   text-transform: uppercase;
 }
 button:hover,
 input[type="button"]:hover {
+  opacity: 1;
   border: 1px solid #0094ff;
   background-color: #21b4ff;
+}
+.multi {
+  width: 100%;
+  border-radius: 2px;
+  border: 1px solid #005588;
+  color: white;
+  margin: 10px 0;
+}
+.multi .label {
+  background-color: #005588;
+  padding: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.multi .options {
+  background-color: #fff;
+  display: none;
+  max-height: 300px;
+  overflow-y: scroll;
+}
+.multi .options .option {
+  display: block;
+  padding: 10px;
+  cursor: pointer;
+}
+.multi .options .option .glyph {
+  padding: 25px;
+}
+.multi .options .option .glyph::before {
+  font-size: 50px;
+}
+.multi .options .option:not(.selected) .glyph::before {
+  color: #cccccc;
+}
+.multi .options .option:not(.selected) .option-text {
+  color: #cccccc;
+}
+.multi .options .option.selected .glyph::before {
+  color: #005588;
+}
+.multi .options .option.selected .option-text {
+  color: #005588;
+}
+.multi .options .option:hover .option-text {
+  color: #21b4ff;
+}
+.multi .options .option::after {
+  content: " ";
+  display: table;
+  clear: both;
+}
+.remove.glyph {
+  padding: 12px;
+  cursor: pointer;
+}
+.remove.glyph::before {
+  color: red;
+  font-size: 24px;
 }
 .form-label {
   color: #005588;
@@ -232,7 +295,6 @@ input[type="button"]:hover {
 }
 .detail-overlay .overlay-body {
   display: block;
-  padding: 0 10px 10px 10px;
 }
 .detail-overlay .overlay-body .link {
   color: #005588;
@@ -262,113 +324,139 @@ input[type="button"]:hover {
   color: #005588;
   font-weight: bold;
 }
-.detail-overlay .overlay-body .first-page {
-  transition: width .5s;
-  -moz-transition: width .5s;
-  /* Firefox 4 */
-  -webkit-transition: width .5s;
-  /* Safari and Chrome */
-  -o-transition: width .5s;
-  /* Opera */
-  float: left;
-  margin: 0 auto;
-  width: 100%;
+.detail-overlay .overlay-body .page {
+  overflow: hidden;
+  float: right;
+  width: 0;
   height: 100%;
+  right: 0;
+  padding: 0;
+  margin: 0;
 }
-.detail-overlay .overlay-body .first-page .event-detail .event-info .when {
+.detail-overlay .overlay-body .page.show {
+  width: 100%;
+  padding: 0 10px;
+}
+.detail-overlay .overlay-body .set-filters .set-filter {
+  display: block;
+  padding: 10px 0;
+  cursor: pointer;
+}
+.detail-overlay .overlay-body .set-filters .set-filter .glyph {
+  padding: 25px;
+}
+.detail-overlay .overlay-body .set-filters .set-filter .glyph::before {
+  font-size: 50px;
+}
+.detail-overlay .overlay-body .set-filters .set-filter:not(.disabled) .glyph::before {
+  color: #005588;
+}
+.detail-overlay .overlay-body .set-filters .set-filter:not(.disabled) .filter-text {
+  color: #005588;
+}
+.detail-overlay .overlay-body .set-filters .set-filter.disabled .glyph::before {
+  color: #cccccc;
+}
+.detail-overlay .overlay-body .set-filters .set-filter.disabled .filter-text {
+  color: #cccccc;
+}
+.detail-overlay .overlay-body .set-filters .set-filter.disabled:hover .glyph::before {
+  color: #21b4ff;
+}
+.detail-overlay .overlay-body .set-filters .set-filter:hover .filter-text {
+  color: #21b4ff;
+}
+.detail-overlay .overlay-body .set-filters .set-filter::after {
+  content: " ";
+  display: table;
+  clear: both;
+}
+.detail-overlay .overlay-body .event-detail .event-info .when {
   color: #005588;
   font-weight: bold;
 }
-.detail-overlay .overlay-body .first-page .event-detail .event-info .when .intensity {
+.detail-overlay .overlay-body .event-detail .event-info .when .intensity {
   font-weight: normal;
   font-style: italic;
 }
-.detail-overlay .overlay-body .first-page .event-detail .event-info .where .place {
+.detail-overlay .overlay-body .event-detail .event-info .where .place {
   color: #005588;
 }
-.detail-overlay .overlay-body .first-page .event-detail .event-info .what {
+.detail-overlay .overlay-body .event-detail .event-info .what {
   margin-top: 5px;
 }
-.detail-overlay .overlay-body .first-page .event-detail .reviews .review .rating {
+.detail-overlay .overlay-body .event-detail .reviews .review .rating {
   margin-bottom: -5px;
 }
-.detail-overlay .overlay-body .first-page .event-detail .reviews .review .rating .star {
+.detail-overlay .overlay-body .event-detail .reviews .review .rating .star {
   padding: 12px;
   margin-right: -10px;
 }
-.detail-overlay .overlay-body .first-page .event-detail .reviews .review .rating .star:last-child {
+.detail-overlay .overlay-body .event-detail .reviews .review .rating .star:last-child {
   margin-right: 0;
 }
-.detail-overlay .overlay-body .first-page .event-detail .reviews .review .rating .star::before {
+.detail-overlay .overlay-body .event-detail .reviews .review .rating .star::before {
   font-size: 20px;
   margin: 0;
   color: #666666;
 }
-.detail-overlay .overlay-body .first-page .event-detail .reviews .review .rating .star.star.gold::before {
+.detail-overlay .overlay-body .event-detail .reviews .review .rating .star.star.gold::before {
   color: #ddbb33;
 }
-.detail-overlay .overlay-body .first-page .event-detail .reviews .review .reviewer {
+.detail-overlay .overlay-body .event-detail .reviews .review .reviewer {
   float: left;
   font-style: italic;
 }
-.detail-overlay .overlay-body .first-page .event-detail .reviews .review .date-created {
+.detail-overlay .overlay-body .event-detail .reviews .review .date-created {
   float: right;
   font-style: italic;
 }
-.detail-overlay .overlay-body .first-page .main-menu .map-search {
+.detail-overlay .overlay-body .main-menu .map-search {
   margin-bottom: 5px;
 }
-.detail-overlay .overlay-body .first-page .main-menu .map-search input {
+.detail-overlay .overlay-body .main-menu .map-search input {
   padding: 10px;
   font-size: 16px;
   width: 90%;
 }
-.detail-overlay .overlay-body .first-page .main-menu .map-search .glyph {
+.detail-overlay .overlay-body .main-menu .map-search .glyph {
   padding: 14px;
   cursor: pointer;
 }
-.detail-overlay .overlay-body .first-page .main-menu .map-search .glyph::before {
+.detail-overlay .overlay-body .main-menu .map-search .glyph::before {
   color: #005588;
   font-size: 28px;
 }
-.detail-overlay .overlay-body .first-page .main-menu .menu-items .create-event {
+.detail-overlay .overlay-body .main-menu .menu-items .create-event {
   margin: 0 -10px;
   color: #005588;
 }
-.detail-overlay .overlay-body .first-page .main-menu .menu-items .create-event .heading {
+.detail-overlay .overlay-body .main-menu .menu-items .create-event .heading {
   position: relative;
   top: 3px;
   font-weight: normal;
   font-size: 16px;
   margin-left: 5px;
 }
-.detail-overlay .overlay-body .first-page .main-menu .menu-items .create-event .glyph {
+.detail-overlay .overlay-body .main-menu .menu-items .create-event .glyph {
   padding: 12px;
 }
-.detail-overlay .overlay-body .first-page .main-menu .menu-items .create-event .glyph::before {
+.detail-overlay .overlay-body .main-menu .menu-items .create-event .glyph::before {
   color: #005588;
   font-size: 24px;
 }
-.detail-overlay .overlay-body .first-page .main-menu .menu-items .schedule .events .event .name {
-  float: left;
-  color: #005588;
-}
-.detail-overlay .overlay-body .first-page .main-menu .menu-items .schedule .events .event .date-range {
-  float: right;
-  font-style: italic;
-}
-.detail-overlay .overlay-body .first-page .main-menu .menu-items .connections > div > div {
+.detail-overlay .overlay-body .main-menu .menu-items .connections > div > div {
   color: #005588;
   font-size: 14px;
 }
-.detail-overlay .overlay-body .first-page .main-menu .synced-accounts {
+.detail-overlay .overlay-body .main-menu .synced-accounts {
   text-align: center;
   margin-top: 20px;
 }
-.detail-overlay .overlay-body .first-page .main-menu .synced-accounts .heading {
+.detail-overlay .overlay-body .main-menu .synced-accounts .heading {
   color: #666666;
 }
-.detail-overlay .overlay-body .first-page .main-menu .synced-accounts .glyph::before {
+.detail-overlay .overlay-body .main-menu .synced-accounts .glyph::before {
   font-size: 80px;
   width: 78px;
   height: 78px;
@@ -376,78 +464,33 @@ input[type="button"]:hover {
   border-radius: 7px;
   padding: 0;
 }
-.detail-overlay .overlay-body .first-page .main-menu .synced-accounts .glyph.not-synced::before {
+.detail-overlay .overlay-body .main-menu .synced-accounts .glyph.not-synced::before {
   opacity: .6;
   color: #666666;
   cursor: pointer;
 }
-.detail-overlay .overlay-body .first-page .main-menu .synced-accounts .glyph.not-synced:hover.facebook-logo::before {
+.detail-overlay .overlay-body .main-menu .synced-accounts .glyph.not-synced:hover.facebook-logo::before {
   color: #3B5998;
   background-color: #fff;
 }
-.detail-overlay .overlay-body .first-page .main-menu .synced-accounts .glyph.not-synced:hover.google-logo::before {
+.detail-overlay .overlay-body .main-menu .synced-accounts .glyph.not-synced:hover.google-logo::before {
   color: #d34836;
   background-color: #2d2d2d;
 }
-.detail-overlay .overlay-body .first-page .main-menu .synced-accounts .glyph.not-synced:hover.twitter-logo::before {
+.detail-overlay .overlay-body .main-menu .synced-accounts .glyph.not-synced:hover.twitter-logo::before {
   color: #4099FF;
   background-color: #fff;
 }
-.detail-overlay .overlay-body .first-page .main-menu .synced-accounts .glyph {
+.detail-overlay .overlay-body .main-menu .synced-accounts .glyph {
   padding: 0 10px;
 }
-.detail-overlay .overlay-body .second-page {
-  float: right;
-  transition: width .5s;
-  -moz-transition: width .5s;
-  /* Firefox 4 */
-  -webkit-transition: width .5s;
-  /* Safari and Chrome */
-  -o-transition: width .5s;
-  /* Opera */
-  width: 0;
-  height: 100%;
-  right: 0;
-  padding: 0;
-  margin: 0;
-}
-.detail-overlay .overlay-body .third-page {
-  float: right;
-  transition: width .5s;
-  -moz-transition: width .5s;
-  /* Firefox 4 */
-  -webkit-transition: width .5s;
-  /* Safari and Chrome */
-  -o-transition: width .5s;
-  /* Opera */
-  width: 0;
-  height: 100%;
-  right: 0;
-  padding: 0;
-  margin: 0;
-}
-.detail-overlay .overlay-body.paged.two .first-page {
-  width: 0;
-  overflow: hidden;
-}
-.detail-overlay .overlay-body.paged.two .second-page {
-  width: 100%;
-}
-.detail-overlay .overlay-body.paged.two .third-page {
-  width: 0;
-  overflow: hidden;
-}
-.detail-overlay .overlay-body.paged.three .first-page {
-  width: 0;
-  overflow: hidden;
-}
-.detail-overlay .overlay-body.paged.three .second-page {
+.detail-overlay .overlay-body .event-list .event .name {
   float: left;
-  width: 0;
-  overflow: hidden;
+  color: #005588;
 }
-.detail-overlay .overlay-body.paged.three .third-page {
-  width: 100%;
+.detail-overlay .overlay-body .event-list .event .date-range {
+  float: right;
+  font-style: italic;
 }
 .detail-overlay::-webkit-scrollbar {
   width: 3px;
@@ -538,10 +581,10 @@ input[type="button"]:hover {
   background-color: #fff;
 }
 @media all and (max-width: 1200px) {
-  .container.show-overlay .detail-overlay .overlay-body .first-page .main-menu .menu-items .schedule .events .event .name {
+  .container.show-overlay .detail-overlay .overlay-body .event-list .name {
     float: none;
   }
-  .container.show-overlay .detail-overlay .overlay-body .first-page .main-menu .menu-items .schedule .events .event .date-range {
+  .container.show-overlay .detail-overlay .overlay-body .event-list .date-range {
     float: none;
   }
 }
@@ -557,6 +600,20 @@ input[type="button"]:hover {
   }
   .container.show-overlay .detail-overlay .overlay-body .main-menu .map-search {
     display: block;
+  }
+  .container.show-overlay .detail-overlay .set-filters .set-filter {
+    display: inline-block;
+    padding: 20px;
+    cursor: pointer;
+  }
+  .container.show-overlay .detail-overlay .set-filters .set-filter .glyph {
+    padding: 50px;
+  }
+  .container.show-overlay .detail-overlay .set-filters .set-filter .glyph::before {
+    font-size: 100px;
+  }
+  .container.show-overlay .detail-overlay .set-filters .set-filter .filter-text {
+    display: none;
   }
   .header .user-controls div.map-search {
     display: none;

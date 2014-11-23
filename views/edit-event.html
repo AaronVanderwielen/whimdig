@@ -1,8 +1,10 @@
 ﻿<div class="box">
-    <span class="heading">Create an Event</span>
+    <span class="right glyph glyphicons remove"></span>
+    <span class="heading">Edit Event</span>
     <br />
     <br />
     <form name="CreateEvent" action="/event/create" method="post">
+        <input type="hidden" name="_id" value="" />
         <input type="hidden" name="city" value="Bellingham" />
         <input type="hidden" name="state" value="WA" />
         <input type="hidden" name="zip" value="98225" />
@@ -27,7 +29,7 @@
         <div class="form-input">
             <textarea name="desc" rows="3"></textarea>
         </div>
-                <div class="form-label">
+        <div class="form-label">
             Event Tags
         </div>
         <div class="form-input">
@@ -39,7 +41,7 @@
                         <span class="glyph glyphicons music"></span>
                         <span class="option-text">Music</span>
                     </div>
-                    <div class="option" data-value="alcohol">
+                    <div class="option" data-value="beer">
                         <span class="glyph glyphicons beer"></span>
                         <span class="option-text">Alcohol</span>
                     </div>
@@ -97,7 +99,6 @@
             <select name="privacy">
                 <option value="public" selected="selected">public event</option>
                 <option value="private">my friends</option>
-                <!--<option value="invite">by invite</option>-->
             </select>
         </div>
         <div class="form-label">
@@ -114,7 +115,7 @@
         </div>
         <div class="row">
             <p class="error"></p>
-            <input type="button" class="create-btn" value="Create Event" />
+            <input type="button" class="create-btn" value="Update Event" />
         </div>
     </form>
 </div>
