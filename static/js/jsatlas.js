@@ -712,6 +712,7 @@
 			},
 			// overlay
 			showOverlay = function (headerTitle) {
+				overlayTitle.html('');
 				overlayTitle.html(headerTitle);
 				container.addClass('show-overlay');
 			},
@@ -962,11 +963,12 @@
 				}
 
 				if (user) {
+					var username = user.first_name + " " + (user.last_name && user.last_name.length > 0 ? user.last_name.substring(0, 1) : "");
+					showOverlay(username);
+					var page = navigatePage(0);
+					overlayGoing.hide();
+
 					getTemplate('main-menu', null, function (template) {
-						var username = user.first_name + " " + (user.last_name && user.last_name.length > 0 ? user.last_name.substring(0, 1) : "");
-						overlayGoing.hide();
-						showOverlay(username);
-						var page = navigatePage(0);
 						page.html(template);
 
 						applyMenuHandlers();
@@ -1197,6 +1199,14 @@
 
 				getUserEvent(eventId, function (event) {
 					getAllEventTags(function (tags) {
+						// set selected status here
+						for (var e in event.tags) {
+							for (var t in tags) {
+								if (tags[t].name === event.tags[e].name) {
+									tags[t].selected = true;
+								}
+							}
+						}
 						getTemplate("edit-event", tags, function (html) {
 							// load in user's places
 							getUserPlaces(function (places) {
@@ -1496,6 +1506,9 @@
 			});
 
 			div.data('jsatlas', obj);
+
+			// update data every 500 seconds
+			window.setInterval(loadEvents, 50000);
 		};
 	};
 
