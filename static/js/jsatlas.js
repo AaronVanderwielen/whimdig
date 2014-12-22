@@ -55,6 +55,7 @@
 			},
 			user,
             selectedEvent,
+			boundChange,
 			urls = {
 				// map
 				mapPlaces: '/map/places',
@@ -76,6 +77,7 @@
 				eventUpdate: '/event/update',
 				eventDelete: '/event/remove',
 				tags: '/event/tags',
+				review: '/event/review',
 				// views
 				renderTemplate: '/template'
 			},
@@ -83,14 +85,14 @@
 			currentSpan = 0,
 			paging = 0,
 			reAuthAttempts = 0,
-			sizing = {
-				count: 0
-			},
+			sizing = [],
 			circleData = {
-				count: 0
+				events: [],
+				groups: []
 			},
 			filters = [],
 			datetimeCasualFormat = 'ddd h:mm a',
+			datetimeDateFormat = 'MM/DD/YYYY',
 			datetimeStrictFormat = 'MM/DD/YYYY h:mm a',
 			timeFormat = 'h:mm tt',
 			isMobileDevice = navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
@@ -112,7 +114,7 @@
 			overlayTitle = overlayHeader.find('> .overlay-title'),
 			overlayGoing = overlayHeader.find('> .going'),
 			overlayBody = overlay.find('.overlay-body'),
-			// map actions
+			// google map api
 			initializeMap = function () {
 				var mapOptions = {
 					center: new google.maps.LatLng(settings.initialCenter.lat, settings.initialCenter.lng),
@@ -122,7 +124,8 @@
 				gMap.setOptions({ styles: settings.styleArray });
 			},
 			circleSizeTo = function (el, targetSize, rate, secondRate, interval, callback) {
-				sizing[el.id].event = window.setInterval(function () {
+				var ref = _.find(sizing, function (s) { return s.id === el.id; });
+				ref.event = window.setInterval(function () {
 					var newRad = Math.round(rate * el.radius),
 						increase = newRad - el.radius;
 
@@ -141,8 +144,8 @@
 
 					if (newRad === targetSize) {
 						// circle hit requested size exactly
-						window.clearInterval(sizing[el.id].event);
-						sizing[el.id].event = null;
+						window.clearInterval(ref.event);
+						ref.event = null;
 
 						if (callback) {
 							callback();
@@ -152,10 +155,10 @@
 						var tooFar = rate > 1 ? (el.radius > targetSize) : (el.radius < targetSize);
 
 						if (tooFar) {
-							window.clearInterval(sizing[el.id].event);
-							sizing[el.id].event = null;
+							window.clearInterval(ref.event);
+							ref.event = null;
 							// circle has gone above requested size, scale back
-							if (!sizing[el.id].waver.trigger) {
+							if (!ref.waver.trigger) {
 								if (secondRate) {
 									circleSizeTo(el, targetSize, secondRate, null, 100, callback);
 								}
@@ -172,38 +175,120 @@
 			},
 			setWaver = function (el) {
 				// init if not there
-				sizing[el.id].waver.trigger = true;
+				var ref = _.find(sizing, function (s) { return s.id === el.id; });
+				ref.waver.trigger = true;
 
-				if (sizing[el.id].waver.event) {
-					window.clearInterval(sizing[el.id].waver.event);
-					sizing[el.id].waver.event = null;
+				if (ref.waver.event) {
+					window.clearInterval(ref.waver.event);
+					ref.waver.event = null;
 				}
 				var sizingRunning = false;
-				sizing[el.id].waver.event = window.setInterval(function () {
-					if (!sizingRunning && !sizing[el.id].event) {
+				ref.waver.event = window.setInterval(function () {
+					if (!sizingRunning && !ref.event) {
 						sizingRunning = true;
 
-						var sizeTo = el.radius + (sizing[el.id].waver.sw * (el.radius / 20)),
-							rate = sizing[el.id].waver.sw === 1 ? 1.01 : 0.99;
+						var sizeTo = el.radius + (ref.waver.sw * (el.radius / 20)),
+							rate = ref.waver.sw === 1 ? 1.01 : 0.99;
 
 						circleSizeTo(el, sizeTo, rate, null, 100, function () {
-							sizing[el.id].waver.sw = sizing[el.id].waver.sw > 0 ? -1 : 1;
+							ref.waver.sw = ref.waver.sw > 0 ? -1 : 1;
 							sizingRunning = false;
 						});
 					}
 				}, 100);
 			},
 			clearSizing = function (id, defaultSize) {
+				var ref = _.find(sizing, function (s) { return s.id === id; });
+
 				if (defaultSize) {
-					circleData[id].circle.radius = circleData[id].users.length * 10;
+					var cd = getCdById(id, circleData.events);
+					if (!cd) {
+						cd = getCdById(id, circleData.groups);
+					}
+					if (cd) {
+						cd.circle.radius = cd.users.length * 10;
+					}
 				}
-				if (sizing[id].event) {
-					window.clearInterval(sizing[id].event);
-					sizing[id].event = null;
+				if (ref.event) {
+					window.clearInterval(ref.event);
+					ref.event = null;
 				}
-				if (sizing[id].waver.event) {
-					window.clearInterval(sizing[id].waver.event);
-					sizing[id].waver.event = null;
+				if (ref.waver.event) {
+					window.clearInterval(ref.waver.event);
+					ref.waver.event = null;
+				}
+			},
+			drawGroupedData = function (data) {
+				var singles = _.filter(data, function (g) { return g.length === 1; }),
+					multis = _.map(data, function (g, k) {
+						if (g.length > 1) {
+							return [k, g];
+						};
+					});
+
+				if (singles.length > 0) {
+					// remap as single array
+					singles = _.map(singles, function (a) { return a[0]; });
+					drawEvents(singles);
+				}
+				if (multis.length > 0) {
+					drawGroups(multis);
+				}
+			},
+			drawGroups = function (groups) {
+				for (var g in groups) {
+					if (groups[g]) {
+						drawGroup(groups[g][1], groups[g][0]);
+					}
+				}
+			},
+			drawGroup = function (group, key) {
+				var groupExists = _.some(circleData.groups, function (g) { return g === key; });
+				// TODO check events in group for changes too?
+				if (!groupExists) {
+					var radius = getEventCircleSize(_.max(group, function (e) { return e.users.length; })),
+						c = {
+							id: key,
+							isGroup: true,
+							strokeColor: "rgb(150, 150, 150)",
+							strokeOpacity: 1,
+							strokeWeight: radius / 10,
+							fillColor: "rgb(250, 250, 250)",
+							fillOpacity: 1,
+							map: gMap,
+							center: new google.maps.LatLng(group[0].place.loc.coordinates[1], group[0].place.loc.coordinates[0]),
+							radius: radius
+						};
+
+					var circle = new google.maps.Circle(c);
+					group._id = key;
+					group.circle = circle;
+
+					circleData.groups.push(group);
+
+					// init sizing
+					sizing.push({
+						id: key,
+						event: null,
+						waver: {
+							trigger: false,
+							sw: 1
+						}
+					});
+
+					google.maps.event.addListener(circle, 'mouseover', function (e) {
+						focusGroup.call(this, e);
+					});
+
+					google.maps.event.addListener(circle, 'mouseout', function (e) {
+						if (this !== selectedEvent) {
+							blurGroup.call(this, e);
+						}
+					});
+
+					google.maps.event.addListener(circle, 'click', function (e) {
+						clickGroup.call(this, e);
+					});
 				}
 			},
 			drawEvents = function (data) {
@@ -212,15 +297,15 @@
 				}
 			},
 			drawEvent = function (event) {
-				// only draw event if it is in the selected time window
-				if (withinSelectedSpan(event) && !circleData[event._id]) {
+				// only draw event if it is in the selected time window and isn't already in cdata
+				if (withinSelectedSpan(event) && !getCdById(event._id)) {
 					var colorArray = colorByTime(event[event.intensity_variable]),
 						circleSize = getEventCircleSize(event),
 						c = {
 							id: event._id,
 							strokeColor: arrayToRGB(getShade(colorArray, -20)),
 							strokeOpacity: 1,
-							strokeWeight: getEventCircleSize(event) / 10,
+							strokeWeight: circleSize / 10,
 							fillColor: arrayToRGB(colorArray),
 							fillOpacity: settings.blurOpacity,
 							map: gMap,
@@ -228,22 +313,21 @@
 							radius: circleSize
 						};
 
-					circle = new google.maps.Circle(c);
+					var circle = new google.maps.Circle(c);
 
 					event.color = colorArray;
 					event.circle = circle;
-					circleData[circle.id] = event;
-					circleData.count++;
+					circleData.events.push(event);
 
 					// init sizing
-					sizing[circle.id] = {
+					sizing.push({
+						id: circle.id,
 						event: null,
 						waver: {
 							trigger: false,
 							sw: 1
 						}
-					};
-					sizing.count++;
+					});
 
 					circleSizeTo(circle, circleSize, 1.2, 0.9);
 
@@ -261,80 +345,6 @@
 						circleClick.call(this, e);
 					});
 				}
-			},
-			refreshCircle = function (id) {
-				getUserEvent(id, function (event) {
-					if (circleData[event._id]) {
-						destroyCdata(event._id, 0, function() {
-							drawEvent(event);
-						});
-					}
-					else {
-						drawEvent(event);
-					}
-				});
-			},			
-			focusCircle = function (e) {
-				var circle = this,
-					ref = circleData[circle.id],
-					defaultSize = getEventCircleSize(ref);
-
-				this.setOptions({
-					zIndex: 1,
-					fillOpacity: settings.focusOpacity,
-					fillColor: arrayToRGB(getShade(ref.color, 20)),
-				});
-
-				if (defaultSize >= 20) {
-					setWaver(circle);
-				}
-			},
-			highlightCircle = function (e) {
-				this.setOptions({
-					strokeColor: "#ffffaa"
-					//strokeColor: arrayToRGB(getShade(circleData[this.id].color, 80))
-				});
-			},
-			blurCircle = function (e) {
-				var circle = this,
-					ref = circleData[circle.id],
-					defaultSize = getEventCircleSize(ref);
-
-				if (sizing[this.id]) {
-					window.clearInterval(sizing[this.id].event);
-					sizing[this.id].event = null;
-
-					// stop waver
-					if (sizing[this.id].waver) {
-						window.clearInterval(sizing[this.id].waver.event);
-						sizing[this.id].waver.event = null;
-					}
-				}
-
-				// set back to default
-				circle.setOptions({
-					radius: defaultSize,
-					zIndex: 0,
-					fillOpacity: settings.blurOpacity,
-					fillColor: arrayToRGB(ref.color),
-					strokeColor: arrayToRGB(getShade(ref.color, -20))
-				});
-			},
-			circleClick = function (e) {
-				var clicked = this;
-
-				if (selectedEvent && selectedEvent !== clicked) {
-					blurCircle.call(selectedEvent);
-					selectedEvent = null;
-				}
-
-				selectedEvent = clicked;
-
-				focusCircle.call(this);
-				highlightCircle.call(this);
-				showOverlay(circleData[this.id].name);
-				var page = navigatePage(0);
-				setEventDetail(circleData[this.id], page);
 			},
 			offsetCenter = function (latlng, offsetx, offsety) {
 
@@ -363,6 +373,121 @@
 				GoogleMap.setCenter(newCenter);
 			},
 			// circle utility
+			focusGroup = function (e) {
+				this.setOptions({
+					zIndex: 1,
+					strokeColor: "rgb(250, 250, 200)",
+				});
+			},
+			blurGroup = function (e) {
+				this.setOptions({
+					zIndex: 0,
+					strokeColor: "rgb(150, 150, 150)",
+				});
+			},
+			clickGroup = function (e) {
+				var clicked = this,
+					ref = getCdById(clicked.id, true);
+
+				if (selectedEvent && selectedEvent !== clicked) {
+					blurCircle.call(selectedEvent);
+					selectedEvent = null;
+				}
+
+				selectedEvent = clicked;
+
+				overlayGoing.hide();
+				showOverlay(ref[0].place.name);
+				var page = navigatePage(0);
+				setEventList(ref, page);
+			},
+			refreshCircle = function (id) {
+				getUserEvent(id, function (event) {
+					if (getCdById(event._id)) {
+						// destroy old event sizing handlers
+						destroySizing();
+						destroyCdata(event._id, false, function () {
+							drawEvent(event);
+						});
+					}
+					else {
+						drawEvent(event);
+					}
+				});
+			},
+			focusCircle = function (e) {
+				var circle = this,
+					ref = getCdById(circle.id);;
+
+				defaultSize = getEventCircleSize(ref);
+
+				this.setOptions({
+					zIndex: 1,
+					fillOpacity: settings.focusOpacity,
+					fillColor: arrayToRGB(getShade(ref.color, 20)),
+				});
+
+				if (defaultSize >= 20) {
+					setWaver(circle);
+				}
+			},
+			highlightCircle = function (e) {
+				this.setOptions({
+					strokeColor: "#ffffaa"
+				});
+			},
+			blurCircle = function (e) {
+				var circle = this,
+					ref = getCdById(circle.id),
+					sizeRef = _.find(sizing, function (s) { return s.id === circle.id; });;
+
+				if (circle.isGroup) {
+					return blurGroup.call(circle);
+				}
+
+				var defaultSize = getEventCircleSize(ref);
+
+				if (sizeRef) {
+					window.clearInterval(sizeRef.event);
+					sizeRef.event = null;
+
+					// stop waver
+					if (sizeRef.waver) {
+						window.clearInterval(sizeRef.waver.event);
+						sizeRef.waver.event = null;
+					}
+				}
+
+				// set back to default
+				circle.setOptions({
+					radius: defaultSize,
+					zIndex: 0,
+					fillOpacity: settings.blurOpacity,
+					fillColor: arrayToRGB(ref.color),
+					strokeColor: arrayToRGB(getShade(ref.color, -20))
+				});
+			},
+			circleClick = function (e) {
+				var clicked = this,
+					ref = getCdById(clicked.id);
+
+				if (selectedEvent && selectedEvent !== clicked) {
+					blurCircle.call(selectedEvent);
+					selectedEvent = null;
+				}
+
+				selectedEvent = clicked;
+
+				focusCircle.call(this);
+				highlightCircle.call(this);
+				showOverlay(ref.name);
+				var page = navigatePage(0);
+				setEventDetail(ref, page);
+			},
+			getCdById = function (id, isGroup) {
+				var target = isGroup ? circleData.groups : circleData.events;
+				return _.find(target, function (e) { return e._id === id; });
+			},
 			getEventCircleSize = function (cData) {
 				return cData.users.length * 20;
 			},
@@ -450,89 +575,201 @@
 					}
 				});
 			},
-			loadEvents = function (callback) {
-				if (circleData.count > 0) {
-					// get new events
-					loadEventsInSpan(function (data) {
-						// destroy old
-						var numDestroyed = 0,
-							dataIds = _.map(data, function (d) {
-								return d._id;
-							}),
-							destroy = _.filter(circleData, function (i, cD) {
-								return cD !== "count" && !_.some(dataIds, function (d) { return d === cD; });
-							});
-
-						for (var d in destroy) {
-							var dId = destroy[d]._id;
-							destroyCdata(dId, numDestroyed);
-						}
-						if (callback) {
-							callback();
-						}
+			// events
+			eventLoadingHandler = function () {
+				var bounds = gMap.getBounds();
+				loadEventsInSpan(function (response) {
+					google.maps.event.addListener(gMap, 'bounds_changed', function () {
+						window.clearTimeout(boundChange);
+						boundChange = window.setTimeout(function () {
+							bounds = gMap.getBounds();
+							loadEventsInSpan(null, true);
+						}, 1000);
 					});
-				}
-				else {
-					// get new events
-					loadEventsInSpan(callback);
-				}
+				});
+
+				// update data every 500 seconds
+				window.setInterval(loadEventsInSpan, 50000);
 			},
-			destroySizing = function () {
-				if (sizing.count > 0) {
-					for (var s in sizing) {
-						if (s !== "count") {
-							if (sizing[s].event) {
-								window.clearTimeout(sizing[s].event);
-							}
-							if (sizing[s].waver.event) {
-								window.clearTimeout(sizing[s].waver.event);
-							}
-						}
-					}
-				}
-			},
-			destroyCdata = function (dId, numDestroyed, callback) {
+			//loadEvents = function (callback, bounds, destroyOld) {
+			//	bounds = bounds ? bounds : gMap.getBounds();
+			//	if (circleData.events.length > 0 || circleData.groups.length > 0) {
+			//		// get new events
+			//		loadEventsInSpan(function (data) {
+			//			if (destroyOld) {
+			//				// destroy old
+			//				var dataIds = _.map(data, function (d) {
+			//					return d._id;
+			//				});
+
+			//				cleanCData(dataIds);
+			//			}
+			//			if (callback) {
+			//				callback();
+			//			}
+			//		}, bounds);
+			//	}
+			//	else {
+			//		// get new events
+			//		loadEventsInSpan(callback, bounds);
+			//	}
+			//},
+			//cleanCDataGroups = function (ids) {
+			//	var grouped = circleData.groups;
+
+			//	for (var g in grouped) {
+			//		// group level
+			//		for (var e in grouped[g]) {
+			//			//var eventId = grouped[g][e]._id;
+			//			// event in group
+			//			//if (!_.some(ids, function (i) { return i === eventId; })) {
+			//				// event id not in search, remove
+			//				//grouped[g].splice(e, 1);
+			//			//}
+			//			destroyCdata(grouped[g]._id, true);
+			//		}
+
+			//		//if (grouped[g].length === 1) {
+			//		//	// if one event left in group, transform to circle
+			//		//	var event = grouped[g][e];
+			//		//	// draw individual
+			//		//	drawEvent(event);
+			//		//	// destroy group
+			//		//	destroyCdata(g, true);
+			//		//}
+			//		//else if (grouped[g].length === 0) {
+			//		//	// if no events, delete c data
+			//		//	destroyCdata(grouped[g]._id, true);
+			//		//}
+			//	}
+			//},
+			cleanCData = function (ids) {
 				// destroy old event sizing handlers
 				destroySizing();
 
-				circleSizeTo(circleData[dId].circle, 0, 0.7, null, 50, function () {
-					circleData[dId].circle.setMap(null);
-					numDestroyed++;
-
-					if (numDestroyed === circleData.count) {
-						sizing = {
-							count: 0
-						};
-						circleData = {
-							count: 0
-						};
+				for (var e in circleData.events) {
+					var eId = circleData.events[e]._id;
+					//if (!_.some(ids, function (id) { return id === eId; })) {
+					destroyCdata(eId);
+					//}
+				}
+				for (var g in circleData.groups) {
+					// group level
+					//var eventId = grouped[g][e]._id;
+					// event in group
+					//if (!_.some(ids, function (i) { return i === eventId; })) {
+					// event id not in search, remove
+					//grouped[g].splice(e, 1);
+					//}
+					destroyCdata(circleData.groups[g]._id, true);
+				}
+				//cleanCDataGroups(ids);
+			},
+			destroySizing = function () {
+				if (sizing.length > 0) {
+					for (var s in sizing) {
+						if (sizing[s].event) {
+							window.clearTimeout(sizing[s].event);
+						}
+						if (sizing[s].waver.event) {
+							window.clearTimeout(sizing[s].waver.event);
+						}
 					}
-					else {
-						circleData.count--;
-					}
+				}
+			},
+			destroyCdata = function (dId, isGroup, callback) {
+				var cd,
+					index;
 
-					if (selectedEvent && circleData[dId] && selectedEvent === circleData[dId].circle) {
-						blurCircle.call(circleData[dId].circle);
+				if (isGroup) {
+					for (var i in circleData.groups) {
+						if (circleData.groups[i]._id === dId) {
+							cd = circleData.groups[i];
+							index = i;
+							break;
+						}
+					}
+					circleData.groups.splice(index, 1);
+				}
+				else {
+					for (var i in circleData.events) {
+						if (circleData.events[i]._id === dId) {
+							cd = circleData.events[i];
+							index = i;
+							break;
+						}
+					}
+					circleData.events.splice(index, 1);
+				}
+
+				circleSizeTo(cd.circle, 0, 0.7, null, 50, function () {
+					// blur
+					if (selectedEvent && cd && selectedEvent === cd.circle) {
+						blurCircle.call(cd.circle);
 						selectedEvent = null;
 						exitOverlay();
 					}
+					// remove circle and cdata
+					cd.circle.setMap(null);
 
-					delete circleData[dId];
 					if (callback) {
 						callback();
 					}
 				});
-			},			
-			loadEventsInSpan = function (callback) {
-				$.get(urls.eventsForSpan, { span: currentSpan, filters: filters }, function (response) {
-					if (response.success) {
-						drawEvents(response.body);
-						if (callback) {
-							callback(response.body);
+			},
+			loadEventsInSpan = function (callback, keepOld) {
+				var bounds = gMap.getBounds(),
+					square = [
+						[bounds.wa.j, bounds.Ea.j],
+						[bounds.wa.j, bounds.Ea.k],
+						[bounds.wa.k, bounds.Ea.k],
+						[bounds.wa.k, bounds.Ea.j],
+						[bounds.wa.j, bounds.Ea.j],
+					];
+
+				$.ajax({
+					url: urls.eventsForSpan,
+					type: 'GET',
+					data: {
+						span: currentSpan,
+						filters: filters,
+						bounds: square
+					},
+					success: function (response) {
+						if (response.success) {
+							var ids = _.map(response.body, function (e) { return e._id; }),
+								grouped = {};
+
+							// group by location
+							for (var e in response.body) {
+								var loc = response.body[e].loc.coordinates,
+									key = String.format("{0},{1}", loc[0], loc[1]),
+									existing = grouped[key];
+
+								if (existing) {
+									existing.push(response.body[e]);
+								}
+								else {
+									grouped[key] = [];
+									grouped[key].push(response.body[e]);
+								}
+							}
+
+							// wipe cdata that is not returned by query
+							if (!keepOld) {
+								cleanCData(ids);
+							}
+
+							// draw returned data, add to cdata
+							drawGroupedData(grouped);
+
+							if (callback) {
+								callback(response.body);
+							}
 						}
-					}
-					else if (response.statusCode === 401) {
-						reAuthenticate(loadEvents);
+						else if (response.statusCode === 401) {
+							reAuthenticate(loadEventsInSpan);
+						}
 					}
 				});
 			},
@@ -623,7 +860,7 @@
 					cookie: true,
 					version: 'v2.0'
 				});
-				fbInitLogin(loadEvents);
+				fbInitLogin(eventLoadingHandler);
 			},
 			fbInitLogin = function (callback, callbackArgs) {
 				FB.getLoginStatus(function (auth) {
@@ -690,7 +927,7 @@
 					else {
 						headerDaySelectCurrent.html('24 hour');
 					}
-					loadEvents();
+					loadEventsInSpan();
 				}
 			},
 			gotoNextSpan = function () {
@@ -707,7 +944,7 @@
 					else {
 						headerDaySelectCurrent.html('24 hour');
 					}
-					loadEvents();
+					loadEventsInSpan();
 				}
 			},
 			// overlay
@@ -795,6 +1032,11 @@
 				return overlayBody.find('> .page.page' + paging);
 			},
 			//// event detail
+			setEventList = function (events, div) {
+				renderEventList(events, function (list) {
+					div.html(list);
+				});
+			},
 			applyGoingHandlers = function (cData, div) {
 				var connections = div.find('.connection-info'),
 					numAttending = connections.find('.num-attending');
@@ -901,7 +1143,7 @@
 							return f;
 						}
 					});
-					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends > 1 ? "s" : ""));
+					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends === 1 ? "" : "s"));
 					for (var f in attendingFriends) {
 						var friend = attendingFriends[f],
 							pic = $('<img src="' + friend.picture_url + '">');
@@ -913,46 +1155,6 @@
 					// center the event's circle
 					gMap.setCenter(event.circle.center);
 					gMap.panBy(overlay.width() / 2, 0);
-				});
-			},
-			setPastEventDetail = function (event, div) {
-				getTemplate('past-event-detail', null, function (template) {
-					div.html(template);
-
-					var body = div.find('.event-body'),
-						when = div.find('.when'),
-						where = div.find('.where'),
-						what = div.find('.what'),
-						connections = div.find('.connection-info'),
-						numAttending = connections.find('.num-attending'),
-						friendCount = connections.find('.friend-count'),
-						friendsList = connections.find('.friend-list');
-
-					overlayGoing.hide();
-
-					// apply event detail to template
-					when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
-					when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
-					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
-					where.data('created-by', event.created_by);
-					what.html(event.desc);
-
-					numAttending.html(event.users.length);
-
-					// friends
-					var attendingFriends = _.filter(user.friends, function (f) {
-						if (_.some(event.users, function (u) { return u === f.facebook_id; })) {
-							return f;
-						}
-					});
-					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends > 1 ? "s" : ""));
-					for (var f in attendingFriends) {
-						var friend = attendingFriends[f],
-							pic = $('<img src="' + friend.picture_url + '">');
-
-						// show friend picture in friendListDiv
-						friendsList.append(pic);
-					}
 				});
 			},
 			//// main menu
@@ -1009,7 +1211,9 @@
 				manageEventsBtn.off('click').on('click', function (e) {
 					manageEventsHandler(1);
 				});
-				pastEventsBtn.off('click').on('click', pastEventsHandler);
+				pastEventsBtn.off('click').on('click', function (e) {
+					pastEventsHandler(e, 1);
+				});
 			},
 			applyMenuScheduleEventHandlers = function () {
 				// clicking an event in schedule
@@ -1225,7 +1429,7 @@
 						});
 					});
 				})
-			},			
+			},
 			saveEvent = function (e) {
 				var form = $(this).parents('form:first'),
 					formData = form.serialize();
@@ -1286,11 +1490,11 @@
 				});
 			},
 			////// past events
-			pastEventsHandler = function (e) {
+			pastEventsHandler = function (e, nav) {
 				getUserPastEvents(function (pastEvents) {
 					if (pastEvents.length > 0) {
 						renderEventList(pastEvents, function (html) {
-							var page = navigatePage(1);
+							var page = navigatePage(nav);
 							page.append(html);
 
 							// event click needs to load event detail
@@ -1305,9 +1509,120 @@
 						});
 					}
 					else {
-						var page = navigatePage(1);
+						var page = navigatePage(nav);
 						page.html('<p>You have not gone to any events.</p>');
 					}
+				});
+			},
+			setPastEventDetail = function (event, div) {
+				getTemplate('past-event-detail', event, function (template) {
+					div.html(template);
+					bindUi(div);
+
+					var body = div.find('.event-body'),
+						when = div.find('.when'),
+						where = div.find('.where'),
+						what = div.find('.what'),
+						connections = div.find('.connection-info'),
+						numAttending = connections.find('.num-attending'),
+						friendCount = connections.find('.friend-count'),
+						friendsList = connections.find('.friend-list'),
+						addReviewLink = div.find('.add-review');
+
+					overlayGoing.hide();
+
+					// apply event detail to template
+					//when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
+					//when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
+					//where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
+					//where.data('created-by', event.created_by);
+					//what.html(event.desc);
+
+					numAttending.html(event.users.length);
+
+					// friends
+					var attendingFriends = _.filter(user.friends, function (f) {
+						if (_.some(event.users, function (u) { return u === f.facebook_id; })) {
+							return f;
+						}
+					});
+					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends === 1 ? "" : "s"));
+					for (var f in attendingFriends) {
+						var friend = attendingFriends[f],
+							pic = $('<img src="' + friend.picture_url + '">');
+
+						// show friend picture in friendListDiv
+						friendsList.append(pic);
+					}
+
+					if (!_.some(event.reviews, function (r) { return r.user_id === user._id; })) {
+						// add review click
+						addReviewLink.off('click').on('click', function (e) {
+							addReviewHandler(event);
+						});
+					}
+					else {
+						addReviewLink.hide();
+					}
+				});
+			},
+			addReviewHandler = function (event) {
+				getTemplate('add-review', event, function (html) {
+					var page = navigatePage(1);
+					page.append(html);
+					bindUi(page);
+
+					var rating = page.find('input[name="rating"]'),
+						submitBtn = page.find('.create-btn'),
+						form = page.find('form');
+
+					page.find('.rating').each(function () {
+						var div = $(this),
+							stars = div.find('.star');
+
+						stars.each(function () {
+							$(this).hover(function (e) {
+								var star = $(this),
+									index = stars.index(star);
+
+								stars.removeClass('gold');
+
+								for (var i = 0; i <= index; i++) {
+									var gold = stars.eq(i);
+									gold.addClass('gold');
+								}
+							});
+
+							$(this).click(function (e) {
+								var star = $(this),
+									index = stars.index(star);
+
+								rating.val(index + 1);
+							});
+						});
+
+						div.off('mouseout').on('mouseout', function (e) {
+							// set rating to input
+							stars.each(function () {
+								var star = $(this);
+
+								if (stars.index(star) < rating.val()) {
+									star.addClass('gold');
+								}
+								else {
+									star.removeClass('gold');
+								}
+							});
+						});
+					});
+
+					submitBtn.click(function () {
+						$.post(urls.review, form.serialize(), function (response) {
+							if (response.success) {
+								pastEventsHandler(null, -1);
+							}
+						})
+					});
 				});
 			},
 			//// filters
@@ -1355,7 +1670,7 @@
 						});
 
 						page.find('.apply-filters').off('click').on('click', function (e) {
-							loadEvents(exitOverlay);
+							loadEventsInSpan(exitOverlay);
 						});
 					});
 				});
@@ -1370,7 +1685,7 @@
 						}
 					}
 				});
-			},			
+			},
 			// views
 			getTemplate = function (template, modelData, callback) {
 				if (modelData) {
@@ -1398,8 +1713,11 @@
 						formatted = "";
 					for (var event in eventData) {
 						var e = eventData[event];
-						var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e.place.name);
-						formatted += eHtml;
+
+						if (e._id) {
+							var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e.place.name);
+							formatted += eHtml;
+						}
 					}
 					div.html(formatted);
 					callback(div);
@@ -1429,7 +1747,7 @@
 					else if (p === "place") {
 						model[p] = model[p]._id;
 					}
-					
+
 					input.val(model[p]);
 				}
 
@@ -1490,6 +1808,19 @@
 				});
 
 				div.find('.multi').multi();
+
+				div.find('.dateformat').each(function () {
+					var span = $(this),
+						date = moment(span.html()),
+						format = span.data('format');
+
+					if (format === "casual") {
+						span.html(date.format(datetimeCasualFormat));
+					}
+					else if (format === "date") {
+						span.html(date.format(datetimeDateFormat));
+					}
+				});
 			};
 
 		this.init = function () {
@@ -1506,9 +1837,6 @@
 			});
 
 			div.data('jsatlas', obj);
-
-			// update data every 500 seconds
-			window.setInterval(loadEvents, 50000);
 		};
 	};
 

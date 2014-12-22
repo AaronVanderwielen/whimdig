@@ -249,7 +249,7 @@ input[type="button"]:hover {
 .detail-overlay {
   overflow-y: scroll;
   float: right;
-  background-color: #efefef;
+  background-color: #dfefff;
   transition: width .5s;
   -moz-transition: width .5s;
   /* Firefox 4 */
@@ -304,15 +304,11 @@ input[type="button"]:hover {
 .detail-overlay .overlay-body .box {
   margin: 0 -10px;
   padding: 10px;
-  background-color: #dfefff;
-}
-.detail-overlay .overlay-body .box:nth-child(even) {
-  background-color: #efffff;
+  border-top: 1px solid #cccccc;
 }
 .detail-overlay .overlay-body .selectable {
   padding: 10px;
   cursor: pointer;
-  border-bottom: 1px solid #cccccc;
 }
 .detail-overlay .overlay-body .selectable:hover {
   background-color: #ffffef;
@@ -403,32 +399,6 @@ input[type="button"]:hover {
   display: table;
   clear: both;
 }
-.detail-overlay .overlay-body .event-detail .reviews .review .rating {
-  margin-bottom: -5px;
-}
-.detail-overlay .overlay-body .event-detail .reviews .review .rating .star {
-  padding: 12px;
-  margin-right: -10px;
-}
-.detail-overlay .overlay-body .event-detail .reviews .review .rating .star:last-child {
-  margin-right: 0;
-}
-.detail-overlay .overlay-body .event-detail .reviews .review .rating .star::before {
-  font-size: 20px;
-  margin: 0;
-  color: #666666;
-}
-.detail-overlay .overlay-body .event-detail .reviews .review .rating .star.star.gold::before {
-  color: #ddbb33;
-}
-.detail-overlay .overlay-body .event-detail .reviews .review .reviewer {
-  float: left;
-  font-style: italic;
-}
-.detail-overlay .overlay-body .event-detail .reviews .review .date-created {
-  float: right;
-  font-style: italic;
-}
 .detail-overlay .overlay-body .main-menu .map-search {
   margin-bottom: 5px;
 }
@@ -509,6 +479,47 @@ input[type="button"]:hover {
 .detail-overlay .overlay-body .event-list .event .date-range {
   float: right;
   font-style: italic;
+}
+.detail-overlay .overlay-body .reviews .review .rating,
+.detail-overlay .overlay-body .add-review .review .rating {
+  margin-bottom: -5px;
+}
+.detail-overlay .overlay-body .reviews .review .rating .star,
+.detail-overlay .overlay-body .add-review .review .rating .star {
+  padding: 12px;
+  margin-right: -10px;
+}
+.detail-overlay .overlay-body .reviews .review .rating .star:last-child,
+.detail-overlay .overlay-body .add-review .review .rating .star:last-child {
+  margin-right: 0;
+}
+.detail-overlay .overlay-body .reviews .review .rating .star::before,
+.detail-overlay .overlay-body .add-review .review .rating .star::before {
+  font-size: 20px;
+  margin: 0;
+  color: #666666;
+}
+.detail-overlay .overlay-body .reviews .review .rating .star.star.gold::before,
+.detail-overlay .overlay-body .add-review .review .rating .star.star.gold::before {
+  color: #ddbb33;
+}
+.detail-overlay .overlay-body .reviews .review .reviewer,
+.detail-overlay .overlay-body .add-review .review .reviewer {
+  float: left;
+  font-style: italic;
+}
+.detail-overlay .overlay-body .reviews .review .date-created,
+.detail-overlay .overlay-body .add-review .review .date-created {
+  float: right;
+  font-style: italic;
+}
+.detail-overlay .overlay-body .reviews.add-review .review .rating,
+.detail-overlay .overlay-body .add-review.add-review .review .rating {
+  margin: 10px 0;
+}
+.detail-overlay .overlay-body .reviews.add-review .review .rating .star,
+.detail-overlay .overlay-body .add-review.add-review .review .rating .star {
+  cursor: pointer;
 }
 .detail-overlay::-webkit-scrollbar {
   width: 3px;

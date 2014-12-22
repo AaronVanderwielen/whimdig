@@ -1,0 +1,32 @@
+﻿<div class="add-review">
+    <div class="event-detail">
+        <div class="event-info box">
+            <div class="row">
+                <div class="when"><span class="dateformat" data-format="casual">{{model.start}}</span> - <span class="dateformat" data-format="casual">{{model.end}}</span></div>
+            </div>
+            <div class="where">
+                <div class="place">{{model.place.name}}</div>
+                <div class="address">{{model.place.vicinity}}</div>
+            </div>
+            <div class="what">{{model.desc}}</div>
+        </div>
+    </div>
+    <div class="review box">
+        <form name="AddReview" action="/event/review" method="post">
+            <input type="hidden" name="eventId" value="{{model._id}}" />
+            <input type="hidden" name="rating" value="0" />
+            <div class="rating">
+                <span class="glyph halflings star"></span>
+                <span class="glyph halflings star"></span>
+                <span class="glyph halflings star"></span>
+                <span class="glyph halflings star"></span>
+                <span class="glyph halflings star"></span>
+            </div>
+            <div class="form-label">Review</div>
+            <div class="form-input">
+                <textarea name="message" rows="3"></textarea>
+            </div>
+            <input type="button" class="create-btn" value="Submit" />
+        </form>
+    </div>
+</div>

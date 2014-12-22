@@ -303,7 +303,7 @@ button, input[type="button"] {
 .detail-overlay {
     overflow-y: scroll;
     float: right;
-    background-color: @lightest;
+    background-color: @light-blue;
     transition: width .5s;
     -moz-transition: width .5s; /* Firefox 4 */
     -webkit-transition: width .5s; /* Safari and Chrome */
@@ -362,17 +362,18 @@ button, input[type="button"] {
         .box {
             margin: 0 -10px;
             padding: 10px;
-            background-color: @light-blue;
+            border-top: 1px solid @light;
 
+            //background-color: @light-blue;
             &:nth-child(even) {
-                background-color: @light-turq;
+                //background-color: @light-turq;
             }
         }
 
         .selectable {
             padding: 10px;
             cursor: pointer;
-            border-bottom: 1px solid @light;
+            //border-bottom: 1px solid @light;
 
             &:hover {
                 background-color: @light-gold;
@@ -490,7 +491,7 @@ button, input[type="button"] {
                     .tag {
                         display: inline-block;
                         padding: 10px 0;
-						margin-right: 10px;
+                        margin-right: 10px;
 
                         .glyph {
                             padding: 15px;
@@ -502,7 +503,7 @@ button, input[type="button"] {
                         }
 
                         .tag-label {
-							display: none;
+                            display: none;
                             color: @turq;
                         }
                     }
@@ -519,45 +520,6 @@ button, input[type="button"] {
             }
 
             .connections {
-            }
-
-            .reviews {
-
-                .review {
-
-                    .rating {
-                        margin-bottom: -5px;
-
-                        .star {
-                            padding: 12px;
-                            margin-right: -10px;
-
-                            &:last-child {
-                                margin-right: 0;
-                            }
-
-                            &::before {
-                                font-size: 20px;
-                                margin: 0;
-                                color: @dark;
-                            }
-
-                            &.star.gold::before {
-                                color: @gold;
-                            }
-                        }
-                    }
-
-                    .reviewer {
-                        float: left;
-                        font-style: italic;
-                    }
-
-                    .date-created {
-                        float: right;
-                        font-style: italic;
-                    }
-                }
             }
         }
 
@@ -678,6 +640,55 @@ button, input[type="button"] {
                 .date-range {
                     float: right;
                     font-style: italic;
+                }
+            }
+        }
+
+        .reviews, .add-review {
+
+            .review {
+
+                .rating {
+                    margin-bottom: -5px;
+
+                    .star {
+                        padding: 12px;
+                        margin-right: -10px;
+
+                        &:last-child {
+                            margin-right: 0;
+                        }
+
+                        &::before {
+                            font-size: 20px;
+                            margin: 0;
+                            color: @dark;
+                        }
+
+                        &.star.gold::before {
+                            color: @gold;
+                        }
+                    }
+                }
+
+                .reviewer {
+                    float: left;
+                    font-style: italic;
+                }
+
+                .date-created {
+                    float: right;
+                    font-style: italic;
+                }
+            }
+
+            &.add-review {
+                .review .rating {
+                    margin: 10px 0;
+
+                    .star {
+                        cursor: pointer;
+                    }
                 }
             }
         }

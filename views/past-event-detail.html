@@ -1,10 +1,24 @@
 ﻿<div class="event-detail">
     <div class="event-info box">
         <div class="row">
-            <div class="when"></div>
+            <div class="when">
+                <span class="dateformat" data-format="casual">{{model.start}}</span> - <span class="dateformat" data-format="casual">{{model.end}}</span>
+                <div class="intensity">
+                    {% if model.intensity_variable == "end" %}
+                        <span>show up any time before end</span>
+                    {% else %}
+                        <span>show up before start</span>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div class="where selectable"></div>
-        <div class="what"></div>
+        <div class="where selectable" data-created_by="{{model.created_by}}">
+            <div class="where">
+                <div class="place">{{model.place.name}}</div>
+                <div class="address">{{model.place.vicinity}}</div>
+            </div>
+        </div>
+        <div class="what">{{model.desc}}</div>
     </div>
     <div class="connections box">
         <span class="heading">Attendees</span>
@@ -16,39 +30,25 @@
     <div class="reviews box">
         <span class="heading">Reviews</span>
         <div class="selectables">
-            <div class="link selectable">add your own review</div>
+            <div class="link selectable add-review">add your own review</div>
+            {% for review in model.reviews %}
             <div class="review selectable">
                 <div class="rating">
-                    <span class="glyph halflings star gold"></span>
-                    <span class="glyph halflings star gold"></span>
-                    <span class="glyph halflings star gold"></span>
-                    <span class="glyph halflings star gold"></span>
-                    <span class="glyph halflings star gold"></span>
+                    <span class="glyph halflings star {% if review.rating >= 1 %}gold{% endif %}"></span>
+                    <span class="glyph halflings star {% if review.rating >= 2 %}gold{% endif %}"></span>
+                    <span class="glyph halflings star {% if review.rating >= 3 %}gold{% endif %}"></span>
+                    <span class="glyph halflings star {% if review.rating >= 4 %}gold{% endif %}"></span>
+                    <span class="glyph halflings star {% if review.rating >= 5 %}gold{% endif %}"></span>
                 </div>
                 <div class="row">
-                    <div class="reviewer">Adrian Brody</div>
-                    <div class="date-created">4-14-14</div>
+                    <div class="reviewer">{{review.user.first_name}}</div>
+                    <div class="date-created dateformat" data-format="date">{{review.date_created}}</div>
                 </div>
                 <div class="comment">
-                    Had a great time at their event last week. Pretty good place.
+                    {{review.message}}
                 </div>
             </div>
-            <div class="review selectable">
-                <div class="rating">
-                    <span class="glyph halflings star gold"></span>
-                    <span class="glyph halflings star"></span>
-                    <span class="glyph halflings star"></span>
-                    <span class="glyph halflings star"></span>
-                    <span class="glyph halflings star"></span>
-                </div>
-                <div class="row">
-                    <div class="reviewer">Adrian Brody</div>
-                    <div class="date-created">4-14-14</div>
-                </div>
-                <div class="comment">
-                    Could have done without the gays
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
