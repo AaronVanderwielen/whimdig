@@ -122,6 +122,13 @@
 				};
 				gMap = new google.maps.Map(div[0], mapOptions);
 				gMap.setOptions({ styles: settings.styleArray });
+
+				// Limit the zoom level
+				google.maps.event.addListener(gMap, 'zoom_changed', function (e) {
+					if (gMap.getZoom() < 10) {
+						gMap.setZoom(10);
+					}
+				});
 			},
 			circleSizeTo = function (el, targetSize, rate, secondRate, interval, callback) {
 				var ref = _.find(sizing, function (s) { return s.id === el.id; });
@@ -581,68 +588,18 @@
 				loadEventsInSpan(function (response) {
 					google.maps.event.addListener(gMap, 'bounds_changed', function () {
 						window.clearTimeout(boundChange);
-						boundChange = window.setTimeout(function () {
-							bounds = gMap.getBounds();
-							loadEventsInSpan(null, true);
-						}, 1000);
+						if (gMap.getZoom() > 12) {
+							boundChange = window.setTimeout(function () {
+								bounds = gMap.getBounds();
+								loadEventsInSpan(null, true);
+							}, 1000);
+						}
 					});
 				});
 
 				// update data every 500 seconds
 				window.setInterval(loadEventsInSpan, 50000);
 			},
-			//loadEvents = function (callback, bounds, destroyOld) {
-			//	bounds = bounds ? bounds : gMap.getBounds();
-			//	if (circleData.events.length > 0 || circleData.groups.length > 0) {
-			//		// get new events
-			//		loadEventsInSpan(function (data) {
-			//			if (destroyOld) {
-			//				// destroy old
-			//				var dataIds = _.map(data, function (d) {
-			//					return d._id;
-			//				});
-
-			//				cleanCData(dataIds);
-			//			}
-			//			if (callback) {
-			//				callback();
-			//			}
-			//		}, bounds);
-			//	}
-			//	else {
-			//		// get new events
-			//		loadEventsInSpan(callback, bounds);
-			//	}
-			//},
-			//cleanCDataGroups = function (ids) {
-			//	var grouped = circleData.groups;
-
-			//	for (var g in grouped) {
-			//		// group level
-			//		for (var e in grouped[g]) {
-			//			//var eventId = grouped[g][e]._id;
-			//			// event in group
-			//			//if (!_.some(ids, function (i) { return i === eventId; })) {
-			//				// event id not in search, remove
-			//				//grouped[g].splice(e, 1);
-			//			//}
-			//			destroyCdata(grouped[g]._id, true);
-			//		}
-
-			//		//if (grouped[g].length === 1) {
-			//		//	// if one event left in group, transform to circle
-			//		//	var event = grouped[g][e];
-			//		//	// draw individual
-			//		//	drawEvent(event);
-			//		//	// destroy group
-			//		//	destroyCdata(g, true);
-			//		//}
-			//		//else if (grouped[g].length === 0) {
-			//		//	// if no events, delete c data
-			//		//	destroyCdata(grouped[g]._id, true);
-			//		//}
-			//	}
-			//},
 			cleanCData = function (ids) {
 				// destroy old event sizing handlers
 				destroySizing();

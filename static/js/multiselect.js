@@ -3,7 +3,7 @@
 		var obj = this,
 			container = element,
 			input = container.find('input[type="hidden"]'),
-			label = container.find('.label'),
+			label = container.find('.label, .ui-icon'),
 			optionContainer = container.find('.options'),
 			options = container.find('.option'),
 			// data

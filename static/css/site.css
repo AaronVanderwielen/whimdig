@@ -33,11 +33,40 @@ select.error {
   border-radius: 5px;
   border: 1px solid #0094ff;
 }
+.ui-selectmenu-button.ui-corner-top {
+  border-radius: 5px 5px 0 0;
+  border-bottom: none;
+}
+.ui-selectmenu-button .ui-icon {
+  cursor: pointer;
+  right: 0.5em;
+  left: auto;
+  margin-top: 0;
+  position: absolute;
+  top: 10px;
+}
 .ui-selectmenu-button span.ui-selectmenu-text {
   color: #005588;
-  padding: 0.4em 2.1em 0.4em 1em;
-  line-height: 1.4;
-  font-size: 1.1em;
+  padding: 5px 10px;
+  line-height: 24px;
+  font-size: 1em;
+}
+.ui-selectmenu-open .ui-widget-content {
+  border: 1px solid #0094ff;
+  border-top: none;
+}
+.ui-selectmenu-open .ui-widget-content .ui-menu-item {
+  border-top: none;
+  border-right: none;
+  border-bottom: 1px solid #d0e5f5;
+  border-left: none;
+  padding: 5px 10px;
+}
+.ui-selectmenu-open .ui-widget-content .ui-menu-item.ui-state-focus {
+  margin: 0;
+}
+.ui-selectmenu-open .ui-widget-content .ui-menu-item:last-child {
+  border-bottom: none;
 }
 .ui-state-default,
 .ui-widget-content .ui-state-default,
@@ -61,7 +90,6 @@ input[type="button"] {
   border-radius: 2px;
   border: 1px solid #005588;
   background-color: #005588;
-  opacity: .75;
   color: white;
   padding: 10px;
   margin: 10px 0;
@@ -77,16 +105,25 @@ input[type="button"]:hover {
   background-color: #21b4ff;
 }
 .multi {
+  position: relative;
   width: 100%;
   border-radius: 2px;
-  border: 1px solid #005588;
+  border: 1px solid #0094ff;
   color: white;
   margin: 10px 0;
 }
+.multi .ui-icon {
+  cursor: pointer;
+  right: 0.5em;
+  left: auto;
+  position: absolute;
+  top: 10px;
+}
 .multi .label {
-  background-color: #005588;
-  padding: 10px;
-  font-size: 14px;
+  color: #005588;
+  padding: 5px 10px;
+  border: 1px solid #c5dbec;
+  background: #dfeffc;
   cursor: pointer;
 }
 .multi .options {
@@ -99,6 +136,7 @@ input[type="button"]:hover {
   display: block;
   padding: 10px;
   cursor: pointer;
+  border-bottom: 1px solid #dfeffc;
 }
 .multi .options .option .glyph {
   padding: 25px;
@@ -118,13 +156,23 @@ input[type="button"]:hover {
 .multi .options .option.selected .option-text {
   color: #005588;
 }
-.multi .options .option:hover .option-text {
+.multi .options .option:hover {
+  background-color: #d0e5f5;
+}
+.multi .options .option:hover .option-text,
+.multi .options .option:hover .glyph::before {
   color: #21b4ff;
+}
+.multi .options .option:last-child {
+  border-bottom: none;
 }
 .multi .options .option::after {
   content: " ";
   display: table;
   clear: both;
+}
+.multi:hover .label {
+  background: #d0e5f5;
 }
 .remove.glyph {
   padding: 12px;
@@ -249,7 +297,7 @@ input[type="button"]:hover {
 .detail-overlay {
   overflow-y: scroll;
   float: right;
-  background-color: #dfefff;
+  background-color: #fff;
   transition: width .5s;
   -moz-transition: width .5s;
   /* Firefox 4 */
@@ -305,6 +353,9 @@ input[type="button"]:hover {
   margin: 0 -10px;
   padding: 10px;
   border-top: 1px solid #cccccc;
+}
+.detail-overlay .overlay-body .box .selectable {
+  margin: 0 -10px;
 }
 .detail-overlay .overlay-body .selectable {
   padding: 10px;

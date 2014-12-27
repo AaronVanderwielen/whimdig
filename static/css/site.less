@@ -11,6 +11,8 @@
 @light-turq: #efffff;
 @light-green: #cfefef;
 @light-gold: #ffffef;
+@ui-element: #dfeffc;
+@ui-element-accent: #d0e5f5;
 
 * {
     box-sizing: border-box;
@@ -49,11 +51,49 @@ input[type="text"], textarea, select {
     border-radius: 5px;
     border: 1px solid @blue;
 
+    &.ui-corner-top {
+		border-radius: 5px 5px 0 0;
+		border-bottom: none;
+    }
+
+    .ui-icon {
+        cursor: pointer;
+        right: 0.5em;
+        left: auto;
+        margin-top: 0;
+        position: absolute;
+        top: 10px;
+    }
+
     span.ui-selectmenu-text {
         color: @turq;
-        padding: 0.4em 2.1em 0.4em 1em;
-        line-height: 1.4;
-        font-size: 1.1em;
+        padding: 5px 10px;
+        line-height: 24px;
+        font-size: 1em;
+    }
+}
+
+.ui-selectmenu-open {
+
+    .ui-widget-content {
+        border: 1px solid @blue;
+        border-top: none;
+
+        .ui-menu-item {
+			border-top: none;
+			border-right: none;
+			border-bottom: 1px solid @ui-element-accent;
+			border-left: none;
+			padding: 5px 10px;
+
+			&.ui-state-focus {
+				margin: 0;
+			}
+
+            &:last-child {
+                border-bottom: none;
+            }
+        }
     }
 }
 
@@ -72,7 +112,6 @@ button, input[type="button"] {
     border-radius: 2px;
     border: 1px solid @turq;
     background-color: @turq;
-    opacity: .75;
     color: white;
     padding: 10px;
     margin: 10px 0;
@@ -89,16 +128,34 @@ button, input[type="button"] {
 }
 
 .multi {
+    position: relative;
     width: 100%;
     border-radius: 2px;
-    border: 1px solid @turq;
+    //border: 1px solid @turq;
+    border: 1px solid @blue;
     color: white;
     margin: 10px 0;
 
+    .ui-icon {
+        cursor: pointer;
+        right: 0.5em;
+        left: auto;
+        //margin-top: -8px;
+        position: absolute;
+        top: 10px;
+    }
+
     .label {
-        background-color: @turq;
-        padding: 10px;
-        font-size: 14px;
+        color: #005588;
+        //padding: 0.4em 2.1em 0.4em 1em;
+		padding: 5px 10px;// 0.4em 2.1em 0.4em 1em;
+        //line-height: 1.4;
+        //font-size: 1.1em;
+        border: 1px solid #c5dbec;
+        background: #dfeffc;
+        //background-color: @turq;
+        //padding: 10px;
+        //font-size: 14px;
         cursor: pointer;
     }
 
@@ -112,6 +169,7 @@ button, input[type="button"] {
             display: block;
             padding: 10px;
             cursor: pointer;
+			border-bottom: 1px solid @ui-element;
 
             .glyph {
                 padding: 25px;
@@ -143,16 +201,29 @@ button, input[type="button"] {
             }
 
             &:hover {
-                .option-text {
+				background-color: @ui-element-accent;
+
+                .option-text, .glyph::before {
                     color: @blue-accent;
                 }
             }
+
+			&:last-child {
+				border-bottom: none;
+			}
         }
 
         .option::after {
             content: " ";
             display: table;
             clear: both;
+        }
+    }
+
+	&:hover {
+
+        .label {
+            background: #d0e5f5;
         }
     }
 }
@@ -303,7 +374,7 @@ button, input[type="button"] {
 .detail-overlay {
     overflow-y: scroll;
     float: right;
-    background-color: @light-blue;
+    background-color: #fff; //@light-blue;
     transition: width .5s;
     -moz-transition: width .5s; /* Firefox 4 */
     -webkit-transition: width .5s; /* Safari and Chrome */
@@ -364,9 +435,8 @@ button, input[type="button"] {
             padding: 10px;
             border-top: 1px solid @light;
 
-            //background-color: @light-blue;
-            &:nth-child(even) {
-                //background-color: @light-turq;
+            .selectable {
+                margin: 0 -10px;
             }
         }
 
@@ -374,7 +444,6 @@ button, input[type="button"] {
             padding: 10px;
             cursor: pointer;
             //border-bottom: 1px solid @light;
-
             &:hover {
                 background-color: @light-gold;
             }
