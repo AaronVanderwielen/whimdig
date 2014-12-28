@@ -209,9 +209,9 @@
 
 				if (defaultSize) {
 					// set circle to default size
-					var cd = getCdById(id, circleData.events);
+					var cd = getCdById(id);
 					if (!cd) {
-						cd = getCdById(id, circleData.groups);
+						cd = getCdById(id, true);
 					}
 					if (cd) {
 						cd.circle.radius = cd.users.length * 10;
@@ -245,18 +245,25 @@
 					drawGroups(multis);
 				}
 			},
-			drawGroups = function (groups) {
-				for (var g in groups) {
-					if (groups[g]) {
-						drawGroup(groups[g][1], groups[g][0]);
+			drawGroups = function (multis) {
+				for (var g in multis) {
+					if (multis[g]) {
+						// group data, lat/lng
+						drawGroup(multis[g][1], multis[g][0]);
 					}
 				}
 			},
-			drawGroup = function (group, key) {
-				var groupExists = _.some(circleData.groups, function (g) { return g._id === key; });
+			drawGroup = function (events, key) {
+				var groupExists = _.some(circleData.groups, function (g) { return g._id === key; }),
+					group = {
+						_id: null,
+						circle: null,
+						events: events
+					};
+
 				// TODO check events in group for changes too?
 				if (!groupExists) {
-					var radius = getEventCircleSize(_.max(group, function (e) { return e.users.length; })),
+					var radius = getEventCircleSize(_.max(events, function (e) { return e.users.length; })),
 						c = {
 							id: key,
 							isGroup: true,
@@ -266,7 +273,7 @@
 							fillColor: "rgb(250, 250, 250)",
 							fillOpacity: 1,
 							map: gMap,
-							center: new google.maps.LatLng(group[0].place.loc.coordinates[1], group[0].place.loc.coordinates[0]),
+							center: new google.maps.LatLng(events[0].place.loc.coordinates[1], events[0].place.loc.coordinates[0]),
 							radius: radius
 						};
 
@@ -275,10 +282,9 @@
 					group.circle = circle;
 
 					// events within group need to share group circle reference
-					for (var e in group) {
+					for (var e in group.events) {
 						// reference to parent
-						group[e].group = key;
-						group[e].circle = circle;
+						group.events[e].group = key;
 					}
 
 					circleData.groups.push(group);
@@ -393,7 +399,7 @@
 			focusGroup = function (e) {
 				var circle = this,
 					ref = getCdById(circle.id, true),
-					defaultSize = getEventCircleSize(_.max(ref, function (e) { return e.users.length; }));
+					defaultSize = getEventCircleSize(_.max(ref.events, function (e) { return e.users.length; }));
 
 				if (defaultSize >= 20) {
 					setWaver(circle);
@@ -416,9 +422,9 @@
 				selectedEvent = clicked;
 
 				overlayGoing.hide();
-				showOverlay(ref[0].place.name);
+				showOverlay(ref.events[0].place.name);
 				var page = navigatePage(0);
-				setGroupEventList(ref, page);
+				setGroupEventList(ref.events, page);
 			},
 			refreshCircle = function (id) {
 				getUserEvent(id, function (event) {
@@ -458,7 +464,7 @@
 				var circle = this,
 					ref = circle.isGroup ? ref = getCdById(circle.id, true) : ref = getCdById(circle.id),
 					sizeRef = _.find(sizing, function (s) { return s.id === circle.id; }),
-					defaultSize = circle.isGroup ? getEventCircleSize(_.max(ref, function (e) { return e.users.length; })) : getEventCircleSize(ref);
+					defaultSize = circle.isGroup ? getEventCircleSize(_.max(ref.events, function (e) { return e.users.length; })) : getEventCircleSize(ref);
 
 				if (sizeRef) {
 					window.clearInterval(sizeRef.event);
@@ -516,9 +522,9 @@
 			getCdByIdInGroup = function (id) {
 				// loop through groups and events to get event data
 				for (var g in circleData.groups) {
-					for (var e in circleData.groups[g]) {
-						if (circleData.groups[g][e]._id === id) {
-							return circleData.groups[g][e];
+					for (var e in circleData.groups[g].events) {
+						if (circleData.groups[g].events[e]._id === id) {
+							return circleData.groups[g].events[e];
 						}
 					}
 				}
@@ -628,7 +634,8 @@
 				// update data every 500 seconds
 				window.setInterval(function () {
 					// only load new events if detail is closed (it closes it automatically otherwise)
-					loadEventsInSpan();
+					refreshCData();
+					loadEventsInSpan(null, true);
 				}, 50000);
 			},
 			loadEventsInSpan = function (callback, keepOld) {
@@ -687,28 +694,72 @@
 					}
 				});
 			},
+			refreshCData = function (serverUpdate, callback) { // TODO: test!
+				var now = moment(),
+					eventIds = [];
+
+				for (var e in circleData.events) {
+					var event = circleData.events[e];
+
+					if (moment(event.end) < now) {
+						destroyCdata(event._id);
+					}
+					else {
+						// update circle color
+						event.color = colorByTime(event[event.intensity_variable]);
+						event.circle.strokeColor = arrayToRGB(getShade(colorArray, -20));
+						event.circle.fillColor = arrayToRGB(colorArray);
+
+						eventIds.push(event._id)
+					}
+				}
+
+				for (var g in circleData.groups) {
+					var group = circleData.groups[g],
+						expiredIndexes = _.map(group.events, function (e, i, list) { if (moment(e.end) < now) { return i; } });
+
+					// sort indexes descending to avoid indexes changing when deleting
+					expiredIndexes = expiredIndexes.reverse();
+
+					if (group.events.length === expiredIndexes) {
+						// all are expired, delete group
+						destroyCdata(group._id, true);
+					}
+					else if (group.events.length - expiredIndexes.length === 1) {
+						// there will be one left, find event that isn't in expired, get that eventId, draw it, and blow away group
+						var leftover = _.find(group.events, function (e) { return !_.some(expiredIndexes, function (i) { return e._id === i; }) });
+						drawEvent(leftover);
+						destroyCdata(group._id, true);
+					}
+					else {
+						for (var i in expiredIndexes) {
+							// splice from group's cdata
+							circleData.groups[g].events.splice(i, 1);
+						}
+					}
+				}
+
+				if (serverUpdate) {
+					//radius =
+					//strokeWeight: circleSize / 10,
+					if (callback) {
+						callback();
+					}
+				}
+			},
 			cleanCData = function () {
 				// destroy old event sizing handlers
 				destroySizing();
 
 				var eventIds = _.map(circleData.events, function (e) { return e._id; });
 				for (var e in eventIds) {
-					//if (!_.some(ids, function (id) { return id === eId; })) {
 					destroyCdata(eventIds[e]);
-					//}
 				}
+
 				var groupIds = _.map(circleData.groups, function (e) { return e._id; });
 				for (var g in groupIds) {
-					// group level
-					//var eventId = grouped[g][e]._id;
-					// event in group
-					//if (!_.some(ids, function (i) { return i === eventId; })) {
-					// event id not in search, remove
-					//grouped[g].splice(e, 1);
-					//}
 					destroyCdata(groupIds[g], true);
 				}
-				//cleanCDataGroups(ids);
 			},
 			destroySizing = function () {
 				if (sizing.length > 0) {
@@ -1098,7 +1149,9 @@
 				});
 			},
 			setEventDetail = function (event, div) {
-				var model = jQuery.extend(true, {}, event);
+				var circle = event.group ? _.find(circleData.groups, function (g) { return g._id === event.group; }).circle : event.circle,
+					model = jQuery.extend(true, {}, event);
+
 				delete model.circle; // circular reference.. PUN! <- looking at this weeks later made me lol
 
 				getTemplate('event-detail', model, false, function (template) {
@@ -1156,7 +1209,7 @@
 					}
 
 					// center the event's circle
-					gMap.setCenter(event.circle.center);
+					gMap.setCenter(circle.center);
 					gMap.panBy(overlay.width() / 2, 0);
 				});
 			},
@@ -1223,12 +1276,20 @@
 				var menuScheduleEvents = currentPage().find('.schedule .event-list .event');
 				menuScheduleEvents.off('click').on('click', function (e) {
 					var eId = $(this).data('id'),
-						cData = getCdById(eId);
+						cd = getCdById(eId);
 
-					if (cData) {
-						gMap.setCenter(new google.maps.LatLng(cData.place.loc.coordinates[1], cData.place.loc.coordinates[0]));
+					if (!cd) {
+						cd = getCdByIdInGroup(eId);
+						var circle = _.find(circleData.groups, function (g) { return g._id === cd.group; }).circle;
+
+						gMap.setCenter(new google.maps.LatLng(cd.place.loc.coordinates[1], cd.place.loc.coordinates[0]));
 						gMap.panBy(overlay.width() / 2, 0);
-						circleClick.call(cData.circle, e);
+						clickGroup.call(circle, e);
+					}
+					else {
+						gMap.setCenter(new google.maps.LatLng(cd.place.loc.coordinates[1], cd.place.loc.coordinates[0]));
+						gMap.panBy(overlay.width() / 2, 0);
+						circleClick.call(cd.circle, e);
 					}
 				});
 			},
@@ -1449,6 +1510,7 @@
 					success: function (response) {
 						if (response.success) {
 							manageEventsHandler(-1);
+							// TODO: check if it needs to join a group
 							refreshCircle(response.body);
 						}
 						else {
