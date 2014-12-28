@@ -208,6 +208,7 @@
 				var ref = _.find(sizing, function (s) { return s.id === id; });
 
 				if (defaultSize) {
+					// set circle to default size
 					var cd = getCdById(id, circleData.events);
 					if (!cd) {
 						cd = getCdById(id, circleData.groups);
@@ -216,10 +217,12 @@
 						cd.circle.radius = cd.users.length * 10;
 					}
 				}
+				// clear sizeTo
 				if (ref.event) {
 					window.clearInterval(ref.event);
 					ref.event = null;
 				}
+				// clear waver
 				if (ref.waver.event) {
 					window.clearInterval(ref.waver.event);
 					ref.waver.event = null;
@@ -250,7 +253,7 @@
 				}
 			},
 			drawGroup = function (group, key) {
-				var groupExists = _.some(circleData.groups, function (g) { return g === key; });
+				var groupExists = _.some(circleData.groups, function (g) { return g._id === key; });
 				// TODO check events in group for changes too?
 				if (!groupExists) {
 					var radius = getEventCircleSize(_.max(group, function (e) { return e.users.length; })),
@@ -271,6 +274,13 @@
 					group._id = key;
 					group.circle = circle;
 
+					// events within group need to share group circle reference
+					for (var e in group) {
+						// reference to parent
+						group[e].group = key;
+						group[e].circle = circle;
+					}
+
 					circleData.groups.push(group);
 
 					// init sizing
@@ -289,7 +299,7 @@
 
 					google.maps.event.addListener(circle, 'mouseout', function (e) {
 						if (this !== selectedEvent) {
-							blurGroup.call(this, e);
+							blurCircle.call(this, e);
 						}
 					});
 
@@ -381,16 +391,13 @@
 			},
 			// circle utility
 			focusGroup = function (e) {
-				this.setOptions({
-					zIndex: 1,
-					strokeColor: "rgb(250, 250, 200)",
-				});
-			},
-			blurGroup = function (e) {
-				this.setOptions({
-					zIndex: 0,
-					strokeColor: "rgb(150, 150, 150)",
-				});
+				var circle = this,
+					ref = getCdById(circle.id, true),
+					defaultSize = getEventCircleSize(_.max(ref, function (e) { return e.users.length; }));
+
+				if (defaultSize >= 20) {
+					setWaver(circle);
+				}
 			},
 			clickGroup = function (e) {
 				var clicked = this,
@@ -401,12 +408,17 @@
 					selectedEvent = null;
 				}
 
+				this.setOptions({
+					zIndex: 1,
+					strokeColor: "rgb(0, 250, 250)",
+				});
+
 				selectedEvent = clicked;
 
 				overlayGoing.hide();
 				showOverlay(ref[0].place.name);
 				var page = navigatePage(0);
-				setEventList(ref, page);
+				setGroupEventList(ref, page);
 			},
 			refreshCircle = function (id) {
 				getUserEvent(id, function (event) {
@@ -424,9 +436,8 @@
 			},
 			focusCircle = function (e) {
 				var circle = this,
-					ref = getCdById(circle.id);;
-
-				defaultSize = getEventCircleSize(ref);
+					ref = getCdById(circle.id),
+					defaultSize = getEventCircleSize(ref);
 
 				this.setOptions({
 					zIndex: 1,
@@ -445,14 +456,9 @@
 			},
 			blurCircle = function (e) {
 				var circle = this,
-					ref = getCdById(circle.id),
-					sizeRef = _.find(sizing, function (s) { return s.id === circle.id; });;
-
-				if (circle.isGroup) {
-					return blurGroup.call(circle);
-				}
-
-				var defaultSize = getEventCircleSize(ref);
+					ref = circle.isGroup ? ref = getCdById(circle.id, true) : ref = getCdById(circle.id),
+					sizeRef = _.find(sizing, function (s) { return s.id === circle.id; }),
+					defaultSize = circle.isGroup ? getEventCircleSize(_.max(ref, function (e) { return e.users.length; })) : getEventCircleSize(ref);
 
 				if (sizeRef) {
 					window.clearInterval(sizeRef.event);
@@ -466,13 +472,26 @@
 				}
 
 				// set back to default
-				circle.setOptions({
-					radius: defaultSize,
-					zIndex: 0,
-					fillOpacity: settings.blurOpacity,
-					fillColor: arrayToRGB(ref.color),
-					strokeColor: arrayToRGB(getShade(ref.color, -20))
-				});
+				if (circle.isGroup) {
+					circle.setOptions({
+						radius: defaultSize,
+						zIndex: 0,
+						strokeColor: "rgb(150, 150, 150)",
+					});
+				}
+				else {
+					circle.setOptions({
+						radius: defaultSize,
+						zIndex: 0,
+						fillOpacity: settings.blurOpacity,
+						fillColor: arrayToRGB(ref.color),
+						strokeColor: arrayToRGB(getShade(ref.color, -20))
+					});
+				}
+
+				if (circle === selectedEvent) {
+					selectedEvent = null;
+				}
 			},
 			circleClick = function (e) {
 				var clicked = this,
@@ -480,7 +499,6 @@
 
 				if (selectedEvent && selectedEvent !== clicked) {
 					blurCircle.call(selectedEvent);
-					selectedEvent = null;
 				}
 
 				selectedEvent = clicked;
@@ -494,6 +512,16 @@
 			getCdById = function (id, isGroup) {
 				var target = isGroup ? circleData.groups : circleData.events;
 				return _.find(target, function (e) { return e._id === id; });
+			},
+			getCdByIdInGroup = function (id) {
+				// loop through groups and events to get event data
+				for (var g in circleData.groups) {
+					for (var e in circleData.groups[g]) {
+						if (circleData.groups[g][e]._id === id) {
+							return circleData.groups[g][e];
+						}
+					}
+				}
 			},
 			getEventCircleSize = function (cData) {
 				return cData.users.length * 20;
@@ -598,19 +626,79 @@
 				});
 
 				// update data every 500 seconds
-				window.setInterval(loadEventsInSpan, 50000);
+				window.setInterval(function () {
+					// only load new events if detail is closed (it closes it automatically otherwise)
+					loadEventsInSpan();
+				}, 50000);
 			},
-			cleanCData = function (ids) {
+			loadEventsInSpan = function (callback, keepOld) {
+				var bounds = gMap.getBounds(),
+					square = [
+						[bounds.wa.j, bounds.Ea.j],
+						[bounds.wa.j, bounds.Ea.k],
+						[bounds.wa.k, bounds.Ea.k],
+						[bounds.wa.k, bounds.Ea.j],
+						[bounds.wa.j, bounds.Ea.j],
+					];
+
+				$.ajax({
+					url: urls.eventsForSpan,
+					type: 'GET',
+					data: {
+						span: currentSpan,
+						filters: filters,
+						bounds: square
+					},
+					success: function (response) {
+						if (response.success) {
+							var ids = _.map(response.body, function (e) { return e._id; }),
+								grouped = {};
+
+							// group by location
+							for (var e in response.body) {
+								var loc = response.body[e].loc.coordinates,
+									key = String.format("{0},{1}", loc[0], loc[1]),
+									existing = grouped[key];
+
+								if (existing) {
+									existing.push(response.body[e]);
+								}
+								else {
+									grouped[key] = [];
+									grouped[key].push(response.body[e]);
+								}
+							}
+
+							// wipe cdata that is not returned by query
+							if (!keepOld) {
+								cleanCData();
+							}
+
+							// draw returned data, add to cdata
+							drawGroupedData(grouped);
+
+							if (callback) {
+								callback(response.body);
+							}
+						}
+						else if (response.statusCode === 401) {
+							reAuthenticate(loadEventsInSpan);
+						}
+					}
+				});
+			},
+			cleanCData = function () {
 				// destroy old event sizing handlers
 				destroySizing();
 
-				for (var e in circleData.events) {
-					var eId = circleData.events[e]._id;
+				var eventIds = _.map(circleData.events, function (e) { return e._id; });
+				for (var e in eventIds) {
 					//if (!_.some(ids, function (id) { return id === eId; })) {
-					destroyCdata(eId);
+					destroyCdata(eventIds[e]);
 					//}
 				}
-				for (var g in circleData.groups) {
+				var groupIds = _.map(circleData.groups, function (e) { return e._id; });
+				for (var g in groupIds) {
 					// group level
 					//var eventId = grouped[g][e]._id;
 					// event in group
@@ -618,16 +706,18 @@
 					// event id not in search, remove
 					//grouped[g].splice(e, 1);
 					//}
-					destroyCdata(circleData.groups[g]._id, true);
+					destroyCdata(groupIds[g], true);
 				}
 				//cleanCDataGroups(ids);
 			},
 			destroySizing = function () {
 				if (sizing.length > 0) {
 					for (var s in sizing) {
+						// sizeTo event?
 						if (sizing[s].event) {
 							window.clearTimeout(sizing[s].event);
 						}
+						// waver event
 						if (sizing[s].waver.event) {
 							window.clearTimeout(sizing[s].waver.event);
 						}
@@ -671,62 +761,6 @@
 
 					if (callback) {
 						callback();
-					}
-				});
-			},
-			loadEventsInSpan = function (callback, keepOld) {
-				var bounds = gMap.getBounds(),
-					square = [
-						[bounds.wa.j, bounds.Ea.j],
-						[bounds.wa.j, bounds.Ea.k],
-						[bounds.wa.k, bounds.Ea.k],
-						[bounds.wa.k, bounds.Ea.j],
-						[bounds.wa.j, bounds.Ea.j],
-					];
-
-				$.ajax({
-					url: urls.eventsForSpan,
-					type: 'GET',
-					data: {
-						span: currentSpan,
-						filters: filters,
-						bounds: square
-					},
-					success: function (response) {
-						if (response.success) {
-							var ids = _.map(response.body, function (e) { return e._id; }),
-								grouped = {};
-
-							// group by location
-							for (var e in response.body) {
-								var loc = response.body[e].loc.coordinates,
-									key = String.format("{0},{1}", loc[0], loc[1]),
-									existing = grouped[key];
-
-								if (existing) {
-									existing.push(response.body[e]);
-								}
-								else {
-									grouped[key] = [];
-									grouped[key].push(response.body[e]);
-								}
-							}
-
-							// wipe cdata that is not returned by query
-							if (!keepOld) {
-								cleanCData(ids);
-							}
-
-							// draw returned data, add to cdata
-							drawGroupedData(grouped);
-
-							if (callback) {
-								callback(response.body);
-							}
-						}
-						else if (response.statusCode === 401) {
-							reAuthenticate(loadEventsInSpan);
-						}
 					}
 				});
 			},
@@ -858,6 +892,9 @@
 			// header
 			applyHeaderHandlers = function () {
 				headerMenuBtn.off('click').on('click', function (e) {
+					if (selectedEvent) {
+						blurCircle.call(selectedEvent);
+					}
 					setMenuDetail();
 				});
 				headerFilterBtn.off('click').on('click', function (e) {
@@ -989,9 +1026,18 @@
 				return overlayBody.find('> .page.page' + paging);
 			},
 			//// event detail
-			setEventList = function (events, div) {
+			setGroupEventList = function (events, div) {
 				renderEventList(events, function (list) {
 					div.html(list);
+
+					div.find('.event').off('click').on('click', function (e) {
+						var div = $(this),
+							eventId = div.data('id'),
+							eventRef = getCdByIdInGroup(eventId),
+							page = navigatePage(0);
+
+						setEventDetail(eventRef, page);
+					});
 				});
 			},
 			applyGoingHandlers = function (cData, div) {
@@ -1053,9 +1099,9 @@
 			},
 			setEventDetail = function (event, div) {
 				var model = jQuery.extend(true, {}, event);
-				delete model.circle; // circular reference.. PUN!
+				delete model.circle; // circular reference.. PUN! <- looking at this weeks later made me lol
 
-				getTemplate('event-detail', model, function (template) {
+				getTemplate('event-detail', model, false, function (template) {
 					div.html(template);
 
 					var body = div.find('.event-body'),
@@ -1127,7 +1173,7 @@
 					var page = navigatePage(0);
 					overlayGoing.hide();
 
-					getTemplate('main-menu', null, function (template) {
+					getTemplate('main-menu', null, true, function (template) {
 						page.html(template);
 
 						applyMenuHandlers();
@@ -1177,7 +1223,7 @@
 				var menuScheduleEvents = currentPage().find('.schedule .event-list .event');
 				menuScheduleEvents.off('click').on('click', function (e) {
 					var eId = $(this).data('id'),
-						cData = circleData[eId];
+						cData = getCdById(eId);
 
 					if (cData) {
 						gMap.setCenter(new google.maps.LatLng(cData.place.loc.coordinates[1], cData.place.loc.coordinates[0]));
@@ -1189,7 +1235,7 @@
 			////// create event
 			createEventHandler = function (e) {
 				getAllEventTags(function (tags) {
-					getTemplate("create-event", tags, function (html) {
+					getTemplate("create-event", tags, true, function (html) {
 						var page = navigatePage(1);
 						page.html(html);
 						bindUi(page);
@@ -1220,10 +1266,11 @@
 					success: function (response) {
 						if (response.success) {
 							var newEvent = response.body[0];
+
 							drawEvent(newEvent);
-							highlightCircle.call(circleData[newEvent._id].circle);
-							var page = navigatePage(-1);
-							setEventDetail(newEvent, page);
+
+							var cd = getCdById(newEvent._id);
+							circleClick.call(cd.circle);
 						}
 						else {
 							var errorHtml = "";
@@ -1257,7 +1304,7 @@
 							var page = navigatePage(1);
 							placeSelect.val('');
 							placeSelect.selectmenu('refresh');
-							getTemplate('add-user-place', null, function (template) {
+							getTemplate('add-user-place', null, true, function (template) {
 								page.html(template);
 								page.find('input[type=button]').off('click').on('click', function (e) {
 									addUserPlaceHandler(function (op) {
@@ -1368,7 +1415,7 @@
 								}
 							}
 						}
-						getTemplate("edit-event", tags, function (html) {
+						getTemplate("edit-event", tags, false, function (html) {
 							// load in user's places
 							getUserPlaces(function (places) {
 								page = navigatePage(1);
@@ -1472,7 +1519,7 @@
 				});
 			},
 			setPastEventDetail = function (event, div) {
-				getTemplate('past-event-detail', event, function (template) {
+				getTemplate('past-event-detail', event, false, function (template) {
 					div.html(template);
 					bindUi(div);
 
@@ -1524,7 +1571,7 @@
 				});
 			},
 			addReviewHandler = function (event) {
-				getTemplate('add-review', event, function (html) {
+				getTemplate('add-review', event, true, function (html) {
 					var page = navigatePage(1);
 					page.append(html);
 					bindUi(page);
@@ -1590,7 +1637,7 @@
 			},
 			setFiltersView = function () {
 				var tags = getAllEventTags(function (tags) {
-					getTemplate('set-filters', tags, function (template) {
+					getTemplate('set-filters', tags, false, function (template) {
 						overlayGoing.hide();
 						showOverlay("Filter Events");
 						var page = navigatePage(0);
@@ -1644,7 +1691,7 @@
 				});
 			},
 			// views
-			getTemplate = function (template, modelData, callback) {
+			getTemplate = function (template, modelData, cache, callback) {
 				if (modelData) {
 					modelData = JSON.stringify(modelData);
 				}
@@ -1655,8 +1702,10 @@
 						type: 'GET',
 						data: { template: template, model: modelData },
 						success: function (html) {
-							templates[template] = html;
-							callback(templates[template]);
+							if (cache) {
+								templates[template] = html;
+							}
+							callback(html);
 						}
 					});
 				}
@@ -1665,7 +1714,7 @@
 				}
 			},
 			renderEventList = function (eventData, callback) {
-				getTemplate("event-list-item", null, function (template) {
+				getTemplate("event-list-item", null, true, function (template) {
 					var div = $('<div class="event-list"></div>'),
 						formatted = "";
 					for (var event in eventData) {
