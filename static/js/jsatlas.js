@@ -1815,8 +1815,19 @@
 					else if (p === "place") {
 						model[p] = model[p]._id;
 					}
-
-					input.val(model[p]);
+					
+					if (input.is('input[type="radio"]')) {
+						input.removeAttr('checked');
+						input.each(function() {
+							var radio = $(this);
+							if (radio.val() === model[p]) {
+								radio.attr('checked', 'checked');
+							}
+						});
+					}
+					else {
+						input.val(model[p]);
+					}
 				}
 
 				form.find('.multi').each(function () {
