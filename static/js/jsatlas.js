@@ -81,7 +81,6 @@
 				// views
 				renderTemplate: '/template'
 			},
-			templates = {},
 			currentSpan = 0,
 			paging = 0,
 			reAuthAttempts = 0,
@@ -249,125 +248,196 @@
 				for (var g in multis) {
 					if (multis[g]) {
 						// group data, lat/lng
-						drawGroup(multis[g][1], multis[g][0]);
+						var key = multis[g][0],
+							events = multis[g][1],
+							groupExists = _.some(circleData.groups, function (g) { return g._id === key; }),
+							group = {
+								_id: key,
+								circle: null,
+								events: events
+							};
+
+						if (groupExists) {
+							// group already exists, add each event to existing group. function will check if the event is already in the group or not before adding
+							for (var e in group.events) {
+								addToGroup(group._id, group.events[e]);
+							}
+						}
+						else {
+							// check to see if event exists with shared location
+							var eventSameLoc = _.find(circleData.events, function (e) { return createGroupKey(e) === key; });
+							if (eventSameLoc) {
+								transformToGroup(eventSameLoc);
+
+								for (var e in group.events) {
+									addToGroup(key, group.events[e]);
+								}
+							}
+							else {
+								drawGroup(group);
+							}
+						}
 					}
 				}
 			},
-			drawGroup = function (events, key) {
-				var groupExists = _.some(circleData.groups, function (g) { return g._id === key; }),
-					group = {
-						_id: null,
-						circle: null,
-						events: events
+			drawGroup = function (group) {
+				var radius = getEventCircleSize(_.max(group.events, function (e) { return e.users.length; })),
+					c = {
+						id: group._id,
+						isGroup: true,
+						strokeColor: "rgb(150, 150, 150)",
+						strokeOpacity: 1,
+						strokeWeight: radius / 10,
+						fillColor: "rgb(250, 250, 250)",
+						fillOpacity: 1,
+						map: gMap,
+						center: new google.maps.LatLng(group.events[0].place.loc.coordinates[1], group.events[0].place.loc.coordinates[0]),
+						radius: radius
 					};
 
-				// TODO check events in group for changes too?
-				if (!groupExists) {
-					var radius = getEventCircleSize(_.max(events, function (e) { return e.users.length; })),
-						c = {
-							id: key,
-							isGroup: true,
-							strokeColor: "rgb(150, 150, 150)",
-							strokeOpacity: 1,
-							strokeWeight: radius / 10,
-							fillColor: "rgb(250, 250, 250)",
-							fillOpacity: 1,
-							map: gMap,
-							center: new google.maps.LatLng(events[0].place.loc.coordinates[1], events[0].place.loc.coordinates[0]),
-							radius: radius
+				var circle = new google.maps.Circle(c);
+				group.circle = circle;
+
+				// events within group need to share group circle reference
+				for (var e in group.events) {
+					// reference to parent
+					group.events[e].group = group._id;
+				}
+
+				circleData.groups.push(group);
+
+				// init sizing
+				sizing.push({
+					id: group._id,
+					event: null,
+					waver: {
+						trigger: false,
+						sw: 1
+					}
+				});
+
+				google.maps.event.addListener(circle, 'mouseover', function (e) {
+					focusGroup.call(this, e);
+				});
+
+				google.maps.event.addListener(circle, 'mouseout', function (e) {
+					if (this !== selectedEvent) {
+						blurCircle.call(this, e);
+					}
+				});
+
+				google.maps.event.addListener(circle, 'click', function (e) {
+					clickGroup.call(this, e);
+				});
+			},
+			addToGroup = function (groupId, event) {
+				var existingGroup = _.find(circleData.groups, function (g) { return g._id === groupId; }),
+					eventExistsInGroup = _.some(existingGroup.events, function (e) { return e._id === event._id; });
+
+				if (!eventExistsInGroup) {
+					event.group = existingGroup._id;
+					existingGroup.events.push(event);
+				}
+			},
+			transformToGroup = function (event, callback) {
+				destroyCdata(event._id, false, function () {
+					var key = createGroupKey(event),
+						group = {
+							_id: key,
+							circle: null,
+							events: []
 						};
 
-					var circle = new google.maps.Circle(c);
-					group._id = key;
-					group.circle = circle;
+					group.events.push(event);
+					drawGroup(group);
 
-					// events within group need to share group circle reference
-					for (var e in group.events) {
-						// reference to parent
-						group.events[e].group = key;
+					if (callback) {
+						callback(key);
 					}
+				});
+			},
+			transformToEvent = function (group, callback) {
+				var event = group.events[0];
 
-					circleData.groups.push(group);
+				// remove reference to parent group
+				delete event.group;
 
-					// init sizing
-					sizing.push({
-						id: key,
-						event: null,
-						waver: {
-							trigger: false,
-							sw: 1
-						}
-					});
+				// remove group circle
+				destroyCdata(group._id, true, function () {
+					drawEvent(event);
 
-					google.maps.event.addListener(circle, 'mouseover', function (e) {
-						focusGroup.call(this, e);
-					});
-
-					google.maps.event.addListener(circle, 'mouseout', function (e) {
-						if (this !== selectedEvent) {
-							blurCircle.call(this, e);
-						}
-					});
-
-					google.maps.event.addListener(circle, 'click', function (e) {
-						clickGroup.call(this, e);
-					});
-				}
+					if (callback) {
+						callback(key);
+					}
+				});
 			},
 			drawEvents = function (data) {
 				for (var d in data) {
-					drawEvent(data[d]);
+					var key = createGroupKey(data[d]),
+					existingEvent = _.find(circleData.events, function (e) { return e._id === data[d]._id; }),
+					existingGroup = _.find(circleData.groups, function (g) { return g._id === key; }),
+					eventSameLoc = _.find(circleData.events, function (e) { return e._id !== data[d]._id && createGroupKey(e) === key; });
+
+					if (!existingEvent && !existingGroup) {
+						drawEvent(data[d]);
+					}
+					else if (existingGroup) {
+						// function will check if event exists in the group before adding
+						addToGroup(key, data[d]);
+					}
+					else if (eventSameLoc) {
+						transformToGroup(eventSameLoc, function (newGroupId) {
+							addToGroup(newGroupId, data[d]);
+						});
+					}
 				}
 			},
 			drawEvent = function (event) {
-				// only draw event if it is in the selected time window and isn't already in cdata
-				if (withinSelectedSpan(event) && !getCdById(event._id)) {
-					var colorArray = colorByTime(event[event.intensity_variable]),
-						circleSize = getEventCircleSize(event),
-						c = {
-							id: event._id,
-							strokeColor: arrayToRGB(getShade(colorArray, -20)),
-							strokeOpacity: 1,
-							strokeWeight: circleSize / 10,
-							fillColor: arrayToRGB(colorArray),
-							fillOpacity: settings.blurOpacity,
-							map: gMap,
-							center: new google.maps.LatLng(event.place.loc.coordinates[1], event.place.loc.coordinates[0]),
-							radius: circleSize
-						};
+				var colorArray = colorByTime(event[event.intensity_variable]),
+					circleSize = getEventCircleSize(event),
+					c = {
+						id: event._id,
+						strokeColor: arrayToRGB(getShade(colorArray, -20)),
+						strokeOpacity: 1,
+						strokeWeight: circleSize / 10,
+						fillColor: arrayToRGB(colorArray),
+						fillOpacity: settings.blurOpacity,
+						map: gMap,
+						center: new google.maps.LatLng(event.place.loc.coordinates[1], event.place.loc.coordinates[0]),
+						radius: circleSize
+					};
 
-					var circle = new google.maps.Circle(c);
+				var circle = new google.maps.Circle(c);
 
-					event.color = colorArray;
-					event.circle = circle;
-					circleData.events.push(event);
+				event.color = colorArray;
+				event.circle = circle;
+				circleData.events.push(event);
 
-					// init sizing
-					sizing.push({
-						id: circle.id,
-						event: null,
-						waver: {
-							trigger: false,
-							sw: 1
-						}
-					});
+				// init sizing
+				sizing.push({
+					id: circle.id,
+					event: null,
+					waver: {
+						trigger: false,
+						sw: 1
+					}
+				});
 
-					circleSizeTo(circle, circleSize, 1.2, 0.9);
+				circleSizeTo(circle, circleSize, 1.2, 0.9);
 
-					google.maps.event.addListener(circle, 'mouseover', function (e) {
-						focusCircle.call(this, e);
-					});
+				google.maps.event.addListener(circle, 'mouseover', function (e) {
+					focusCircle.call(this, e);
+				});
 
-					google.maps.event.addListener(circle, 'mouseout', function (e) {
-						if (this !== selectedEvent) {
-							blurCircle.call(this, e);
-						}
-					});
+				google.maps.event.addListener(circle, 'mouseout', function (e) {
+					if (this !== selectedEvent) {
+						blurCircle.call(this, e);
+					}
+				});
 
-					google.maps.event.addListener(circle, 'click', function (e) {
-						circleClick.call(this, e);
-					});
-				}
+				google.maps.event.addListener(circle, 'click', function (e) {
+					circleClick.call(this, e);
+				});
 			},
 			offsetCenter = function (latlng, offsetx, offsety) {
 
@@ -571,6 +641,10 @@
 			arrayToRGB = function (c) {
 				return String.format("rgb({0}, {1}, {2})", c[0], c[1], c[2]);
 			},
+			createGroupKey = function (event) {
+				var loc = event.loc.coordinates;
+				return String.format("{0},{1}", loc[0], loc[1]);
+			},
 			// map API calls
 			applySearchHandlers = function () {
 				var searches = $('.map-search');
@@ -633,12 +707,10 @@
 
 				// update data every 500 seconds
 				window.setInterval(function () {
-					// only load new events if detail is closed (it closes it automatically otherwise)
-					refreshCData();
-					loadEventsInSpan(null, true);
+					loadEventsInSpan();
 				}, 50000);
 			},
-			loadEventsInSpan = function (callback, keepOld) {
+			loadEventsInSpan = function (callback) {
 				var bounds = gMap.getBounds(),
 					square = [
 						[bounds.wa.j, bounds.Ea.j],
@@ -658,41 +730,39 @@
 					},
 					success: function (response) {
 						if (response.success) {
-							var ids = _.map(response.body, function (e) { return e._id; }),
-								grouped = {};
-
-							// group by location
-							for (var e in response.body) {
-								var loc = response.body[e].loc.coordinates,
-									key = String.format("{0},{1}", loc[0], loc[1]),
-									existing = grouped[key];
-
-								if (existing) {
-									existing.push(response.body[e]);
-								}
-								else {
-									grouped[key] = [];
-									grouped[key].push(response.body[e]);
-								}
-							}
-
-							// wipe cdata that is not returned by query
-							if (!keepOld) {
-								cleanCData();
-							}
-
-							// draw returned data, add to cdata
-							drawGroupedData(grouped);
-
-							if (callback) {
-								callback(response.body);
-							}
+							eventsLoaded(response, callback);
 						}
 						else if (response.statusCode === 401) {
 							reAuthenticate(loadEventsInSpan);
 						}
 					}
 				});
+			},
+			eventsLoaded = function (response, callback) {
+				var ids = _.map(response.body, function (e) { return e._id; }),
+					grouped = {};
+
+				// convert to grouped format, group by location
+				for (var e in response.body) {
+					var key = createGroupKey(response.body[e]),
+						existing = grouped[key];
+
+					if (existing) {
+						existing.push(response.body[e]);
+					}
+					else {
+						grouped[key] = [];
+						grouped[key].push(response.body[e]);
+					}
+				}
+
+				// wipe cdata that is not returned by query
+				cleanCData(ids);
+				drawGroupedData(grouped);
+
+				if (callback) {
+					callback(response.body);
+				}
 			},
 			refreshCData = function (serverUpdate, callback) { // TODO: test!
 				var now = moment(),
@@ -747,18 +817,34 @@
 					}
 				}
 			},
-			cleanCData = function () {
+			cleanCData = function (keepIds) {
 				// destroy old event sizing handlers
 				destroySizing();
 
-				var eventIds = _.map(circleData.events, function (e) { return e._id; });
-				for (var e in eventIds) {
-					destroyCdata(eventIds[e]);
+				for (var e in circleData.events) {
+					var eventGone = !_.some(keepIds, function (keepId) { return circleData.events[e] === keepId; });
+					if (eventGone) {
+						destroyCdata(circleData.events[e]._id);
+					}
 				}
 
-				var groupIds = _.map(circleData.groups, function (e) { return e._id; });
-				for (var g in groupIds) {
-					destroyCdata(groupIds[g], true);
+				//var groupIds = _.map(circleData.groups, function (e) { return e._id; });
+				for (var g in circleData.groups) {
+					for (var e in circleData.groups[g].events) {
+						var eventGone = !_.some(keepIds, function (keepId) { return circleData.groups[g].events[e]._id === keepId; });
+						if (eventGone) {
+							// splice event from group
+							circleData.groups[g].events.splice(e, 1);
+						}
+					}
+					if (circleData.groups[g].events.length === 0) {
+						// if group is empty, destroy
+						destroyCdata(groupIds[g], true);
+					}
+					else if (circleData.groups[g].events.length === 1) {
+						// if group has one event left, transform to event
+						transformToEvent(circleData.groups[g])
+					}
 				}
 			},
 			destroySizing = function () {
@@ -1044,13 +1130,18 @@
 
 						// previous page coming back
 						var prevPage = overlayBody.find(String.format('.page.page{0}', paging + dir));
-						prevPage.css('float', 'left');
+						prevPage.css({
+							display: 'block',
+							float: 'left',
+						});
 						prevPage.animate(showProps, speed);
 					}
 					else {
 						// user is navigating to the next page, hide prev page, create new
 						lastPage.css('float', 'left'); // swipe <---
-						lastPage.animate(hideProps, speed);
+						lastPage.animate(hideProps, speed, function () {
+							lastPage.css('display', 'none');
+						});
 						var newPage = $(String.format('<div class="page page{0}"></div>', paging + dir));
 						overlayBody.append(newPage);
 						newPage.animate(showProps, speed);
@@ -1154,7 +1245,7 @@
 
 				delete model.circle; // circular reference.. PUN! <- looking at this weeks later made me lol
 
-				getTemplate('event-detail', model, false, function (template) {
+				getTemplate('event-detail', model, function (template) {
 					div.html(template);
 
 					var body = div.find('.event-body'),
@@ -1226,7 +1317,7 @@
 					var page = navigatePage(0);
 					overlayGoing.hide();
 
-					getTemplate('main-menu', null, true, function (template) {
+					getTemplate('main-menu', null, function (template) {
 						page.html(template);
 
 						applyMenuHandlers();
@@ -1296,7 +1387,7 @@
 			////// create event
 			createEventHandler = function (e) {
 				getAllEventTags(function (tags) {
-					getTemplate("create-event", tags, true, function (html) {
+					getTemplate("create-event", tags, function (html) {
 						var page = navigatePage(1);
 						page.html(html);
 						bindUi(page);
@@ -1328,10 +1419,21 @@
 						if (response.success) {
 							var newEvent = response.body[0];
 
-							drawEvent(newEvent);
-
-							var cd = getCdById(newEvent._id);
-							circleClick.call(cd.circle);
+							loadEventsInSpan(function () {
+								// check if new event is in cData, if so, trigger click
+								var cd = getCdById(newEvent._id);
+								if (cd) {
+									circleClick.call(cd.circle);
+								}
+								if (!cd) {
+									cd = getCdByIdInGroup(newEvent._id);
+									var circle = _.find(circleData.groups, function (g) { return g._id === cd.group; }).circle;
+									clickGroup.call(circle);
+									page = navigatePage(0);
+									setEventDetail(cd, page);
+									// TODO - go straight to event detail
+								}
+							});
 						}
 						else {
 							var errorHtml = "";
@@ -1365,7 +1467,7 @@
 							var page = navigatePage(1);
 							placeSelect.val('');
 							placeSelect.selectmenu('refresh');
-							getTemplate('add-user-place', null, true, function (template) {
+							getTemplate('add-user-place', null, function (template) {
 								page.html(template);
 								page.find('input[type=button]').off('click').on('click', function (e) {
 									addUserPlaceHandler(function (op) {
@@ -1476,7 +1578,7 @@
 								}
 							}
 						}
-						getTemplate("edit-event", tags, false, function (html) {
+						getTemplate("edit-event", tags, function (html) {
 							// load in user's places
 							getUserPlaces(function (places) {
 								page = navigatePage(1);
@@ -1510,8 +1612,7 @@
 					success: function (response) {
 						if (response.success) {
 							manageEventsHandler(-1);
-							// TODO: check if it needs to join a group
-							refreshCircle(response.body);
+							loadEventsInSpan();
 						}
 						else {
 							var errorHtml = "";
@@ -1541,6 +1642,7 @@
 					success: function (response) {
 						if (response.success) {
 							manageEventsHandler(-1);
+							loadEventsInSpan();
 						}
 						else {
 							var errorHtml = "";
@@ -1581,7 +1683,7 @@
 				});
 			},
 			setPastEventDetail = function (event, div) {
-				getTemplate('past-event-detail', event, false, function (template) {
+				getTemplate('past-event-detail', event, function (template) {
 					div.html(template);
 					bindUi(div);
 
@@ -1633,7 +1735,7 @@
 				});
 			},
 			addReviewHandler = function (event) {
-				getTemplate('add-review', event, true, function (html) {
+				getTemplate('add-review', event, function (html) {
 					var page = navigatePage(1);
 					page.append(html);
 					bindUi(page);
@@ -1699,7 +1801,7 @@
 			},
 			setFiltersView = function () {
 				var tags = getAllEventTags(function (tags) {
-					getTemplate('set-filters', tags, false, function (template) {
+					getTemplate('set-filters', tags, function (template) {
 						overlayGoing.hide();
 						showOverlay("Filter Events");
 						var page = navigatePage(0);
@@ -1753,30 +1855,22 @@
 				});
 			},
 			// views
-			getTemplate = function (template, modelData, cache, callback) {
+			getTemplate = function (template, modelData, callback) {
 				if (modelData) {
 					modelData = JSON.stringify(modelData);
 				}
-				if (!templates[template]) {
-					// template hasn't been loaded by server yet, load and cache locally
-					$.ajax({
-						url: urls.renderTemplate,
-						type: 'GET',
-						data: { template: template, model: modelData },
-						success: function (html) {
-							if (cache) {
-								templates[template] = html;
-							}
-							callback(html);
-						}
-					});
-				}
-				else {
-					callback(templates[template]);
-				}
+
+				$.ajax({
+					url: urls.renderTemplate,
+					type: 'GET',
+					data: { template: template, model: modelData },
+					success: function (html) {
+						callback(html);
+					}
+				});
 			},
 			renderEventList = function (eventData, callback) {
-				getTemplate("event-list-item", null, true, function (template) {
+				getTemplate("event-list-item", null, function (template) {
 					var div = $('<div class="event-list"></div>'),
 						formatted = "";
 					for (var event in eventData) {
@@ -1815,10 +1909,10 @@
 					else if (p === "place") {
 						model[p] = model[p]._id;
 					}
-					
+
 					if (input.is('input[type="radio"]')) {
 						input.removeAttr('checked');
-						input.each(function() {
+						input.each(function () {
 							var radio = $(this);
 							if (radio.val() === model[p]) {
 								radio.attr('checked', 'checked');
