@@ -81,10 +81,22 @@
 				// views
 				renderTemplate: '/template'
 			},
+			pageNames = {
+				eventDetail: 'event-detail',
+				eventGroupDetail: 'event-group-detail',
+				createEvent: 'create-event',
+				editEvent: 'edit-event',
+				addPlace: 'add-place',
+				eventList: 'event-list',
+				pastEventList: 'past-event-list',
+				pastEventDetail: 'past-event-detail',
+				addReview: 'add-review',
+				filters: 'filters',
+				menu: 'menu'
+			},
 			currentSpan = 0,
 			paging = 0,
 			reAuthAttempts = 0,
-			sizing = [],
 			circleData = {
 				events: [],
 				groups: []
@@ -130,8 +142,7 @@
 				});
 			},
 			circleSizeTo = function (el, targetSize, rate, secondRate, interval, callback) {
-				var ref = _.find(sizing, function (s) { return s.id === el.id; });
-				ref.event = window.setInterval(function () {
+				el.sizing = window.setInterval(function () {
 					var newRad = Math.round(rate * el.radius),
 						increase = newRad - el.radius;
 
@@ -150,8 +161,7 @@
 
 					if (newRad === targetSize) {
 						// circle hit requested size exactly
-						window.clearInterval(ref.event);
-						ref.event = null;
+						clearSizing(el);
 
 						if (callback) {
 							callback();
@@ -161,16 +171,10 @@
 						var tooFar = rate > 1 ? (el.radius > targetSize) : (el.radius < targetSize);
 
 						if (tooFar) {
-							window.clearInterval(ref.event);
-							ref.event = null;
+							clearSizing(el);
 							// circle has gone above requested size, scale back
-							if (!ref.waver.trigger) {
-								if (secondRate) {
-									circleSizeTo(el, targetSize, secondRate, null, 100, callback);
-								}
-								else if (callback) {
-									callback();
-								}
+							if (secondRate) {
+								circleSizeTo(el, targetSize, secondRate, null, 100, callback);
 							}
 							else if (callback) {
 								callback();
@@ -179,52 +183,24 @@
 					}
 				}, interval ? interval : 50);
 			},
-			setWaver = function (el) {
-				// init if not there
-				var ref = _.find(sizing, function (s) { return s.id === el.id; });
-				ref.waver.trigger = true;
+			circleHover = function (el) {
+				if (!el.sizing) {
+					var cd = getCdById(el.id, el.isGroup),
+						originalSize = el.isGroup ? getEventCircleSize(_.max(group.events, function (e) { return e.users.length; })) : getEventCircleSize(cd),
+						growTo = el.radius + (el.radius / 10);
 
-				if (ref.waver.event) {
-					window.clearInterval(ref.waver.event);
-					ref.waver.event = null;
-				}
-				var sizingRunning = false;
-				ref.waver.event = window.setInterval(function () {
-					if (!sizingRunning && !ref.event) {
-						sizingRunning = true;
-
-						var sizeTo = el.radius + (ref.waver.sw * (el.radius / 20)),
-							rate = ref.waver.sw === 1 ? 1.01 : 0.99;
-
-						circleSizeTo(el, sizeTo, rate, null, 100, function () {
-							ref.waver.sw = ref.waver.sw > 0 ? -1 : 1;
-							sizingRunning = false;
+					circleSizeTo(el, growTo, 1.3, null, 100, function () {
+						circleSizeTo(el, originalSize, .9, 1.1, 100, function () {
+							clearSizing(el);
 						});
-					}
-				}, 100);
+					});
+				}
 			},
-			clearSizing = function (id, defaultSize) {
-				var ref = _.find(sizing, function (s) { return s.id === id; });
-
-				if (defaultSize) {
-					// set circle to default size
-					var cd = getCdById(id);
-					if (!cd) {
-						cd = getCdById(id, true);
-					}
-					if (cd) {
-						cd.circle.radius = cd.users.length * 10;
-					}
-				}
-				// clear sizeTo
-				if (ref.event) {
-					window.clearInterval(ref.event);
-					ref.event = null;
-				}
-				// clear waver
-				if (ref.waver.event) {
-					window.clearInterval(ref.waver.event);
-					ref.waver.event = null;
+			clearSizing = function (circle) {
+				// clear sizing events
+				if (circle.sizing) {
+					window.clearInterval(circle.sizing);
+					circle.sizing = false;
 				}
 			},
 			drawGroupedData = function (data) {
@@ -284,6 +260,7 @@
 				var radius = getEventCircleSize(_.max(group.events, function (e) { return e.users.length; })),
 					c = {
 						id: group._id,
+						sizing: false,
 						isGroup: true,
 						strokeColor: "rgb(150, 150, 150)",
 						strokeOpacity: 1,
@@ -306,19 +283,7 @@
 
 				circleData.groups.push(group);
 
-				// init sizing
-				sizing.push({
-					id: group._id,
-					event: null,
-					waver: {
-						trigger: false,
-						sw: 1
-					}
-				});
-
-				google.maps.event.addListener(circle, 'mouseover', function (e) {
-					focusGroup.call(this, e);
-				});
+				google.maps.event.addListener(circle, 'mouseover', circleHover);
 
 				google.maps.event.addListener(circle, 'mouseout', function (e) {
 					if (this !== selectedEvent) {
@@ -397,6 +362,7 @@
 					circleSize = getEventCircleSize(event),
 					c = {
 						id: event._id,
+						sizing: false,
 						strokeColor: arrayToRGB(getShade(colorArray, -20)),
 						strokeOpacity: 1,
 						strokeWeight: circleSize / 10,
@@ -408,22 +374,6 @@
 					};
 
 				var circle = new google.maps.Circle(c);
-
-				event.color = colorArray;
-				event.circle = circle;
-				circleData.events.push(event);
-
-				// init sizing
-				sizing.push({
-					id: circle.id,
-					event: null,
-					waver: {
-						trigger: false,
-						sw: 1
-					}
-				});
-
-				circleSizeTo(circle, circleSize, 1.2, 0.9);
 
 				google.maps.event.addListener(circle, 'mouseover', function (e) {
 					focusCircle.call(this, e);
@@ -438,6 +388,12 @@
 				google.maps.event.addListener(circle, 'click', function (e) {
 					circleClick.call(this, e);
 				});
+
+				circleSizeTo(circle, circleSize, 1.2, 0.9);
+
+				event.color = colorArray;
+				event.circle = circle;
+				circleData.events.push(event);
 			},
 			offsetCenter = function (latlng, offsetx, offsety) {
 
@@ -466,15 +422,6 @@
 				GoogleMap.setCenter(newCenter);
 			},
 			// circle utility
-			focusGroup = function (e) {
-				var circle = this,
-					ref = getCdById(circle.id, true),
-					defaultSize = getEventCircleSize(_.max(ref.events, function (e) { return e.users.length; }));
-
-				if (defaultSize >= 20) {
-					setWaver(circle);
-				}
-			},
 			clickGroup = function (e) {
 				var clicked = this,
 					ref = getCdById(clicked.id, true);
@@ -493,27 +440,12 @@
 
 				overlayGoing.hide();
 				showOverlay(ref.events[0].place.name);
-				var page = navigatePage(0);
+				var page = navigatePage(0, pageNames.eventGroupDetail);
 				setGroupEventList(ref.events, page);
-			},
-			refreshCircle = function (id) {
-				getUserEvent(id, function (event) {
-					if (getCdById(event._id)) {
-						// destroy old event sizing handlers
-						destroySizing();
-						destroyCdata(event._id, false, function () {
-							drawEvent(event);
-						});
-					}
-					else {
-						drawEvent(event);
-					}
-				});
 			},
 			focusCircle = function (e) {
 				var circle = this,
-					ref = getCdById(circle.id),
-					defaultSize = getEventCircleSize(ref);
+					ref = getCdById(circle.id, circle.isGroup);
 
 				this.setOptions({
 					zIndex: 1,
@@ -521,9 +453,7 @@
 					fillColor: arrayToRGB(getShade(ref.color, 20)),
 				});
 
-				if (defaultSize >= 20) {
-					setWaver(circle);
-				}
+				circleHover(circle);
 			},
 			highlightCircle = function (e) {
 				this.setOptions({
@@ -532,20 +462,10 @@
 			},
 			blurCircle = function (e) {
 				var circle = this,
-					ref = circle.isGroup ? ref = getCdById(circle.id, true) : ref = getCdById(circle.id),
-					sizeRef = _.find(sizing, function (s) { return s.id === circle.id; }),
+					ref = getCdById(circle.id, circle.isGroup),
 					defaultSize = circle.isGroup ? getEventCircleSize(_.max(ref.events, function (e) { return e.users.length; })) : getEventCircleSize(ref);
 
-				if (sizeRef) {
-					window.clearInterval(sizeRef.event);
-					sizeRef.event = null;
-
-					// stop waver
-					if (sizeRef.waver) {
-						window.clearInterval(sizeRef.waver.event);
-						sizeRef.waver.event = null;
-					}
-				}
+				clearSizing(circle)
 
 				// set back to default
 				if (circle.isGroup) {
@@ -582,7 +502,7 @@
 				focusCircle.call(this);
 				highlightCircle.call(this);
 				showOverlay(ref.name);
-				var page = navigatePage(0);
+				var page = navigatePage(0, pageNames.eventDetail);
 				setEventDetail(ref, page);
 			},
 			getCdById = function (id, isGroup) {
@@ -818,11 +738,8 @@
 				}
 			},
 			cleanCData = function (keepIds) {
-				// destroy old event sizing handlers
-				destroySizing();
-
 				for (var e in circleData.events) {
-					var eventGone = !_.some(keepIds, function (keepId) { return circleData.events[e] === keepId; });
+					var eventGone = !_.some(keepIds, function (keepId) { return circleData.events[e]._id === keepId; });
 					if (eventGone) {
 						destroyCdata(circleData.events[e]._id);
 					}
@@ -844,20 +761,6 @@
 					else if (circleData.groups[g].events.length === 1) {
 						// if group has one event left, transform to event
 						transformToEvent(circleData.groups[g])
-					}
-				}
-			},
-			destroySizing = function () {
-				if (sizing.length > 0) {
-					for (var s in sizing) {
-						// sizeTo event?
-						if (sizing[s].event) {
-							window.clearTimeout(sizing[s].event);
-						}
-						// waver event
-						if (sizing[s].waver.event) {
-							window.clearTimeout(sizing[s].waver.event);
-						}
 					}
 				}
 			},
@@ -885,7 +788,7 @@
 					}
 					circleData.events.splice(index, 1);
 				}
-
+				clearSizing(cd.circle);
 				circleSizeTo(cd.circle, 0, 0.7, null, 50, function () {
 					// blur
 					if (selectedEvent && cd && selectedEvent === cd.circle) {
@@ -1094,7 +997,7 @@
 					overlayBody.find('.page').remove();
 				});
 			},
-			navigatePage = function (dir) {
+			navigatePage = function (dir, newPageName) {
 				var lastPage = overlayBody.find('.page.page' + paging),
 					showProps = {
 						width: '100%',
@@ -1111,14 +1014,22 @@
 				}
 
 				if (dir === 0) {
-					var newPage = $(String.format('<div class="page page{0}"></div>', 0));
-					// clear all pages
-					overlayBody.find('.page').remove();
-					// append new base page
-					overlayBody.append(newPage);
-					newPage.css('float', 'right');
-					paging = 0;
-					overlayBody.find('.page.page' + paging).animate(showProps, speed);
+					var existingPage = $('.page.page0'),
+						newPage = $(String.format('<div class="page page{0}" data-name="{1}"></div>', 0, newPageName));
+
+					if (existingPage.length && existingPage.data('name') === newPageName) {
+						// clicked menu or something when it's current page
+						exitOverlay();
+					}
+					else {
+						// clear all pages
+						overlayBody.find('.page').remove();
+						// append new base page
+						overlayBody.append(newPage);
+						newPage.css('float', 'right');
+						paging = 0;
+						overlayBody.find('.page.page' + paging).animate(showProps, speed);
+					}
 				}
 				else {
 					if (dir < 0) {
@@ -1142,7 +1053,7 @@
 						lastPage.animate(hideProps, speed, function () {
 							lastPage.css('display', 'none');
 						});
-						var newPage = $(String.format('<div class="page page{0}"></div>', paging + dir));
+						var newPage = $(String.format('<div class="page page{0}" data-name="{1}"></div>', paging + dir, newPageName));
 						overlayBody.append(newPage);
 						newPage.animate(showProps, speed);
 					}
@@ -1176,7 +1087,7 @@
 						var div = $(this),
 							eventId = div.data('id'),
 							eventRef = getCdByIdInGroup(eventId),
-							page = navigatePage(0);
+							page = navigatePage(0, pageNames.eventDetail);
 
 						setEventDetail(eventRef, page);
 					});
@@ -1211,10 +1122,8 @@
 								overlayGoing.removeClass('check');
 								overlayGoing.removeClass('green');
 								overlayGoing.addClass('unchecked');
-								clearSizing(cData._id);
-								circleSizeTo(cData.circle, size, 0.9, null, 50, function () {
-									setWaver(cData.circle);
-								});
+								clearSizing(cData.circle);
+								circleSizeTo(cData.circle, size, 0.9, null, 50);
 								numAttending.html(parseInt(cData.users.length, 10));
 							}
 						});
@@ -1229,10 +1138,8 @@
 								overlayGoing.removeClass('unchecked');
 								overlayGoing.addClass('check');
 								overlayGoing.addClass('green');
-								clearSizing(cData._id);
-								circleSizeTo(cData.circle, size, 1.1, null, 50, function () {
-									setWaver(cData.circle);
-								});
+								clearSizing(cData.circle);
+								circleSizeTo(cData.circle, size, 1.1, null, 50);
 								numAttending.html(parseInt(cData.users.length, 10));
 							}
 						});
@@ -1314,7 +1221,7 @@
 				if (user) {
 					var username = user.first_name + " " + (user.last_name && user.last_name.length > 0 ? user.last_name.substring(0, 1) : "");
 					showOverlay(username);
-					var page = navigatePage(0);
+					var page = navigatePage(0, pageNames.menu);
 					overlayGoing.hide();
 
 					getTemplate('main-menu', null, function (template) {
@@ -1388,7 +1295,7 @@
 			createEventHandler = function (e) {
 				getAllEventTags(function (tags) {
 					getTemplate("create-event", tags, function (html) {
-						var page = navigatePage(1);
+						var page = navigatePage(1, pageNames.createEvent);
 						page.html(html);
 						bindUi(page);
 
@@ -1429,7 +1336,7 @@
 									cd = getCdByIdInGroup(newEvent._id);
 									var circle = _.find(circleData.groups, function (g) { return g._id === cd.group; }).circle;
 									clickGroup.call(circle);
-									page = navigatePage(0);
+									page = navigatePage(0, pageNames.eventDetail);
 									setEventDetail(cd, page);
 									// TODO - go straight to event detail
 								}
@@ -1464,7 +1371,7 @@
 				placeSelect.selectmenu({
 					change: function () {
 						if ($(this).val() === "new") {
-							var page = navigatePage(1);
+							var page = navigatePage(1, pageNames.addPlace);
 							placeSelect.val('');
 							placeSelect.selectmenu('refresh');
 							getTemplate('add-user-place', null, function (template) {
@@ -1552,7 +1459,7 @@
 							var list = $('<div class="event-list"></div>');
 
 							list.html(html);
-							var page = navigatePage(dir);
+							var page = navigatePage(dir, pageNames.eventList);
 							page.html(list);
 
 							// event click needs to load event detail
@@ -1560,7 +1467,7 @@
 						});
 					}
 					else {
-						var page = navigatePage(dir);
+						var page = navigatePage(dir, pageNames.eventList);
 						page.html('<p>You have not created any events.</p>');
 					}
 				});
@@ -1581,7 +1488,7 @@
 						getTemplate("edit-event", tags, function (html) {
 							// load in user's places
 							getUserPlaces(function (places) {
-								page = navigatePage(1);
+								page = navigatePage(1, pageNames.editEvent);
 								page.html(html);
 
 								var select = page.find('select[name="place"]');
@@ -1662,7 +1569,7 @@
 				getUserPastEvents(function (pastEvents) {
 					if (pastEvents.length > 0) {
 						renderEventList(pastEvents, function (html) {
-							var page = navigatePage(nav);
+							var page = navigatePage(nav, pageNames.pastEventList);
 							page.append(html);
 
 							// event click needs to load event detail
@@ -1670,14 +1577,14 @@
 								var eventId = $(this).data('id');
 
 								getUserEvent(eventId, function (event) {
-									page = navigatePage(1);
+									page = navigatePage(1, pageNames.pastEventDetail);
 									setPastEventDetail(event, page);
 								})
 							});
 						});
 					}
 					else {
-						var page = navigatePage(nav);
+						var page = navigatePage(nav, pageNames.pastEventList);
 						page.html('<p>You have not gone to any events.</p>');
 					}
 				});
@@ -1736,7 +1643,7 @@
 			},
 			addReviewHandler = function (event) {
 				getTemplate('add-review', event, function (html) {
-					var page = navigatePage(1);
+					var page = navigatePage(1, pageNames.addReview);
 					page.append(html);
 					bindUi(page);
 
@@ -1804,7 +1711,7 @@
 					getTemplate('set-filters', tags, function (template) {
 						overlayGoing.hide();
 						showOverlay("Filter Events");
-						var page = navigatePage(0);
+						var page = navigatePage(0, pageNames.filters);
 						page.html(template);
 
 						page.find('.tag').each(function () {
