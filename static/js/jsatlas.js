@@ -60,7 +60,8 @@
 				// map
 				mapPlaces: '/map/places',
 				// places
-				placesSearch: '/places',
+				place: '/places',
+				placesPastEvents: '/places/pastEvents',
 				placesNames: '/places/names',
 				userPlaces: '/places/user',
 				searchAllPlaces: '/places/searchAll',
@@ -91,6 +92,7 @@
 				pastEventList: 'past-event-list',
 				pastEventDetail: 'past-event-detail',
 				addReview: 'add-review',
+				placeDetail: 'place-detail',
 				filters: 'filters',
 				menu: 'menu'
 			},
@@ -1017,7 +1019,7 @@
 					var existingPage = $('.page.page0'),
 						newPage = $(String.format('<div class="page page{0}" data-name="{1}"></div>', 0, newPageName));
 
-					if (existingPage.length && existingPage.data('name') === newPageName) {
+					if (existingPage.length && (existingPage.data('name') != pageNames.eventDetail && existingPage.data('name') === newPageName)) {
 						// clicked menu or something when it's current page
 						exitOverlay();
 					}
@@ -1150,7 +1152,7 @@
 				var circle = event.group ? _.find(circleData.groups, function (g) { return g._id === event.group; }).circle : event.circle,
 					model = jQuery.extend(true, {}, event);
 
-				delete model.circle; // circular reference.. PUN! <- looking at this weeks later made me lol
+				delete model.circle; // circular reference.. PUN!
 
 				getTemplate('event-detail', model, function (template) {
 					div.html(template);
@@ -1183,8 +1185,17 @@
 					when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
 					when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
 					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
+					where.data('id', event.place._id);
 					where.data('created-by', event.created_by);
 					what.html(event.desc);
+
+					// click event info goes to place detail
+					where.off('click').on('click', function (e) {
+						var placeId = $(this).data('id'),
+							page = navigatePage(0, pageNames.placeDetail);
+
+						setPlaceDetail(placeId, page);
+					});
 
 					// going checkbox event handlers
 					overlayGoing.show();
@@ -1209,6 +1220,43 @@
 					// center the event's circle
 					gMap.setCenter(circle.center);
 					gMap.panBy(overlay.width() / 2, 0);
+				});
+			},
+			//// place detail
+			setPlaceDetail = function (id, div) {
+				getTemplate('place-detail', null, function (template) {
+					// get place
+					$.get(urls.place, { placeId: id }, function (response) {
+						if (response.success) {
+							var place = response.body;
+							div.html(template);
+							showOverlay(place.name);
+							
+							var where = div.find('.where'),
+								what = div.find('.what'),
+								pastEvents = div.find('.past-events');
+
+							// apply event detail to template
+							where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', place.name, place.vicinity));
+							what.html(place.desc);
+
+							$.get(urls.placesPastEvents, { placeId: id }, function (response) {
+								if (response.success) {
+									renderEventList(response.body, function (html) {
+										pastEvents.html(html);
+										pastEvents.find('.event').off('click').on('click', function (e) {
+											var eventId = $(this).data('id'),
+												page = navigatePage(1, pageNames.pastEventList),
+												event = _.find(response.body, function(e) { return e._id == eventId; });
+
+											showOverlay(event.name);
+											setPastEventDetail(event, page);
+										});
+									});
+								}
+							});
+						}
+					});
 				});
 			},
 			//// main menu
