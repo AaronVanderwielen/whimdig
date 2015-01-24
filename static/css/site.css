@@ -450,6 +450,31 @@ input[type="button"]:hover {
   display: table;
   clear: both;
 }
+.detail-overlay .overlay-body .event-detail .chat .fb-photo {
+  float: left;
+  height: 50px;
+  margin: 0 10px 10px 0;
+}
+.detail-overlay .overlay-body .event-detail .chat .chat-input {
+  margin: 5px 0 0 0;
+}
+.detail-overlay .overlay-body .event-detail .chat .chat-list {
+  height: 450px;
+  border: 1px solid #0094ff;
+  border-radius: 5px;
+  overflow-y: scroll;
+}
+.detail-overlay .overlay-body .event-detail .chat .chat-list .chat-msg {
+  padding: 5px 0 0 5px;
+}
+.detail-overlay .overlay-body .event-detail .chat .chat-list .chat-msg .chat-photo {
+  float: left;
+  height: 50px;
+  margin: 0 10px 0 0;
+}
+.detail-overlay .overlay-body .event-detail .chat .chat-list .chat-msg .message-text {
+  padding: 2px 0 2px 0;
+}
 .detail-overlay .overlay-body .main-menu .map-search {
   margin-bottom: 5px;
 }

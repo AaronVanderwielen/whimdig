@@ -52,8 +52,8 @@ input[type="text"], textarea, select {
     border: 1px solid @blue;
 
     &.ui-corner-top {
-		border-radius: 5px 5px 0 0;
-		border-bottom: none;
+        border-radius: 5px 5px 0 0;
+        border-bottom: none;
     }
 
     .ui-icon {
@@ -80,15 +80,15 @@ input[type="text"], textarea, select {
         border-top: none;
 
         .ui-menu-item {
-			border-top: none;
-			border-right: none;
-			border-bottom: 1px solid @ui-element-accent;
-			border-left: none;
-			padding: 5px 10px;
+            border-top: none;
+            border-right: none;
+            border-bottom: 1px solid @ui-element-accent;
+            border-left: none;
+            padding: 5px 10px;
 
-			&.ui-state-focus {
-				margin: 0;
-			}
+            &.ui-state-focus {
+                margin: 0;
+            }
 
             &:last-child {
                 border-bottom: none;
@@ -148,7 +148,7 @@ button, input[type="button"] {
     .label {
         color: #005588;
         //padding: 0.4em 2.1em 0.4em 1em;
-		padding: 5px 10px;// 0.4em 2.1em 0.4em 1em;
+        padding: 5px 10px; // 0.4em 2.1em 0.4em 1em;
         //line-height: 1.4;
         //font-size: 1.1em;
         border: 1px solid #c5dbec;
@@ -169,7 +169,7 @@ button, input[type="button"] {
             display: block;
             padding: 10px;
             cursor: pointer;
-			border-bottom: 1px solid @ui-element;
+            border-bottom: 1px solid @ui-element;
 
             .glyph {
                 padding: 25px;
@@ -201,16 +201,16 @@ button, input[type="button"] {
             }
 
             &:hover {
-				background-color: @ui-element-accent;
+                background-color: @ui-element-accent;
 
                 .option-text, .glyph::before {
                     color: @blue-accent;
                 }
             }
 
-			&:last-child {
-				border-bottom: none;
-			}
+            &:last-child {
+                border-bottom: none;
+            }
         }
 
         .option::after {
@@ -220,7 +220,7 @@ button, input[type="button"] {
         }
     }
 
-	&:hover {
+    &:hover {
 
         .label {
             background: #d0e5f5;
@@ -588,7 +588,38 @@ button, input[type="button"] {
                 }
             }
 
-            .connections {
+            .chat {
+
+                .fb-photo {
+                    float: left;
+                    height: 50px;
+                    margin: 0 10px 10px 0;
+                }
+
+                .chat-input {
+                    margin: 5px 0 0 0;
+                }
+
+                .chat-list {
+                    height: 450px;
+                    border: 1px solid @blue;
+                    border-radius: 5px;
+                    overflow-y: scroll;
+
+                    .chat-msg {
+                        padding: 5px 0 0 5px;
+
+                        .chat-photo {
+                            float: left;
+                            height: 50px;
+                            margin: 0 10px 0 0;
+                        }
+
+                        .message-text {
+                            padding: 2px 0 2px 0;
+                        }
+                    }
+                }
             }
         }
 

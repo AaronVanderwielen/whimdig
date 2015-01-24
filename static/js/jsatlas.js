@@ -13,6 +13,8 @@
 (function ($, window) {
 	var jsAtlas = function (element) {
 		var obj = this,
+			socket,
+			socketId,
 			div = element,
 			gMap,
 			settings = {
@@ -108,6 +110,7 @@
 			datetimeDateFormat = 'MM/DD/YYYY',
 			datetimeStrictFormat = 'MM/DD/YYYY h:mm a',
 			timeFormat = 'h:mm tt',
+			fbPhotoUrl = "//graph.facebook.com/{0}/picture",
 			isMobileDevice = navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
 			// elements
 			container = $('.container'),
@@ -423,6 +426,46 @@
 
 				GoogleMap.setCenter(newCenter);
 			},
+			getBoundsSquare = function () {
+				var bounds = gMap.getBounds(),
+					startLat,
+					endLat,
+					startLng,
+					endLng;
+				//square = [
+				//[bounds.wa.j, bounds.Ea.j],
+				//[bounds.wa.j, bounds.Ea.k],
+				//[bounds.wa.k, bounds.Ea.k],
+				//[bounds.wa.k, bounds.Ea.j],
+				//[bounds.wa.j, bounds.Ea.j],
+				//]
+
+				// for some reason gMap is returning different property names over time
+				// so do it this way to be consistent
+				var i = 0;
+				for (var p in bounds) {
+					if (i === 0) {
+						startLat = bounds[p].j;
+						endLat = bounds[p].k;
+					}
+					else if (i === 1) {
+						startLng = bounds[p].j;
+						endLng = bounds[p].k;
+					}
+					else {
+						break;
+					}
+					i++;
+				}
+
+				return [
+					[startLat, startLng],
+					[startLat, endLng],
+					[endLat, endLng],
+					[endLat, startLng],
+					[startLat, startLng]
+				];
+			},
 			// circle utility
 			clickGroup = function (e) {
 				var clicked = this,
@@ -635,12 +678,13 @@
 			loadEventsInSpan = function (callback) {
 				var bounds = gMap.getBounds(),
 					square = [
-						[bounds.wa.j, bounds.Ea.j],
-						[bounds.wa.j, bounds.Ea.k],
-						[bounds.wa.k, bounds.Ea.k],
-						[bounds.wa.k, bounds.Ea.j],
-						[bounds.wa.j, bounds.Ea.j],
+						[bounds.va.j, bounds.Ca.j],
+						[bounds.va.j, bounds.Ca.k],
+						[bounds.va.k, bounds.Ca.k],
+						[bounds.va.k, bounds.Ca.j],
+						[bounds.va.j, bounds.Ca.j],
 					];
+				//]getBoundsSquare();
 
 				$.ajax({
 					url: urls.eventsForSpan,
@@ -1081,6 +1125,118 @@
 				return overlayBody.find('> .page.page' + paging);
 			},
 			//// event detail
+			setEventDetail = function (event, div) {
+				var circle = event.group ? _.find(circleData.groups, function (g) { return g._id === event.group; }).circle : event.circle,
+					model = jQuery.extend(true, {}, event);
+
+				delete model.circle; // circular reference.. PUN!
+
+				getTemplate('event-detail', model, function (template) {
+					div.html(template);
+
+					var body = div.find('.event-body'),
+						when = div.find('.when'),
+						where = div.find('.where'),
+						what = div.find('.what'),
+						connections = div.find('.connection-info'),
+						numAttending = connections.find('.num-attending'),
+						friendCount = connections.find('.friend-count'),
+						friendsList = connections.find('.friend-list'),
+						fbPhoto = div.find('.fb-photo'),
+						chatlist = div.find('.chat-list'),
+						chatbox = div.find('.chat-input');
+
+					// make sure cData.users exists
+					if (event.users) {
+						// initialize 'going' checkbox by checking if user is in event.users on client
+						if (_.some(event.users, function (u) { return u === user.facebook_id; })) {
+							overlayGoing.removeClass('unchecked');
+							overlayGoing.addClass('check');
+							overlayGoing.addClass('green');
+						}
+						else {
+							overlayGoing.removeClass('check');
+							overlayGoing.addClass('unchecked');
+							overlayGoing.removeClass('green');
+						}
+					}
+
+					// apply event detail to template
+					when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
+					when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
+					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
+					where.data('id', event.place._id);
+					where.data('created-by', event.created_by);
+					what.html(event.desc);
+
+					// click event info goes to place detail
+					where.off('click').on('click', function (e) {
+						var placeId = $(this).data('id'),
+							page = navigatePage(0, pageNames.placeDetail);
+
+						setPlaceDetail(placeId, page);
+					});
+
+					// going checkbox event handlers
+					overlayGoing.show();
+					applyGoingHandlers(event, div);
+					numAttending.html(event.users.length);
+
+					// friends
+					var attendingFriends = _.filter(user.friends, function (f) {
+						if (_.some(event.users, function (u) { return u === f.facebook_id; })) {
+							return f;
+						}
+					});
+					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends === 1 ? "" : "s"));
+					for (var f in attendingFriends) {
+						var friend = attendingFriends[f],
+							pic = $('<img>');
+
+						console.log(friend);
+						pic.attr('src', String.format(fbPhotoUrl, friend.id));
+
+						// show friend picture in friendListDiv
+						friendsList.append(pic);
+					}
+
+					// center the event's circle
+					gMap.setCenter(circle.center);
+					gMap.panBy(overlay.width() / 2, 0);
+
+					fbPhoto.attr('src', String.format(fbPhotoUrl, user.facebook_id));
+
+					for (var m in event.messages) {
+						writeMessageToChat(event.messages[m], chatlist);
+					}
+					socket.on('message', function (data) {
+						if (data.eventId === model._id) {
+							writeMessageToChat(data, chatlist);
+						}
+					});
+
+					chatbox.off('keydown').on('keydown', function (e) {
+						var msg = $(this).val();
+
+						if (e.keyCode === 13) {
+							socket.emit('chat', { eventId: model._id, text: msg });
+							chatbox.val('');
+						}
+					});
+
+				});
+			},
+			writeMessageToChat = function (message, div) {
+				var chatMsg = $('<div class="chat-msg row">'),
+					fbPic = $('<img class="chat-photo" src="' + String.format(fbPhotoUrl, message.facebook_id) + '" />'),
+					msg = $('<span class="message-text">');
+
+				msg.html(message.text);
+
+				chatMsg.append(fbPic);
+				chatMsg.append(msg);
+				div.append(chatMsg);
+			},
 			setGroupEventList = function (events, div) {
 				renderEventList(events, function (list) {
 					div.html(list);
@@ -1148,80 +1304,6 @@
 					}
 				});
 			},
-			setEventDetail = function (event, div) {
-				var circle = event.group ? _.find(circleData.groups, function (g) { return g._id === event.group; }).circle : event.circle,
-					model = jQuery.extend(true, {}, event);
-
-				delete model.circle; // circular reference.. PUN!
-
-				getTemplate('event-detail', model, function (template) {
-					div.html(template);
-
-					var body = div.find('.event-body'),
-						when = div.find('.when'),
-						where = div.find('.where'),
-						what = div.find('.what'),
-						connections = div.find('.connection-info'),
-						numAttending = connections.find('.num-attending'),
-						friendCount = connections.find('.friend-count'),
-						friendsList = connections.find('.friend-list');
-
-					// make sure cData.users exists
-					if (event.users) {
-						// initialize 'going' checkbox by checking if user is in event.users on client
-						if (_.some(event.users, function (u) { return u === user.facebook_id; })) {
-							overlayGoing.removeClass('unchecked');
-							overlayGoing.addClass('check');
-							overlayGoing.addClass('green');
-						}
-						else {
-							overlayGoing.removeClass('check');
-							overlayGoing.addClass('unchecked');
-							overlayGoing.removeClass('green');
-						}
-					}
-
-					// apply event detail to template
-					when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
-					when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
-					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
-					where.data('id', event.place._id);
-					where.data('created-by', event.created_by);
-					what.html(event.desc);
-
-					// click event info goes to place detail
-					where.off('click').on('click', function (e) {
-						var placeId = $(this).data('id'),
-							page = navigatePage(0, pageNames.placeDetail);
-
-						setPlaceDetail(placeId, page);
-					});
-
-					// going checkbox event handlers
-					overlayGoing.show();
-					applyGoingHandlers(event, div);
-					numAttending.html(event.users.length);
-
-					// friends
-					var attendingFriends = _.filter(user.friends, function (f) {
-						if (_.some(event.users, function (u) { return u === f.facebook_id; })) {
-							return f;
-						}
-					});
-					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends === 1 ? "" : "s"));
-					for (var f in attendingFriends) {
-						var friend = attendingFriends[f],
-							pic = $('<img src="' + friend.picture_url + '">');
-
-						// show friend picture in friendListDiv
-						friendsList.append(pic);
-					}
-
-					// center the event's circle
-					gMap.setCenter(circle.center);
-					gMap.panBy(overlay.width() / 2, 0);
-				});
-			},
 			//// place detail
 			setPlaceDetail = function (id, div) {
 				getTemplate('place-detail', null, function (template) {
@@ -1231,7 +1313,7 @@
 							var place = response.body;
 							div.html(template);
 							showOverlay(place.name);
-							
+
 							var where = div.find('.where'),
 								what = div.find('.what'),
 								pastEvents = div.find('.past-events');
@@ -1247,7 +1329,7 @@
 										pastEvents.find('.event').off('click').on('click', function (e) {
 											var eventId = $(this).data('id'),
 												page = navigatePage(1, pageNames.pastEventList),
-												event = _.find(response.body, function(e) { return e._id == eventId; });
+												event = _.find(response.body, function (e) { return e._id == eventId; });
 
 											showOverlay(event.name);
 											setPastEventDetail(event, page);
@@ -1962,6 +2044,14 @@
 
 			$('.site-logo').click(function () {
 				window.location.reload();
+			});
+
+			// set up socket
+			socket = io.connect(document.domain);
+
+			socket.on('connect', function () {
+				socketId = socket.io.engine.id;
+				console.log('Connected ' + socketId);
 			});
 
 			div.data('jsatlas', obj);
