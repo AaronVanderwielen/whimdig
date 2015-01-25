@@ -324,6 +324,7 @@ button, input[type="button"] {
     }
 
     .user-controls {
+		top: 3px;
         float: right;
         position: relative;
 
@@ -354,7 +355,7 @@ button, input[type="button"] {
         display: inline-block;
         float: right;
         position: relative;
-        top: 5px;
+        top: 4px;
         margin: 0 2%;
 
         .current {
@@ -590,6 +591,16 @@ button, input[type="button"] {
 
             .chat {
 
+				.glyph {
+                    padding: 14px;
+                    cursor: pointer;
+
+                    &::before {
+                        color: @turq;
+                        font-size: 28px;
+                    }
+                }
+
                 .fb-photo {
                     float: left;
                     height: 50px;
@@ -701,10 +712,10 @@ button, input[type="button"] {
                 .glyph.not-synced::before {
                     opacity: .6;
                     color: @dark;
-                    cursor: pointer;
+                    /*cursor: pointer;*/
                 }
 
-                .glyph.not-synced:hover {
+                /*.glyph.not-synced:hover {
 
                     &.facebook-logo::before {
                         color: #3B5998;
@@ -720,7 +731,7 @@ button, input[type="button"] {
                         color: #4099FF;
                         background-color: #fff;
                     }
-                }
+                }*/
 
                 .glyph {
                     padding: 0 10px;

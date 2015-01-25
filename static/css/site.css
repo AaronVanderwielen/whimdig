@@ -256,6 +256,7 @@ input[type="button"]:hover {
   padding: 8px;
 }
 .header .user-controls {
+  top: 3px;
   float: right;
   position: relative;
 }
@@ -281,7 +282,7 @@ input[type="button"]:hover {
   display: inline-block;
   float: right;
   position: relative;
-  top: 5px;
+  top: 4px;
   margin: 0 2%;
 }
 .header .day-select .current {
@@ -450,6 +451,14 @@ input[type="button"]:hover {
   display: table;
   clear: both;
 }
+.detail-overlay .overlay-body .event-detail .chat .glyph {
+  padding: 14px;
+  cursor: pointer;
+}
+.detail-overlay .overlay-body .event-detail .chat .glyph::before {
+  color: #005588;
+  font-size: 28px;
+}
 .detail-overlay .overlay-body .event-detail .chat .fb-photo {
   float: left;
   height: 50px;
@@ -516,6 +525,23 @@ input[type="button"]:hover {
 .detail-overlay .overlay-body .main-menu .synced-accounts {
   text-align: center;
   margin-top: 20px;
+  /*.glyph.not-synced:hover {
+
+                    &.facebook-logo::before {
+                        color: #3B5998;
+                        background-color: #fff;
+                    }
+
+                    &.google-logo::before {
+                        color: #d34836;
+                        background-color: #2d2d2d;
+                    }
+
+                    &.twitter-logo::before {
+                        color: #4099FF;
+                        background-color: #fff;
+                    }
+                }*/
 }
 .detail-overlay .overlay-body .main-menu .synced-accounts .heading {
   color: #666666;
@@ -531,19 +557,7 @@ input[type="button"]:hover {
 .detail-overlay .overlay-body .main-menu .synced-accounts .glyph.not-synced::before {
   opacity: .6;
   color: #666666;
-  cursor: pointer;
-}
-.detail-overlay .overlay-body .main-menu .synced-accounts .glyph.not-synced:hover.facebook-logo::before {
-  color: #3B5998;
-  background-color: #fff;
-}
-.detail-overlay .overlay-body .main-menu .synced-accounts .glyph.not-synced:hover.google-logo::before {
-  color: #d34836;
-  background-color: #2d2d2d;
-}
-.detail-overlay .overlay-body .main-menu .synced-accounts .glyph.not-synced:hover.twitter-logo::before {
-  color: #4099FF;
-  background-color: #fff;
+  /*cursor: pointer;*/
 }
 .detail-overlay .overlay-body .main-menu .synced-accounts .glyph {
   padding: 0 10px;

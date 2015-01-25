@@ -3,16 +3,12 @@
     <br />
     <br />
     <form name="CreateEvent" action="/event/create" method="post">
-        <input type="hidden" name="city" value="Bellingham" />
-        <input type="hidden" name="state" value="WA" />
-        <input type="hidden" name="zip" value="98225" />
-
         <div class="form-label">
             Place
         </div>
         <div class="form-input">
             <select name="place">
-                <option value="">- select a place -</option>
+                <option disabled value="">- select a place -</option>
             </select>
         </div>
         <div class="form-label">

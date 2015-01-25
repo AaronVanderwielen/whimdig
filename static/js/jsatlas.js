@@ -17,13 +17,10 @@
 			socketId,
 			div = element,
 			gMap,
+			mapLoaded = false,
 			settings = {
 				key: "AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54",
 				initialZoom: 16,
-				initialCenter: {
-					lat: 48.745555,
-					lng: -122.478132,
-				},
 				styleArray: [
 					{
 						stylers: [
@@ -131,18 +128,29 @@
 			overlayGoing = overlayHeader.find('> .going'),
 			overlayBody = overlay.find('.overlay-body'),
 			// google map api
-			initializeMap = function () {
+			initializeMap = function (position, afterLoad) {
 				var mapOptions = {
-					center: new google.maps.LatLng(settings.initialCenter.lat, settings.initialCenter.lng),
+					center: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
 					zoom: settings.initialZoom
 				};
+
 				gMap = new google.maps.Map(div[0], mapOptions);
 				gMap.setOptions({ styles: settings.styleArray });
 
 				// Limit the zoom level
 				google.maps.event.addListener(gMap, 'zoom_changed', function (e) {
-					if (gMap.getZoom() < 10) {
-						gMap.setZoom(10);
+					if (gMap.getZoom() < 13) {
+						gMap.setZoom(13);
+					}
+				});
+
+				// after finish load
+				google.maps.event.addListener(gMap, 'tilesloaded', function (e) {
+					if (!mapLoaded) {
+						if (afterLoad) {
+							afterLoad();
+						}
+						mapLoaded = true;
 					}
 				});
 			},
@@ -188,10 +196,10 @@
 					}
 				}, interval ? interval : 50);
 			},
-			circleHover = function (el) {
+			circleHover = function (el, cd) {
 				if (!el.sizing) {
-					var cd = getCdById(el.id, el.isGroup),
-						originalSize = el.isGroup ? getEventCircleSize(_.max(group.events, function (e) { return e.users.length; })) : getEventCircleSize(cd),
+					var cd = cd ? cd : getCdById(el.id, el.isGroup),
+						originalSize = el.isGroup ? getEventCircleSize(_.max(cd.events, function (e) { return e.users.length; })) : getEventCircleSize(cd),
 						growTo = el.radius + (el.radius / 10);
 
 					circleSizeTo(el, growTo, 1.3, null, 100, function () {
@@ -284,11 +292,12 @@
 				for (var e in group.events) {
 					// reference to parent
 					group.events[e].group = group._id;
+					group.events[e].circle = circle;
 				}
 
 				circleData.groups.push(group);
 
-				google.maps.event.addListener(circle, 'mouseover', circleHover);
+				google.maps.event.addListener(circle, 'mouseover', focusGroup);
 
 				google.maps.event.addListener(circle, 'mouseout', function (e) {
 					if (this !== selectedEvent) {
@@ -400,7 +409,7 @@
 				event.circle = circle;
 				circleData.events.push(event);
 			},
-			offsetCenter = function (latlng, offsetx, offsety) {
+			offsetCenter_notused = function (latlng, offsetx, offsety) {
 
 				// latlng is the apparent center-point
 				// offsetx is the distance you want that point to move to the right, in pixels
@@ -426,7 +435,7 @@
 
 				GoogleMap.setCenter(newCenter);
 			},
-			getBoundsSquare = function () {
+			getBoundsSquare_notused = function () {
 				var bounds = gMap.getBounds(),
 					startLat,
 					endLat,
@@ -466,31 +475,68 @@
 					[startLat, startLng]
 				];
 			},
+			getAllowedBounds = function () {
+				var swBounds = new google.maps.LatLng(46.089838, -125.631207),
+					neBounds = new google.maps.LatLng(48.993225, -117.053631),
+					waBounds = new google.maps.LatLngBounds(swBounds, neBounds);
+				//checkLoc = new google.maps.LatLng(lat, lng);
+
+				return waBounds;
+			},
+			moveBoundsToAllowed = function () {
+				var center = gMap.getCenter(),
+					allowed = getAllowedBounds();
+
+				if (!allowed.contains(center)) {
+					var lat = center.lat(),
+						lng = center.lng();
+
+					var maxLng = allowed.getNorthEast().lng();
+					var maxLat = allowed.getNorthEast().lat();
+					var minLng = allowed.getSouthWest().lng();
+					var minLat = allowed.getSouthWest().lat();;
+
+					if (lng < minLng) { lng = minLng; }
+					if (lng > maxLng) { lng = maxLng; }
+					if (lat < minLat) { lat = minLat; }
+					if (lat > maxLat) { lat = maxLat; }
+
+					gMap.setCenter(new google.maps.LatLng(lat, lng));
+				}
+			},
 			// circle utility
 			clickGroup = function (e) {
 				var clicked = this,
-					ref = getCdById(clicked.id, true);
+					ref = getCdById(clicked.id, true),
+					pan = !container.hasClass('show-overlay');
 
 				if (selectedEvent && selectedEvent !== clicked) {
 					blurCircle.call(selectedEvent);
 					selectedEvent = null;
 				}
 
+				focusGroup.call(clicked, ref);
+
+				overlayGoing.hide();
+				showOverlay(ref.events[0].place.name);
+				var page = navigatePage(0, pageNames.eventGroupDetail);
+				selectedEvent = clicked;
+				setGroupEventList(ref, page, pan);
+			},
+			focusGroup = function (e, cd) {
+				var circle = this,
+					ref = cd ? cd : getCdById(circle.id, true);
+
 				this.setOptions({
 					zIndex: 1,
 					strokeColor: "rgb(0, 250, 250)",
 				});
 
-				selectedEvent = clicked;
-
-				overlayGoing.hide();
-				showOverlay(ref.events[0].place.name);
-				var page = navigatePage(0, pageNames.eventGroupDetail);
-				setGroupEventList(ref.events, page);
+				circleHover(circle, ref);
 			},
-			focusCircle = function (e) {
+			focusCircle = function (e, cd) {
 				var circle = this,
-					ref = getCdById(circle.id, circle.isGroup);
+					ref = cd ? cd : getCdById(circle.id, circle.isGroup);
 
 				this.setOptions({
 					zIndex: 1,
@@ -536,7 +582,8 @@
 			},
 			circleClick = function (e) {
 				var clicked = this,
-					ref = getCdById(clicked.id);
+					ref = getCdById(clicked.id),
+					pan = !container.hasClass('show-overlay');
 
 				if (selectedEvent && selectedEvent !== clicked) {
 					blurCircle.call(selectedEvent);
@@ -544,11 +591,11 @@
 
 				selectedEvent = clicked;
 
-				focusCircle.call(this);
+				focusCircle.call(this, ref);
 				highlightCircle.call(this);
 				showOverlay(ref.name);
 				var page = navigatePage(0, pageNames.eventDetail);
-				setEventDetail(ref, page);
+				setEventDetail(ref, page, pan);
 			},
 			getCdById = function (id, isGroup) {
 				var target = isGroup ? circleData.groups : circleData.events;
@@ -663,8 +710,8 @@
 						window.clearTimeout(boundChange);
 						if (gMap.getZoom() > 12) {
 							boundChange = window.setTimeout(function () {
-								bounds = gMap.getBounds();
-								loadEventsInSpan(null, true);
+								moveBoundsToAllowed();
+								loadEventsInSpan();
 							}, 1000);
 						}
 					});
@@ -920,24 +967,24 @@
 						eventId: id
 					},
 					success: function (response) {
-						if (response.success) {
-							callback(response);
-						}
-						else if (response.statusCode === 401) {
-							reAuthenticate(addEventUser, [id, callback]);
-						}
+						//if (response.success) {
+						callback(response);
+						//}
+						//else if (response.statusCode === 401) {
+						//	reAuthenticate(addEventUser, [id, callback]);
+						//}
 					}
 				});
 			},
 			// facebook api
 			//// authentication
-			initAuthentication = function () {
+			initAuthentication = function (callback) {
 				FB.init({
 					appId: '655662931197377',
 					cookie: true,
 					version: 'v2.0'
 				});
-				fbInitLogin(eventLoadingHandler);
+				fbInitLogin(callback);
 			},
 			fbInitLogin = function (callback, callbackArgs) {
 				FB.getLoginStatus(function (auth) {
@@ -984,6 +1031,9 @@
 					setMenuDetail();
 				});
 				headerFilterBtn.off('click').on('click', function (e) {
+					if (selectedEvent) {
+						blurCircle.call(selectedEvent);
+					}
 					setFiltersView();
 				});
 				headerDaySelectPrev.off('click').on('click', function (e) {
@@ -1036,7 +1086,6 @@
 			exitOverlay = function () {
 				if (selectedEvent) {
 					blurCircle.call(selectedEvent);
-					selectedEvent = null;
 				}
 				container.removeClass('show-overlay');
 				currentPage().animate({ width: 0, padding: 0 }, 200, function () {
@@ -1125,7 +1174,7 @@
 				return overlayBody.find('> .page.page' + paging);
 			},
 			//// event detail
-			setEventDetail = function (event, div) {
+			setEventDetail = function (event, div, pan) {
 				var circle = event.group ? _.find(circleData.groups, function (g) { return g._id === event.group; }).circle : event.circle,
 					model = jQuery.extend(true, {}, event);
 
@@ -1133,6 +1182,8 @@
 
 				getTemplate('event-detail', model, function (template) {
 					div.html(template);
+					overlayTitle.html('');
+					overlayTitle.html(model.name);
 
 					var body = div.find('.event-body'),
 						when = div.find('.when'),
@@ -1143,8 +1194,10 @@
 						friendCount = connections.find('.friend-count'),
 						friendsList = connections.find('.friend-list'),
 						fbPhoto = div.find('.fb-photo'),
-						chatlist = div.find('.chat-list'),
-						chatbox = div.find('.chat-input');
+						chat = div.find('.chat'),
+						chatsend = chat.find('.glyph.play'),
+						chatlist = chat.find('.chat-list'),
+						chatbox = chat.find('.chat-input');
 
 					// make sure cData.users exists
 					if (event.users) {
@@ -1200,9 +1253,12 @@
 						friendsList.append(pic);
 					}
 
-					// center the event's circle
-					gMap.setCenter(circle.center);
-					gMap.panBy(overlay.width() / 2, 0);
+					// only want to pan when the overlay just opened
+					if (pan) {
+						// center the event's circle
+						gMap.setCenter(circle.center);
+						gMap.panBy(overlay.width() / 2, 0);
+					}
 
 					fbPhoto.attr('src', String.format(fbPhotoUrl, user.facebook_id));
 
@@ -1215,16 +1271,23 @@
 						}
 					});
 
-					chatbox.off('keydown').on('keydown', function (e) {
-						var msg = $(this).val();
+					chatsend.off('click').on('click', function (e) {
+						sendChat(chatbox, model._id);
+					});
 
+					chatbox.off('keydown').on('keydown', function (e) {
 						if (e.keyCode === 13) {
-							socket.emit('chat', { eventId: model._id, text: msg });
-							chatbox.val('');
+							sendChat(chatbox, model._id);
 						}
 					});
 
 				});
+			},
+			sendChat = function (input, eventId) {
+				var msg = input.val();
+
+				socket.emit('chat', { eventId: eventId, text: msg });
+				input.val('');
 			},
 			writeMessageToChat = function (message, div) {
 				var chatMsg = $('<div class="chat-msg row">'),
@@ -1237,7 +1300,15 @@
 				chatMsg.append(msg);
 				div.append(chatMsg);
 			},
-			setGroupEventList = function (events, div) {
+			setGroupEventList = function (ref, div, pan) {
+				var events = ref.events;
+				// only want to pan when the overlay just opened
+				if (pan) {
+					// center the event's circle
+					gMap.setCenter(ref.circle.center);
+					gMap.panBy(overlay.width() / 2, 0);
+				}
+
 				renderEventList(events, function (list) {
 					div.html(list);
 
@@ -1247,6 +1318,7 @@
 							eventRef = getCdByIdInGroup(eventId),
 							page = navigatePage(0, pageNames.eventDetail);
 
+						focusGroup.call(eventRef.circle);
 						setEventDetail(eventRef, page);
 					});
 				});
@@ -1269,22 +1341,24 @@
 				});
 				overlayGoing.off('click').on('click', function () {
 					if (overlayGoing.hasClass('green')) {
-						removeEventUser(cData._id, function (response) {
-							if (response.success) {
-								var indexOfUser = cData.users.indexOf(user.facebook_id),
-									size = getEventCircleSize(cData);
+						if (cData.created_by !== user._id) {
+							removeEventUser(cData._id, function (response) {
+								if (response.success) {
+									var indexOfUser = cData.users.indexOf(user.facebook_id),
+										size = getEventCircleSize(cData);
 
-								// remove locally
-								cData.users.splice(indexOfUser, 1);
+									// remove locally
+									cData.users.splice(indexOfUser, 1);
 
-								overlayGoing.removeClass('check');
-								overlayGoing.removeClass('green');
-								overlayGoing.addClass('unchecked');
-								clearSizing(cData.circle);
-								circleSizeTo(cData.circle, size, 0.9, null, 50);
-								numAttending.html(parseInt(cData.users.length, 10));
-							}
-						});
+									overlayGoing.removeClass('check');
+									overlayGoing.removeClass('green');
+									overlayGoing.addClass('unchecked');
+									clearSizing(cData.circle);
+									circleSizeTo(cData.circle, size, 0.9, null, 50);
+									numAttending.html(parseInt(cData.users.length, 10));
+								}
+							});
+						}
 					}
 					else {
 						addEventUser(cData._id, function (response) {
@@ -1343,11 +1417,6 @@
 			},
 			//// main menu
 			setMenuDetail = function () {
-				if (selectedEvent && circleData[selectedEvent.id]) {
-					blurCircle.call(circleData[selectedEvent.id].circle);
-					selectedEvent = null;
-				}
-
 				if (user) {
 					var username = user.first_name + " " + (user.last_name && user.last_name.length > 0 ? user.last_name.substring(0, 1) : "");
 					showOverlay(username);
@@ -1403,19 +1472,33 @@
 				// clicking an event in schedule
 				var menuScheduleEvents = currentPage().find('.schedule .event-list .event');
 				menuScheduleEvents.off('click').on('click', function (e) {
+					// first go to latlng
+					var lat = $(this).data('lat'),
+						lng = $(this).data('lng'),
+						latlng = new google.maps.LatLng(lat, lng);
+
+					gMap.setCenter(latlng);
+
 					var eId = $(this).data('id'),
 						cd = getCdById(eId);
 
 					if (!cd) {
 						cd = getCdByIdInGroup(eId);
-						var circle = _.find(circleData.groups, function (g) { return g._id === cd.group; }).circle;
+						var group = _.find(circleData.groups, function (g) { return g._id === cd.group; }),
+							circle = group ? group.circle : false;
 
-						gMap.setCenter(new google.maps.LatLng(cd.place.loc.coordinates[1], cd.place.loc.coordinates[0]));
+						//gMap.setCenter(new google.maps.LatLng(cd.place.loc.coordinates[1], cd.place.loc.coordinates[0]));
 						gMap.panBy(overlay.width() / 2, 0);
-						clickGroup.call(circle, e);
+
+						if (circle) {
+							var page = navigatePage(0, pageNames.eventDetail);
+							focusGroup.call(circle);
+							selectedEvent = circle;
+							setEventDetail(cd, page);
+						}
 					}
 					else {
-						gMap.setCenter(new google.maps.LatLng(cd.place.loc.coordinates[1], cd.place.loc.coordinates[0]));
+						//gMap.setCenter(new google.maps.LatLng(cd.place.loc.coordinates[1], cd.place.loc.coordinates[0]));
 						gMap.panBy(overlay.width() / 2, 0);
 						circleClick.call(cd.circle, e);
 					}
@@ -1454,7 +1537,10 @@
 					data: formData,
 					success: function (response) {
 						if (response.success) {
-							var newEvent = response.body[0];
+							var newEvent = response.body[0],
+								latlng = new google.maps.LatLng(newEvent.loc.coordinates[1], newEvent.loc.coordinates[0]);
+
+							gMap.setCenter(latlng);
 
 							loadEventsInSpan(function () {
 								// check if new event is in cData, if so, trigger click
@@ -1535,19 +1621,22 @@
 						name: placeName
 					};
 
-				$.post(urls.searchAllPlaces, data, function (response) {
-					if (response.success) {
-						for (var p in response.body) {
-							var place = $(String.format('<div class="result selectable" data-id="{0}" data-name="{1}"><div class="heading">{1}</div><span>{2}</span></div>', response.body[p]._id, response.body[p].name, response.body[p].vicinity));
+				// check if lat/lng are within WA
+				if (checkAllowedBounds(data.lat, data.lng)) {
+					$.post(urls.searchAllPlaces, data, function (response) {
+						if (response.success) {
+							for (var p in response.body) {
+								var place = $(String.format('<div class="result selectable" data-id="{0}" data-name="{1}"><div class="heading">{1}</div><span>{2}</span></div>', response.body[p]._id, response.body[p].name, response.body[p].vicinity));
 
-							place.off('click').on('click', function (e) {
-								addUserPlaceClick.call(this, callback);
-							});
+								place.off('click').on('click', function (e) {
+									addUserPlaceClick.call(this, callback);
+								});
 
-							resultsDiv.append(place);
+								resultsDiv.append(place);
+							}
 						}
-					}
-				});
+					});
+				}
 			},
 			addUserPlaceClick = function (callback) {
 				var placeId = $(this).data('id'),
@@ -1732,7 +1821,8 @@
 						numAttending = connections.find('.num-attending'),
 						friendCount = connections.find('.friend-count'),
 						friendsList = connections.find('.friend-list'),
-						addReviewLink = div.find('.add-review');
+						//addReviewLink = div.find('.add-review'),
+						chatlist = div.find('.chat-list');
 
 					overlayGoing.hide();
 
@@ -1760,14 +1850,18 @@
 						friendsList.append(pic);
 					}
 
-					if (!_.some(event.reviews, function (r) { return r.user_id === user._id; })) {
-						// add review click
-						addReviewLink.off('click').on('click', function (e) {
-							addReviewHandler(event);
-						});
-					}
-					else {
-						addReviewLink.hide();
+					//if (!_.some(event.reviews, function (r) { return r.user_id === user._id; })) {
+					//	// add review click
+					//	addReviewLink.off('click').on('click', function (e) {
+					//		addReviewHandler(event);
+					//	});
+					//}
+					//else {
+					//	addReviewLink.hide();
+					//}
+
+					for (var m in event.messages) {
+						writeMessageToChat(event.messages[m], chatlist);
 					}
 				});
 			},
@@ -1914,7 +2008,7 @@
 						var e = eventData[event];
 
 						if (e._id) {
-							var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e.place.name);
+							var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e.place.name, e.loc.coordinates[1], e.loc.coordinates[0]);
 							formatted += eHtml;
 						}
 					}
@@ -2034,13 +2128,20 @@
 			};
 
 		this.init = function () {
-			initializeMap();
-			applyHeaderHandlers();
-			applySearchHandlers();
-			setDefaultFilters();
-			overlayExit.on('click', exitOverlay);
-			bindUi($('body'));
-			window.fbAsyncInit = initAuthentication;
+			window.fbAsyncInit = function () {
+				initAuthentication(function () {
+					if (navigator.geolocation) {
+						navigator.geolocation.getCurrentPosition(function (pos) {
+							initializeMap(pos, eventLoadingHandler);
+							applyHeaderHandlers();
+							//applySearchHandlers();
+							setDefaultFilters();
+							overlayExit.on('click', exitOverlay);
+							bindUi($('body'));
+						});
+					}
+				});
+			};
 
 			$('.site-logo').click(function () {
 				window.location.reload();
