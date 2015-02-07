@@ -128,10 +128,10 @@
 			overlayGoing = overlayHeader.find('> .going'),
 			overlayBody = overlay.find('.overlay-body'),
 			// google map api
-			initializeMap = function (position, afterLoad) {
+			initializeMap = function (loc, afterLoad) {
 				var mapOptions = {
-					center: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
-					zoom: settings.initialZoom
+					center: new google.maps.LatLng(loc.lat, loc.lng),
+					zoom: loc.zoom ? loc.zoom : settings.initialZoom
 				};
 
 				gMap = new google.maps.Map(div[0], mapOptions);
@@ -141,6 +141,14 @@
 				google.maps.event.addListener(gMap, 'zoom_changed', function (e) {
 					if (gMap.getZoom() < 13) {
 						gMap.setZoom(13);
+
+						var center = gMap.getCenter(),
+							loc = {
+								lat: center.lat(),
+								lng: center.lng(),
+								zoom: gMap.getZoom()
+							};
+						setCookie("last" + user.facebook_id, JSON.stringify(loc));
 					}
 				});
 
@@ -409,71 +417,24 @@
 				event.circle = circle;
 				circleData.events.push(event);
 			},
-			offsetCenter_notused = function (latlng, offsetx, offsety) {
-
-				// latlng is the apparent center-point
-				// offsetx is the distance you want that point to move to the right, in pixels
-				// offsety is the distance you want that point to move upwards, in pixels
-				// offset can be negative
-				// offsetx and offsety are both optional
-
-				var scale = Math.pow(2, GoogleMap.getZoom());
-				var nw = new google.maps.LatLng(
-					GoogleMap.getBounds().getNorthEast().lat(),
-					GoogleMap.getBounds().getSouthWest().lng()
-				);
-
-				var worldCoordinateCenter = GoogleMap.getProjection().fromLatLngToPoint(latlng);
-				var pixelOffset = new google.maps.Point((offsetx / scale) || 0, (offsety / scale) || 0);
-
-				var worldCoordinateNewCenter = new google.maps.Point(
-					worldCoordinateCenter.x - pixelOffset.x,
-					worldCoordinateCenter.y + pixelOffset.y
-				);
-
-				var newCenter = GoogleMap.getProjection().fromPointToLatLng(worldCoordinateNewCenter);
-
-				GoogleMap.setCenter(newCenter);
-			},
-			getBoundsSquare_notused = function () {
+			//// bounds
+			getBoundsSquare = function () {
 				var bounds = gMap.getBounds(),
-					startLat,
-					endLat,
-					startLng,
-					endLng;
-				//square = [
-				//[bounds.wa.j, bounds.Ea.j],
-				//[bounds.wa.j, bounds.Ea.k],
-				//[bounds.wa.k, bounds.Ea.k],
-				//[bounds.wa.k, bounds.Ea.j],
-				//[bounds.wa.j, bounds.Ea.j],
-				//]
+					ne = bounds.getNorthEast(),
+					sw = bounds.getSouthWest(),
+					nw = new google.maps.LatLng(ne.lat(), sw.lng()),
+					se = new google.maps.LatLng(sw.lat(), ne.lng()),
+					square;
 
-				// for some reason gMap is returning different property names over time
-				// so do it this way to be consistent
-				var i = 0;
-				for (var p in bounds) {
-					if (i === 0) {
-						startLat = bounds[p].j;
-						endLat = bounds[p].k;
-					}
-					else if (i === 1) {
-						startLng = bounds[p].j;
-						endLng = bounds[p].k;
-					}
-					else {
-						break;
-					}
-					i++;
-				}
-
-				return [
-					[startLat, startLng],
-					[startLat, endLng],
-					[endLat, endLng],
-					[endLat, startLng],
-					[startLat, startLng]
+				square = [
+					[nw.lng(), nw.lat()],
+					[ne.lng(), ne.lat()],
+					[se.lng(), se.lat()],
+					[sw.lng(), sw.lat()],
+					[nw.lng(), nw.lat()]
 				];
+
+				return square;
 			},
 			getAllowedBounds = function () {
 				var swBounds = new google.maps.LatLng(46.089838, -125.631207),
@@ -712,6 +673,15 @@
 							boundChange = window.setTimeout(function () {
 								moveBoundsToAllowed();
 								loadEventsInSpan();
+
+								var center = gMap.getCenter(),
+									loc = {
+										lat: center.lat(),
+										lng: center.lng(),
+										zoom: gMap.getZoom()
+									};
+
+								setCookie("last" + user.facebook_id, JSON.stringify(loc));
 							}, 1000);
 						}
 					});
@@ -723,15 +693,7 @@
 				}, 50000);
 			},
 			loadEventsInSpan = function (callback) {
-				var bounds = gMap.getBounds(),
-					square = [
-						[bounds.va.j, bounds.Ca.j],
-						[bounds.va.j, bounds.Ca.k],
-						[bounds.va.k, bounds.Ca.k],
-						[bounds.va.k, bounds.Ca.j],
-						[bounds.va.j, bounds.Ca.j],
-					];
-				//]getBoundsSquare();
+				var square = getBoundsSquare();
 
 				$.ajax({
 					url: urls.eventsForSpan,
@@ -1025,10 +987,15 @@
 			// header
 			applyHeaderHandlers = function () {
 				headerMenuBtn.off('click').on('click', function (e) {
-					if (selectedEvent) {
-						blurCircle.call(selectedEvent);
+					if (currentPage().data('name') === pageNames.menu) {
+						exitOverlay();
 					}
-					setMenuDetail();
+					else {
+						if (selectedEvent) {
+							blurCircle.call(selectedEvent);
+						}
+						setMenuDetail();
+					}
 				});
 				headerFilterBtn.off('click').on('click', function (e) {
 					if (selectedEvent) {
@@ -1112,11 +1079,6 @@
 					var existingPage = $('.page.page0'),
 						newPage = $(String.format('<div class="page page{0}" data-name="{1}"></div>', 0, newPageName));
 
-					if (existingPage.length && (existingPage.data('name') != pageNames.eventDetail && existingPage.data('name') === newPageName)) {
-						// clicked menu or something when it's current page
-						exitOverlay();
-					}
-					else {
 						// clear all pages
 						overlayBody.find('.page').remove();
 						// append new base page
@@ -1124,7 +1086,6 @@
 						newPage.css('float', 'right');
 						paging = 0;
 						overlayBody.find('.page.page' + paging).animate(showProps, speed);
-					}
 				}
 				else {
 					if (dir < 0) {
@@ -1237,17 +1198,17 @@
 
 					// friends
 					var attendingFriends = _.filter(user.friends, function (f) {
-						if (_.some(event.users, function (u) { return u === f.facebook_id; })) {
+						if (_.some(event.users, function (u) { return u === f; })) {
 							return f;
 						}
 					});
 					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends === 1 ? "" : "s"));
 					for (var f in attendingFriends) {
-						var friend = attendingFriends[f],
+						var friendId = attendingFriends[f],
 							pic = $('<img>');
 
 						console.log(friend);
-						pic.attr('src', String.format(fbPhotoUrl, friend.id));
+						pic.attr('src', String.format(fbPhotoUrl, friendId));
 
 						// show friend picture in friendListDiv
 						friendsList.append(pic);
@@ -1445,8 +1406,10 @@
 						friendCountSpan.html(user.friends.length + " friend" + (user.friends > 1 ? "s" : ""));
 
 						for (var f in user.friends) {
-							var friend = user.friends[f],
-								pic = $('<img src="' + friend.picture_url + '">');
+							var friendId = user.friends[f],
+								pic = $('<img />');
+
+							pic.attr('src', String.format(fbPhotoUrl, friendId));
 
 							// show friend picture in friendListDiv
 							friendListDiv.append(pic);
@@ -2020,6 +1983,24 @@
 				$(html).dialog(opts);
 			},
 			// utility
+			getCookie = function (cname) {
+				var name = cname + "=";
+				var ca = document.cookie.split(';');
+				for (var i = 0; i < ca.length; i++) {
+					var c = ca[i];
+					while (c.charAt(0) == ' ') c = c.substring(1);
+					if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+				}
+				return "";
+			},
+			setCookie = function (cname, cvalue) {
+				var d = new Date(),
+					days = 30;
+
+				d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+				var expires = "expires=" + d.toUTCString();
+				document.cookie = cname + "=" + cvalue + "; " + expires;
+			},
 			withinSelectedSpan = function (event) {
 				var now = moment(),
 					hours = currentSpan === 0 ? 12 : (currentSpan === 1 ? 24 : 48),
@@ -2132,7 +2113,17 @@
 				initAuthentication(function () {
 					if (navigator.geolocation) {
 						navigator.geolocation.getCurrentPosition(function (pos) {
-							initializeMap(pos, eventLoadingHandler);
+							var loc = {
+								lat: pos.coords.latitude,
+								lng: pos.coords.longitude
+							},
+								lastLoc = getCookie("last" + user.facebook_id);
+
+							if (lastLoc !== "") {
+								loc = JSON.parse(lastLoc);
+							}
+
+							initializeMap(loc, eventLoadingHandler);
 							applyHeaderHandlers();
 							//applySearchHandlers();
 							setDefaultFilters();

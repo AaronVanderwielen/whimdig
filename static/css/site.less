@@ -317,7 +317,7 @@ button, input[type="button"] {
         }
 
         .glyph {
-            top: 1px;
+            top: 0px;
             margin: 0;
             padding: 8px;
         }
@@ -383,10 +383,11 @@ button, input[type="button"] {
     width: 0;
     height: 0;
     right: 0;
-    padding: 0;
+    padding: 0 0 0 10px;
     margin: 0;
     z-index: 2;
     border-left: 3px solid @turq;
+	box-shadow: 1px 1px 20px 0px @turq inset;
 
     .overlay-header {
         padding: 10px;
@@ -446,7 +447,7 @@ button, input[type="button"] {
             cursor: pointer;
             //border-bottom: 1px solid @light;
             &:hover {
-                background-color: @light-gold;
+                background-color: @light-blue;//@light-gold;
             }
 
             &:last-child {
