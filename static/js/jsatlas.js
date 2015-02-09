@@ -289,7 +289,7 @@
 						fillColor: "rgb(250, 250, 250)",
 						fillOpacity: 1,
 						map: gMap,
-						center: new google.maps.LatLng(group.events[0].place.loc.coordinates[1], group.events[0].place.loc.coordinates[0]),
+						center: new google.maps.LatLng(group.events[0].loc.coordinates[1], group.events[0].loc.coordinates[0]),
 						radius: radius
 					};
 
@@ -391,7 +391,7 @@
 						fillColor: arrayToRGB(colorArray),
 						fillOpacity: settings.blurOpacity,
 						map: gMap,
-						center: new google.maps.LatLng(event.place.loc.coordinates[1], event.place.loc.coordinates[0]),
+						center: new google.maps.LatLng(event.loc.coordinates[1], event.loc.coordinates[0]),
 						radius: circleSize
 					};
 
@@ -689,7 +689,9 @@
 
 				// update data every 500 seconds
 				window.setInterval(function () {
-					loadEventsInSpan();
+					if (container.hasClass('show-overlay')) {
+						loadEventsInSpan();
+					}
 				}, 50000);
 			},
 			loadEventsInSpan = function (callback) {
@@ -1136,112 +1138,111 @@
 			},
 			//// event detail
 			setEventDetail = function (event, div, pan) {
-				var circle = event.group ? _.find(circleData.groups, function (g) { return g._id === event.group; }).circle : event.circle,
-					model = jQuery.extend(true, {}, event);
+				var circle = event.group ? _.find(circleData.groups, function (g) { return g._id === event.group; }).circle : event.circle;
 
-				delete model.circle; // circular reference.. PUN!
+				getUserEvent(event._id, function (event) {
+					getTemplate('event-detail', event, function (template) {
+						div.html(template);
+						overlayTitle.html('');
+						overlayTitle.html(event.name);
 
-				getTemplate('event-detail', model, function (template) {
-					div.html(template);
-					overlayTitle.html('');
-					overlayTitle.html(model.name);
+						var body = div.find('.event-body'),
+							when = div.find('.when'),
+							where = div.find('.where'),
+							what = div.find('.what'),
+							connections = div.find('.connection-info'),
+							numAttending = connections.find('.num-attending'),
+							friendCount = connections.find('.friend-count'),
+							friendsList = connections.find('.friend-list'),
+							fbPhoto = div.find('.fb-photo'),
+							chat = div.find('.chat'),
+							chatsend = chat.find('.glyph.play'),
+							chatlist = chat.find('.chat-list'),
+							chatbox = chat.find('.chat-input');
 
-					var body = div.find('.event-body'),
-						when = div.find('.when'),
-						where = div.find('.where'),
-						what = div.find('.what'),
-						connections = div.find('.connection-info'),
-						numAttending = connections.find('.num-attending'),
-						friendCount = connections.find('.friend-count'),
-						friendsList = connections.find('.friend-list'),
-						fbPhoto = div.find('.fb-photo'),
-						chat = div.find('.chat'),
-						chatsend = chat.find('.glyph.play'),
-						chatlist = chat.find('.chat-list'),
-						chatbox = chat.find('.chat-input');
-
-					// make sure cData.users exists
-					if (event.users) {
-						// initialize 'going' checkbox by checking if user is in event.users on client
-						if (_.some(event.users, function (u) { return u === user.facebook_id; })) {
-							overlayGoing.removeClass('unchecked');
-							overlayGoing.addClass('check');
-							overlayGoing.addClass('green');
+						// make sure cData.users exists
+						if (event.users) {
+							// initialize 'going' checkbox by checking if user is in event.users on client
+							if (_.some(event.users, function (u) { return u === user.facebook_id; })) {
+								overlayGoing.removeClass('unchecked');
+								overlayGoing.addClass('check');
+								overlayGoing.addClass('green');
+							}
+							else {
+								overlayGoing.removeClass('check');
+								overlayGoing.addClass('unchecked');
+								overlayGoing.removeClass('green');
+							}
 						}
-						else {
-							overlayGoing.removeClass('check');
-							overlayGoing.addClass('unchecked');
-							overlayGoing.removeClass('green');
+
+						// apply event detail to template
+						when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
+						when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
+						where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
+						where.data('id', event.place._id);
+						where.data('created-by', event.created_by);
+						what.html(event.desc);
+
+						// click event info goes to place detail
+						where.off('click').on('click', function (e) {
+							var placeId = $(this).data('id'),
+								page = navigatePage(0, pageNames.placeDetail);
+
+							setPlaceDetail(placeId, page);
+						});
+
+						// going checkbox event handlers
+						overlayGoing.show();
+						applyGoingHandlers(event, div);
+						numAttending.html(event.users.length);
+
+						// friends
+						var attendingFriends = _.filter(user.friends, function (f) {
+							if (_.some(event.users, function (u) { return u === f; })) {
+								return f;
+							}
+						});
+						friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends === 1 ? "" : "s"));
+						for (var f in attendingFriends) {
+							var friendId = attendingFriends[f],
+								pic = $('<img>');
+
+							console.log(friend);
+							pic.attr('src', String.format(fbPhotoUrl, friendId));
+
+							// show friend picture in friendListDiv
+							friendsList.append(pic);
 						}
-					}
 
-					// apply event detail to template
-					when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
-					when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
-					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
-					where.data('id', event.place._id);
-					where.data('created-by', event.created_by);
-					what.html(event.desc);
-
-					// click event info goes to place detail
-					where.off('click').on('click', function (e) {
-						var placeId = $(this).data('id'),
-							page = navigatePage(0, pageNames.placeDetail);
-
-						setPlaceDetail(placeId, page);
-					});
-
-					// going checkbox event handlers
-					overlayGoing.show();
-					applyGoingHandlers(event, div);
-					numAttending.html(event.users.length);
-
-					// friends
-					var attendingFriends = _.filter(user.friends, function (f) {
-						if (_.some(event.users, function (u) { return u === f; })) {
-							return f;
+						// only want to pan when the overlay just opened
+						if (pan) {
+							// center the event's circle
+							gMap.setCenter(circle.center);
+							gMap.panBy(overlay.width() / 2, 0);
 						}
-					});
-					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends === 1 ? "" : "s"));
-					for (var f in attendingFriends) {
-						var friendId = attendingFriends[f],
-							pic = $('<img>');
 
-						console.log(friend);
-						pic.attr('src', String.format(fbPhotoUrl, friendId));
+						fbPhoto.attr('src', String.format(fbPhotoUrl, user.facebook_id));
 
-						// show friend picture in friendListDiv
-						friendsList.append(pic);
-					}
-
-					// only want to pan when the overlay just opened
-					if (pan) {
-						// center the event's circle
-						gMap.setCenter(circle.center);
-						gMap.panBy(overlay.width() / 2, 0);
-					}
-
-					fbPhoto.attr('src', String.format(fbPhotoUrl, user.facebook_id));
-
-					for (var m in event.messages) {
-						writeMessageToChat(event.messages[m], chatlist);
-					}
-					socket.on('message', function (data) {
-						if (data.eventId === model._id) {
-							writeMessageToChat(data, chatlist);
+						for (var m in event.messages) {
+							writeMessageToChat(event.messages[m], chatlist);
 						}
-					});
+						socket.on('message', function (data) {
+							if (data.eventId === event._id) {
+								writeMessageToChat(data, chatlist);
+							}
+						});
 
-					chatsend.off('click').on('click', function (e) {
-						sendChat(chatbox, model._id);
-					});
+						chatsend.off('click').on('click', function (e) {
+							sendChat(chatbox, event._id);
+						});
 
-					chatbox.off('keydown').on('keydown', function (e) {
-						if (e.keyCode === 13) {
-							sendChat(chatbox, model._id);
-						}
-					});
+						chatbox.off('keydown').on('keydown', function (e) {
+							if (e.keyCode === 13) {
+								sendChat(chatbox, event._id);
+							}
+						});
 
+					});
 				});
 			},
 			sendChat = function (input, eventId) {
@@ -1251,15 +1252,17 @@
 				input.val('');
 			},
 			writeMessageToChat = function (message, div) {
-				var chatMsg = $('<div class="chat-msg row">'),
-					fbPic = $('<img class="chat-photo" src="' + String.format(fbPhotoUrl, message.facebook_id) + '" />'),
-					msg = $('<span class="message-text">');
+				if (message) {
+					var chatMsg = $('<div class="chat-msg row">'),
+						fbPic = $('<img class="chat-photo" src="' + String.format(fbPhotoUrl, message.facebook_id) + '" />'),
+						msg = $('<span class="message-text">');
 
-				msg.html(message.text);
+					msg.html(message.text);
 
-				chatMsg.append(fbPic);
-				chatMsg.append(msg);
-				div.append(chatMsg);
+					chatMsg.append(fbPic);
+					chatMsg.append(msg);
+					div.append(chatMsg);
+				}
 			},
 			setGroupEventList = function (ref, div, pan) {
 				var events = ref.events;
@@ -1414,6 +1417,7 @@
 							// show friend picture in friendListDiv
 							friendListDiv.append(pic);
 						}
+						bindUi(page);
 					});
 				}
 			},
@@ -1500,7 +1504,7 @@
 					data: formData,
 					success: function (response) {
 						if (response.success) {
-							var newEvent = response.body[0],
+							var newEvent = response.body,
 								latlng = new google.maps.LatLng(newEvent.loc.coordinates[1], newEvent.loc.coordinates[0]);
 
 							gMap.setCenter(latlng);
@@ -1522,14 +1526,14 @@
 							});
 						}
 						else {
-							var errorHtml = "";
+							//var errorHtml = "";
 							// display error messages
-							for (var i in response.body) {
-								var input = form.find('[name="' + i + '"]');
-								input.addClass('error');
-								errorHtml = response.body[i];
-							}
-							form.find('.error').html(errorHtml);
+							//for (var i in response.body) {
+							//	var input = form.find('[name="' + i + '"]');
+							//	input.addClass('error');
+							//	errorHtml = response.body[i];
+							//}
+							form.find('.error').html(response.body.message);
 						}
 					}
 				});
@@ -1585,7 +1589,7 @@
 					};
 
 				// check if lat/lng are within WA
-				if (checkAllowedBounds(data.lat, data.lng)) {
+				if (getAllowedBounds().contains(loc)) {
 					$.post(urls.searchAllPlaces, data, function (response) {
 						if (response.success) {
 							for (var p in response.body) {
@@ -1890,7 +1894,7 @@
 			//// filters
 			setDefaultFilters = function () {
 				var tags = getAllEventTags(function (tags) {
-					filters = _.map(tags, function (t) { return t.name; });
+					filters = _.map(tags, function (t) { return t._id; });
 				});
 			},
 			setFiltersView = function () {
@@ -1904,10 +1908,10 @@
 						page.find('.tag').each(function () {
 							var div = $(this),
 								filter = div.find('span'),
-								fType = filter.data('name');
+								fId = filter.data('id');
 
 							// check if not active, set disabled
-							if (!_.some(filters, function (f) { return f === fType; })) {
+							if (!_.some(filters, function (f) { return f === fId; })) {
 								div.addClass('disabled');
 							}
 
@@ -1915,14 +1919,14 @@
 							div.off('click').on('click', function (e) {
 								var div = $(this),
 									filter = div.find('span'),
-									fType = filter.data('name');
+									fId = filter.data('id');
 
 								if (div.hasClass('disabled')) {
-									filters.push(fType);
+									filters.push(fId);
 									div.removeClass('disabled');
 								}
 								else {
-									var fIndex = filters.indexOf(fType);
+									var fIndex = filters.indexOf(fId);
 									if (fIndex >= 0) {
 										filters.splice(fIndex, 1);
 									}
@@ -2106,6 +2110,8 @@
 						span.html(date.format(datetimeDateFormat));
 					}
 				});
+
+				div.tooltip();
 			};
 
 		this.init = function () {

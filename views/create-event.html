@@ -33,7 +33,7 @@
                 <input type="hidden" name="tags" value="" />
                 <div class="options">
                     {% for tag in model %}
-                        <div class="option" data-value="{{ tag.name }}">
+                        <div class="option" data-value="{{ tag._id }}">
                             <span class="glyph glyphicons {{ tag.glyph}}"></span>
                             <span class="option-text">{{ tag.label }}</span>
                         </div>
