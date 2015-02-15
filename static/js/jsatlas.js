@@ -18,6 +18,7 @@
 			div = element,
 			gMap,
 			mapLoaded = false,
+			resizeTimer,
 			settings = {
 				key: "AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54",
 				initialZoom: 16,
@@ -162,6 +163,9 @@
 					}
 				});
 			},
+			resizeGoogleMap = function () {
+				google.maps.event.trigger(gMap, 'resize');
+			}
 			circleSizeTo = function (el, targetSize, rate, secondRate, interval, callback) {
 				el.sizing = window.setInterval(function () {
 					var newRad = Math.round(rate * el.radius),
@@ -387,7 +391,7 @@
 						sizing: false,
 						strokeColor: arrayToRGB(getShade(colorArray, -20)),
 						strokeOpacity: 1,
-						strokeWeight: circleSize / 10,
+						strokeWeight: (circleSize / 10) > 5 ? 5 : (circleSize / 10),
 						fillColor: arrayToRGB(colorArray),
 						fillOpacity: settings.blurOpacity,
 						map: gMap,
@@ -573,7 +577,10 @@
 				}
 			},
 			getEventCircleSize = function (cData) {
-				return cData.users.length * 20;
+				var min = 20, max = 400,
+					calc = cData.users.length * 10;
+
+				return calc < min ? min : (calc > max ? max : calc);
 			},
 			getShade = function (rgb, delta) {
 				var newRGB = [];
@@ -687,14 +694,21 @@
 					});
 				});
 
+				$(window).off('resize').on('resize', function () {
+					clearTimeout(resizeTimer);
+					resizeTimer = setTimeout(resizeGoogleMap, 500);
+				});
+
 				// update data every 500 seconds
 				window.setInterval(function () {
-					if (container.hasClass('show-overlay')) {
-						loadEventsInSpan();
-					}
+					loadEventsInSpan();
 				}, 50000);
 			},
 			loadEventsInSpan = function (callback) {
+				if ($('.jsatlas').width() === 0) {
+					return;
+				}
+				
 				var square = getBoundsSquare();
 
 				$.ajax({
@@ -1059,6 +1073,7 @@
 				container.removeClass('show-overlay');
 				currentPage().animate({ width: 0, padding: 0 }, 200, function () {
 					overlayBody.find('.page').remove();
+					google.maps.event.trigger(gMap, 'resize');
 				});
 			},
 			navigatePage = function (dir, newPageName) {
