@@ -452,35 +452,51 @@ input[type="button"]:hover {
   display: table;
   clear: both;
 }
-.detail-overlay .overlay-body .event-detail .chat .glyph {
+.detail-overlay .overlay-body .event-detail .chat > .row:first-child {
+  padding: 0 30px 5px 55px;
+}
+.detail-overlay .overlay-body .event-detail .chat > .row:first-child .fb-photo {
+  margin-left: -55px;
+}
+.detail-overlay .overlay-body .event-detail .chat > .row:first-child .chat-input {
+  width: 100%;
+  margin: 5px 0 0 0;
+}
+.detail-overlay .overlay-body .event-detail .chat > .row:first-child .glyph {
+  float: right;
+  margin: 12px -30px 0 0;
   padding: 14px;
   cursor: pointer;
 }
-.detail-overlay .overlay-body .event-detail .chat .glyph::before {
+.detail-overlay .overlay-body .event-detail .chat > .row:first-child .glyph::before {
   color: #005588;
   font-size: 28px;
 }
 .detail-overlay .overlay-body .event-detail .chat .fb-photo {
   float: left;
   height: 50px;
-  margin: 0 10px 10px 0;
-}
-.detail-overlay .overlay-body .event-detail .chat .chat-input {
-  margin: 5px 0 0 0;
 }
 .detail-overlay .overlay-body .event-detail .chat .chat-list {
-  height: 450px;
   border: 1px solid #0094ff;
   border-radius: 5px;
-  overflow-y: scroll;
+  padding: 5px;
+  overflow-x: hidden;
 }
-.detail-overlay .overlay-body .event-detail .chat .chat-list .chat-msg {
-  padding: 5px 0 0 5px;
+.detail-overlay .overlay-body .event-detail .chat .chat-list .fb-photo {
+  margin: 0 10px 10px 0;
+}
+.detail-overlay .overlay-body .event-detail .chat .chat-list .chat-msg:not(:last-child) {
+  padding-bottom: 5px;
 }
 .detail-overlay .overlay-body .event-detail .chat .chat-list .chat-msg .chat-photo {
   float: left;
   height: 50px;
   margin: 0 10px 0 0;
+}
+.detail-overlay .overlay-body .event-detail .chat .chat-list .chat-msg .message-date {
+  float: right;
+  font-style: italic;
+  padding: 0 0 5px 5px;
 }
 .detail-overlay .overlay-body .event-detail .chat .chat-list .chat-msg .message-text {
   padding: 2px 0 2px 0;

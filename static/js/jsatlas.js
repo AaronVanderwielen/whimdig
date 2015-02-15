@@ -1223,6 +1223,7 @@
 
 						fbPhoto.attr('src', String.format(fbPhotoUrl, user.facebook_id));
 
+						//event.messages = _.sortBy(event.messages, function (m) { return -moment(m.date).toDate(); });
 						for (var m in event.messages) {
 							writeMessageToChat(event.messages[m], chatlist);
 						}
@@ -1255,13 +1256,16 @@
 				if (message) {
 					var chatMsg = $('<div class="chat-msg row">'),
 						fbPic = $('<img class="chat-photo" src="' + String.format(fbPhotoUrl, message.facebook_id) + '" />'),
+						msgDate = $('<span class="message-date">'),
 						msg = $('<span class="message-text">');
 
+					msgDate.html(moment(message.date).format(datetimeCasualFormat));
 					msg.html(message.text);
 
 					chatMsg.append(fbPic);
+					chatMsg.append(msgDate);
 					chatMsg.append(msg);
-					div.append(chatMsg);
+					div.prepend(chatMsg);
 				}
 			},
 			setGroupEventList = function (ref, div, pan) {
@@ -1788,19 +1792,18 @@
 						numAttending = connections.find('.num-attending'),
 						friendCount = connections.find('.friend-count'),
 						friendsList = connections.find('.friend-list'),
-						//addReviewLink = div.find('.add-review'),
 						chatlist = div.find('.chat-list');
 
 					overlayGoing.hide();
-
-					// apply event detail to template
-					//when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
-					//when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
-					//where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
-					//where.data('created-by', event.created_by);
-					//what.html(event.desc);
-
 					numAttending.html(event.users.length);
+
+					// click event info goes to place detail
+					where.off('click').on('click', function (e) {
+						var placeId = $(this).data('id'),
+							page = navigatePage(0, pageNames.placeDetail);
+
+						setPlaceDetail(placeId, page);
+					});
 
 					// friends
 					var attendingFriends = _.filter(user.friends, function (f) {
@@ -1816,16 +1819,6 @@
 						// show friend picture in friendListDiv
 						friendsList.append(pic);
 					}
-
-					//if (!_.some(event.reviews, function (r) { return r.user_id === user._id; })) {
-					//	// add review click
-					//	addReviewLink.off('click').on('click', function (e) {
-					//		addReviewHandler(event);
-					//	});
-					//}
-					//else {
-					//	addReviewLink.hide();
-					//}
 
 					for (var m in event.messages) {
 						writeMessageToChat(event.messages[m], chatlist);
@@ -1999,7 +1992,7 @@
 			},
 			setCookie = function (cname, cvalue) {
 				var d = new Date(),
-					days = 30;
+					days = 2;
 
 				d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
 				var expires = "expires=" + d.toUTCString();

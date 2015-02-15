@@ -12,11 +12,9 @@
                 </div>
             </div>
         </div>
-        <div class="where selectable" data-created_by="{{model.created_by}}">
-            <div class="where">
-                <div class="place">{{model.place.name}}</div>
-                <div class="address">{{model.place.vicinity}}</div>
-            </div>
+        <div class="where selectable" data-id="{{model.place._id}}" data-created_by="{{model.created_by}}">
+            <div class="place">{{model.place.name}}</div>
+            <div class="address">{{model.place.vicinity}}</div>
         </div>
         <div class="what">{{model.desc}}</div>
     </div>
