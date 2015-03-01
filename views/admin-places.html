@@ -1,0 +1,22 @@
+﻿<table class="place-list">
+    <thead>
+        <tr>
+            <th>_id</th>
+            <th>place_id</th>
+            <th>name</th>
+            <!--<th>loc</th>-->
+            <th>vicinity</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for place in model.places %}
+        <tr>
+            <td>{{place._id.toString()}}</td>
+            <td>{{place.place_id}}</td>
+            <td>{{place.name}}</td>
+            <!--<td>{{place.loc}}</td>-->
+            <td>{{place.vicinity}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

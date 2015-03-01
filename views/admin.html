@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Admin</title>
+    <link rel="stylesheet" href="/css/glyphicons.css" />
+    <link rel="stylesheet" href="/css/halflings.css" />
+    <link rel="stylesheet" href="/css/social.css" />
+    <link rel="stylesheet" href="/css/filetypes.css" />
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $.get('/admin/events', function (html) {
+                var table = $(html);
+                $('.events').append(table);
+            });
+            $.get('/admin/places', function (html) {
+                var table = $(html);
+                $('.places').append(table);
+            });
+            $.get('/admin/tags', function (html) {
+                var table = $(html);
+                $('.tags').append(table);
+            });
+            $.get('/admin/users', function (html) {
+                var table = $(html);
+                $('.users').append(table);
+            });
+        });
+    </script>
+    <style>
+        .glyph {
+            width: 24px;
+            top: -12px;
+            padding-left: 0;
+        }
+        th {
+
+        }
+        td { 
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body style="background-color: #666; color: white;">
+    <div class="admin">
+        <div class="events">
+            <h2>Events</h2>
+            <div class="event-import">
+                <h4>Import Events CSV</h4>
+                <form action="/admin/importEvents" method="post" enctype="multipart/form-data">
+                    <input type="file" name="csv" />
+                    <input type="submit" value="Upload" />
+                </form>
+                <table class="ajax-table" data-url="/admin/events"></table>
+            </div>
+        </div>
+        <div class="places">
+            <h2>Places</h2>
+
+        </div>
+        <div class="tags">
+            <h2>Tags</h2>
+
+        </div>
+        <div class="users">
+            <h2>Users</h2>
+
+        </div>
+    </div>
+</body>
+</html>

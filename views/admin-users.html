@@ -1,0 +1,26 @@
+﻿<table class="user-list">
+    <thead>
+        <tr>
+            <th>_id</th>
+            <th>facebook_id</th>
+            <th>first_name</th>
+            <th>last_name</th>
+            <th>admin</th>
+            <th>last_login</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in model.users %}
+        <tr>
+            <td>{{user._id.toString()}}</td>
+            <td>{{user.facebook_id}}</td>
+            <td>{{user.first_name}}</td>
+            <td>{{user.last_name}}</td>
+            <!--<td>{{user.friends}}</td>-->
+            <td>{{user.admin}}</td>
+            <td>{{user.last_login|date('m/d/y g:i a', 480)}}</td>
+            <!--<td>{{user.places}}</td>-->
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

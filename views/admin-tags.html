@@ -1,0 +1,20 @@
+﻿<table class="tag-list">
+    <thead>
+        <tr>
+            <th>_id</th>
+            <th><span class="glyph glyphicons {{ tag.glyph}}"></span></th>
+            <th>glyph</th>
+            <th>label</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for tag in model.tags %}
+        <tr>
+            <td>{{tag._id.toString()}}</td>
+            <td><span class="glyph glyphicons {{ tag.glyph}}"></span></td>
+            <td>{{tag.glyph}}</td>
+            <td>{{tag.label}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

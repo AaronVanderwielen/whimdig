@@ -1,0 +1,46 @@
+﻿<table class="event-list">
+    <thead>
+        <tr>
+            <th>_id</th>
+            <th>name</th>
+            <th>desc</th>
+            <th>tags</th>
+            <th>place</th>
+            <th>start</th>
+            <th>end</th>
+            <th>privacy</th>
+            <th>intensity_variable</th>
+            <!--<td>created_by</td>-->
+<!--            <td>user</td>
+            <td>message</td>-->
+        </tr>
+    </thead>
+    {% for event in model.events %}
+        <tr>
+            <td>{{event._id.toString()}}</td>
+            <td>{{event.name}}</td>
+            <td>{{event.desc}}</td>
+            <td>
+                {% for tag in event.tags %}
+                    <span class="glyph glyphicons {{ tag.glyph}}"></span>
+                {% endfor %}
+            </td>
+            <td>{{event.place.toString()}}</td>
+            <td>{{event.start|date('m/d/y g:i a', 480)}}</td>
+            <td>{{event.end|date('m/d/y g:i a', 480)}}</td>
+            <td>{{event.privacy}}</td>
+            <td>{{event.intensity_variable}}</td>
+            <!--<td>{{event.created_by}}</td>
+            <td>
+                {% for user in event.users %}
+                    {{user}}
+                {% endfor %}
+            </td>
+                <td>
+                {% for message in event.messages %}
+                    {{message._id}}
+                {% endfor %}
+            </td>-->
+        </tr>
+    {% endfor %}
+</table>

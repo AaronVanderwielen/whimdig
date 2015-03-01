@@ -17,6 +17,8 @@
     "underscore": "~1.7.0",
     "swig": "~1.4.2",
     "socket.io": "~1.2.1",
-    "mongoose": "~3.8.22"
+    "mongoose": "~3.8.22",
+    "connect-busboy": "0.0.2",
+    "fast-csv": "~0.5.6"
   }
 }

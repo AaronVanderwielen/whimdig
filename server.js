@@ -9,6 +9,8 @@
 	Http = require('http'),
 	Path = require('path'),
 	Express = require('express'),
+	Busboy = require('connect-busboy'), // middleware for form/file upload
+	CSV = require('fast-csv'), // middleware for parsing csv files
 	BodyParser = require('body-parser'),
 	Socket = require("socket.io"),
 	Cons = require('consolidate'),
@@ -94,6 +96,9 @@ function init() {
 		});
 	});
 
+	// form file upload
+	app.use(Busboy());
+
 	// initialize static file directory
 	app.use(Express.static(Path.join(__dirname, '/static')));
 
@@ -107,7 +112,7 @@ function init() {
 	app.use(BodyParser.urlencoded()); // to support URL-encoded bodies
 
 	// register controllers, routes
-	cBundle.loadControllers(app, ControllerData(bl));
+	cBundle.loadControllers(app, ControllerData(bl, CSV));
 	app.get('*', function (req, res) {
 		res.status(404).send("404 Not Found");
 	});

@@ -481,12 +481,17 @@
 				}
 
 				focusGroup.call(clicked, ref);
-
 				overlayGoing.hide();
-				showOverlay(ref.events[0].place.name);
-				var page = navigatePage(0, pageNames.eventGroupDetail);
-				selectedEvent = clicked;
-				setGroupEventList(ref, page, pan);
+				
+				// load in referenced documents
+				var ids = _.map(ref.events, function (e) { return e._id; });
+				getEvents(ids, function (eventData) {
+					ref.events = eventData;
+					showOverlay(ref.events[0].place.name);
+					var page = navigatePage(0, pageNames.eventGroupDetail);
+					selectedEvent = clicked;
+					setGroupEventList(ref, page, pan);
+				});
 			},
 			focusGroup = function (e, cd) {
 				var circle = this,
@@ -875,6 +880,13 @@
 					}
 				});
 			},
+			getEvents = function (ids, callback) {
+				$.get(urls.eventList, { ids: ids }, function (response) {
+					if (response.success) {
+						callback(response.body);
+					}
+				});
+			}
 			getUserEvent = function (id, callback) {
 				$.get(urls.event, { eventId: id }, function (response) {
 					if (response.success) {
@@ -1301,7 +1313,7 @@
 							eventRef = getCdByIdInGroup(eventId),
 							page = navigatePage(0, pageNames.eventDetail);
 
-						focusGroup.call(eventRef.circle);
+						//focusGroup.call(eventRef.circle);
 						setEventDetail(eventRef, page);
 					});
 				});
@@ -1557,13 +1569,13 @@
 					}
 				});
 			},
-			userPlacesHandler = function (places, placeSelect) {
+			userPlacesHandler = function (places, placeSelect, selectedPlaceId) {
 				var newOption = $('<option value="new">- add another place -</option>');
 
 				// add options
 				if (places) {
 					for (var p in places) {
-						var option = $(String.format('<option value="{0}">{1}</option>', places[p]._id, places[p].name));
+						var option = $(String.format('<option value="{0}" {2}>{1}</option>', places[p]._id, places[p].name, (selectedPlaceId && selectedPlaceId === places[p]._id) ? "selected" : ""));
 						placeSelect.append(option);
 					}
 				}
@@ -1590,7 +1602,7 @@
 						}
 					}
 				});
-				placeSelect.selectmenu('refresh');
+				//placeSelect.selectmenu('refresh');
 			},
 			addUserPlaceHandler = function (callback) {
 				var page = currentPage(),
@@ -1697,7 +1709,7 @@
 								page.html(html);
 
 								var select = page.find('select[name="place"]');
-								userPlacesHandler(places, select);
+								userPlacesHandler(places, select, event.place._id);
 								bindModelToForm(event, page);
 								bindUi(page);
 
