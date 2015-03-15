@@ -1,7 +1,7 @@
 ﻿<div class="event-detail">
     <div class="event-info box">
         <div class="row">
-            <div class="when">
+            <div class="when heading">
                 <span class="dateformat" data-format="casual">{{model.start}}</span> - <span class="dateformat" data-format="casual">{{model.end}}</span>
                 <div class="intensity">
                     {% if model.intensity_variable == "end" %}
@@ -16,7 +16,7 @@
             <div class="place">{{model.place.name}}</div>
             <div class="address">{{model.place.vicinity}}</div>
         </div>
-        <div class="what">{{model.desc}}</div>
+        <div class="what pad">{{model.desc}}</div>
     </div>
     <div class="connections box">
         <span class="heading">Attendees</span>
@@ -28,28 +28,4 @@
     <div class="chat">
         <div class="chat-list"></div>
     </div>
-    <!--<div class="reviews box">
-        <span class="heading">Reviews</span>
-        <div class="selectables">
-            <div class="link selectable add-review">add your own review</div>
-            {% for review in model.reviews %}
-            <div class="review selectable">
-                <div class="rating">
-                    <span class="glyph halflings star {% if review.rating >= 1 %}gold{% endif %}"></span>
-                    <span class="glyph halflings star {% if review.rating >= 2 %}gold{% endif %}"></span>
-                    <span class="glyph halflings star {% if review.rating >= 3 %}gold{% endif %}"></span>
-                    <span class="glyph halflings star {% if review.rating >= 4 %}gold{% endif %}"></span>
-                    <span class="glyph halflings star {% if review.rating >= 5 %}gold{% endif %}"></span>
-                </div>
-                <div class="row">
-                    <div class="reviewer">{{review.user.first_name}}</div>
-                    <div class="date-created dateformat" data-format="date">{{review.date_created}}</div>
-                </div>
-                <div class="comment">
-                    {{review.message}}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>-->
 </div>

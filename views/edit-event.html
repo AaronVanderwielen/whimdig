@@ -1,19 +1,14 @@
 ﻿<div class="box">
-    <span class="right glyph glyphicons remove"></span>
+    <span class="right glyph glyphicons remove glyph-aligner"></span>
     <span class="heading">Edit Event</span>
-    <br />
-    <br />
     <form name="CreateEvent" action="/event/create" method="post">
         <input type="hidden" name="_id" value="" />
-        <input type="hidden" name="city" value="Bellingham" />
-        <input type="hidden" name="state" value="WA" />
-        <input type="hidden" name="zip" value="98225" />
 
         <div class="form-label">
             Place
         </div>
         <div class="form-input">
-            <select name="place">
+            <select name="place" data-val-el-query=".ui-selectmenu-button">
                 <option value="">- select a place -</option>
             </select>
         </div>
@@ -35,7 +30,7 @@
         <div class="form-input">
             <div class="multi">
                 <div class="label">select tags</div>
-                <input type="hidden" name="tags" value="" />
+                <input type="hidden" data-val-el-query=".multi" name="tags" value="" />
                 <div class="options">
                     {% for tag in model %}
                         <div class="option {% if tag.selected %} selected {% endif %}" data-value="{{ tag.name }}">
@@ -62,7 +57,7 @@
             Privacy
         </div>
         <div class="form-input">
-            <select name="privacy">
+            <select name="privacy" data-val-el-query=".ui-selectmenu-button">
                 <option value="public" selected="selected">public event</option>
                 <option value="private">my friends</option>
             </select>
@@ -80,7 +75,7 @@
             </label>
         </div>
         <div class="row">
-            <p class="error"></p>
+            <p class="error-message"></p>
             <input type="button" class="create-btn" value="Update Event" />
         </div>
     </form>

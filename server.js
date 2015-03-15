@@ -35,7 +35,7 @@
 		console.log(JSON.stringify(json, null, 2));
 	};
 
-Mongoose.connect('mongodb://localhost/wiegos');
+Mongoose.connect('mongodb://localhost/whimdig');
 db = Mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function (callback) {

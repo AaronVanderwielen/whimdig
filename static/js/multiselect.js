@@ -46,18 +46,26 @@
 				updateValues();
 			},
 			updateValues = function () {
-				valueArray = [];
+			    var labels = [];
+			    valueArray = [];
 
 				var selected = container.find('.option.selected');
 				selected.each(function () {
 					var option = $(this),
-						value = option.data('value');
+						value = option.data('value'),
+					    label = option.find('.option-text').html();
 
 					valueArray.push(value);
+					labels.push(label);
 				});
 
 				input.val(valueArray.toString());
-				label.html(selected.length + ' selected');
+				if (labels.length > 0) {
+				    label.html(labels.join(',&nbsp; '));
+				}
+				else {
+                    label.html('- select tags -')
+				}
 			},
 			updateHtml = function () {
 				var selected = input.val().split(',');

@@ -1,13 +1,11 @@
 ﻿<div class="box">
     <span class="heading">Create an Event</span>
-    <br />
-    <br />
     <form name="CreateEvent" action="/event/create" method="post">
         <div class="form-label">
             Place
         </div>
         <div class="form-input">
-            <select name="place">
+            <select name="place" data-val-el-query=".ui-selectmenu-button">
                 <option disabled value="">- select a place -</option>
             </select>
         </div>
@@ -30,7 +28,7 @@
             <div class="multi">
                 <span class="ui-icon ui-icon-triangle-1-s"></span>
                 <div class="label">- select tags -</div>
-                <input type="hidden" name="tags" value="" />
+                <input type="hidden" data-val-el-query=".multi" name="tags" value="" />
                 <div class="options">
                     {% for tag in model %}
                         <div class="option" data-value="{{ tag._id }}">
@@ -57,7 +55,7 @@
             Privacy
         </div>
         <div class="form-input">
-            <select name="privacy">
+            <select name="privacy" data-val-el-query=".ui-selectmenu-button">
                 <option value="public" selected="selected">public event</option>
                 <option value="private">my friends</option>
                 <!--<option value="invite">by invite</option>-->
@@ -76,7 +74,7 @@
             </label>
         </div>
         <div class="row">
-            <p class="error"></p>
+            <p class="error-message"></p>
             <input type="button" class="create-btn" value="Create Event" />
         </div>
     </form>

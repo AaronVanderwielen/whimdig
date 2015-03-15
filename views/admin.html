@@ -53,15 +53,38 @@
                     <input type="file" name="csv" />
                     <input type="submit" value="Upload" />
                 </form>
-                <table class="ajax-table" data-url="/admin/events"></table>
             </div>
+            <br /><br />
+            <table class="ajax-table" data-url="/admin/events"></table>
         </div>
         <div class="places">
             <h2>Places</h2>
+            <div class="place-import">
+                <h4>Import Places</h4>
+                <form action="/admin/importPlaces" method="post">
+                    <input type="hidden" name="key" value="AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54" />
+                    <label>address<input type="text" name="address" /></label><br />
+                    <label>keyword<input type="text" name="keyword" /></label>
+                    <input type="submit" value="Submit" />
+                </form>
+            </div>
+            <br /><br />
 
         </div>
         <div class="tags">
             <h2>Tags</h2>
+            <div class="create-tag">
+                <h4>Create Tag</h4>
+                <form action="/admin/createTag" method="post">
+                    <label>glyph<input type="text" name="glyph" /></label><br />
+                    <label>label<input type="text" name="label" /></label><br />
+                    <input type="submit" value="Create" />
+                </form>
+                <form action="/admin/createDefaultTags" method="post">
+                    <input type="submit" value="Create Default Tags" />
+                </form>
+            </div>
+            <br /><br />
 
         </div>
         <div class="users">
