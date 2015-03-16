@@ -19,8 +19,9 @@
 			gMap,
 			mapLoaded = false,
 			resizeTimer,
+            prodGoogleKey = 'AIzaSyB-COXOajhbFyq4fRpnbXOvwJJ97ghKrkE', testGoogleKey = 'AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54', prodFbApi = { appId: '793549090738791', xfbml: true, version: 'v2.2' }, testFbApi = { appId: '655662931197377', cookie: true, version: 'v2.0' },
 			settings = {
-			    key: "AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54",
+			    key: prodGoogleKey,
 			    initialZoom: 16,
 			    styleArray: [
 					{
@@ -969,11 +970,7 @@
             // facebook api
             //// authentication
             initAuthentication = function (callback) {
-                FB.init({
-                    appId: '655662931197377',
-                    cookie: true,
-                    version: 'v2.0'
-                });
+                FB.init(prodFbApi);
                 fbInitLogin(callback);
             },
             fbInitLogin = function (callback, callbackArgs) {

@@ -1,4 +1,4 @@
-* {
+﻿* {
   box-sizing: border-box;
   font-family: 'Open Sans', sans-serif;
 }
@@ -321,7 +321,7 @@ input[type="button"]:hover {
   margin: 0 2%;
 }
 .header .day-select .current {
-  width: 70px;
+  width: 55px;
   text-align: center;
   display: inline-block;
   font-size: 14px;
@@ -765,3 +765,4 @@ input[type="button"]:hover {
     display: none;
   }
 }
+/*# sourceMappingURL=site.css.map */

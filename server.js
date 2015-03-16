@@ -14,7 +14,6 @@
 	BodyParser = require('body-parser'),
 	Socket = require("socket.io"),
 	Cons = require('consolidate'),
-	//MongoClient = require('mongodb').MongoClient,
 	Session = require('express-session'),
 	MongoStore = require('connect-mongo')(Session),
 	Mongoose = require('mongoose'),
@@ -27,8 +26,7 @@
 	schema,
 	server,
 	io,
-	//mongoClient = new MongoClient(new Server('localhost', 27017, { 'native_parser': true })),
-	db,// = mongoClient.db('wiegos'),
+	db,
 	bl,
 	sessionMiddleware,
 	logJson = function (json) {
@@ -43,11 +41,6 @@ db.once('open', function (callback) {
 	init();
 });
 
-// wait for mongo connection first
-//mongoClient.open(function (err, mongoClient) {
-//	if (!err) {
-//initialize web app
-//app.listen(1337);
 function init() {
 	// initialize Mongoose schema
 	schema = Schema(Mongoose);
@@ -64,9 +57,9 @@ function init() {
 
 	// initialize session middleware
 	sessionMiddleware = Session({
-		secret: "asdifj0w3jfowimrjv0i2m50moimgojh2980j",
+		secret: "4lkknfpoj4509yvojn3q4-9udfvkl;m",
 		store: new MongoStore({
-			db: 'wiegos',
+		    db: 'whimdig',
 			host: 'localhost',
 			port: 27017,
 			collection: 'sessions'
@@ -121,7 +114,3 @@ function init() {
 	server.listen(1337);
 	console.log("Express listening on 1337");
 }
-//	else {
-//		console.log("ERR on mongo open");
-//}
-//});
