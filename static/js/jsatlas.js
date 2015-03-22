@@ -19,9 +19,12 @@
 			gMap,
 			mapLoaded = false,
 			resizeTimer,
-            prodGoogleKey = 'AIzaSyB-COXOajhbFyq4fRpnbXOvwJJ97ghKrkE', testGoogleKey = 'AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54', prodFbApi = { appId: '793549090738791', xfbml: true, version: 'v2.2' }, testFbApi = { appId: '655662931197377', cookie: true, version: 'v2.0' },
+            prodGoogleKey = 'AIzaSyDEQiAImA3u9GB8EiF0NFMZH9Wy10AVTWg',
+            testGoogleKey = 'AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54',
+            prodFbApi = { appId: '793549090738791', xfbml: true, version: 'v2.2' },
+            testFbApi = { appId: '655662931197377', cookie: true, version: 'v2.0' },
 			settings = {
-			    key: prodGoogleKey,
+			    key: testGoogleKey,
 			    initialZoom: 16,
 			    styleArray: [
 					{
@@ -62,6 +65,7 @@
 			    mapPlaces: '/map/places',
 			    // places
 			    place: '/places',
+			    placesUpcomingEvents: '/places/upcomingEvents',
 			    placesPastEvents: '/places/pastEvents',
 			    placesNames: '/places/names',
 			    userPlaces: '/places/user',
@@ -139,31 +143,45 @@
 			    gMap = new google.maps.Map(div[0], mapOptions);
 			    gMap.setOptions({ styles: settings.styleArray });
 
-			    // Limit the zoom level
-			    google.maps.event.addListener(gMap, 'zoom_changed', function (e) {
-			        if (gMap.getZoom() < 13) {
-			            gMap.setZoom(13);
-
-			            var center = gMap.getCenter(),
-							loc = {
-							    lat: center.lat(),
-							    lng: center.lng(),
-							    zoom: gMap.getZoom()
-							};
-			            setCookie("last" + user.facebook_id, JSON.stringify(loc));
-			        }
-			    });
+			    google.maps.event.addListener(gMap, 'zoom_changed', zoom_changed);
 
 			    // after finish load
-			    google.maps.event.addListener(gMap, 'tilesloaded', function (e) {
-			        if (!mapLoaded) {
-			            if (afterLoad) {
-			                afterLoad();
-			            }
-			            mapLoaded = true;
-			        }
-			    });
+			    google.maps.event.addListener(gMap, 'tilesloaded', tiles_loaded);
 			},
+            bounds_changed = function () {
+                window.clearTimeout(boundChange);
+                if (gMap.getZoom() > 12) {
+                    boundChange = window.setTimeout(function () {
+                        moveBoundsToAllowed();
+                        loadEventsInSpan();
+
+                        var center = gMap.getCenter(),
+                            loc = {
+                                lat: center.lat(),
+                                lng: center.lng(),
+                                zoom: gMap.getZoom()
+                            };
+
+                        setCookie("last" + user.facebook_id, JSON.stringify(loc));
+                    }, 1000);
+                }
+            },
+            zoom_changed = function (e) {
+                var center = gMap.getCenter(),
+                    loc = {
+                        lat: center.lat(),
+                        lng: center.lng(),
+                        zoom: gMap.getZoom()
+                    };
+
+                setCookie("last" + user.facebook_id, JSON.stringify(loc));
+            },
+            tiles_loaded = function (e) {
+                if (!mapLoaded) {
+                    eventLoadingHandler();
+                    mapLoaded = true;
+                }
+            },
 			resizeGoogleMap = function () {
 			    google.maps.event.trigger(gMap, 'resize');
 			},
@@ -647,7 +665,6 @@
 		    mapPlacesTest = function (name) {
 		        var loc = gMap.getCenter(),
                     data = {
-                        key: settings.key,
                         lat: loc.lat(),
                         lng: loc.lng(),
                         radius: 1000,
@@ -680,24 +697,7 @@
 		    eventLoadingHandler = function () {
 		        var bounds = gMap.getBounds();
 		        loadEventsInSpan(function (response) {
-		            google.maps.event.addListener(gMap, 'bounds_changed', function () {
-		                window.clearTimeout(boundChange);
-		                if (gMap.getZoom() > 12) {
-		                    boundChange = window.setTimeout(function () {
-		                        moveBoundsToAllowed();
-		                        loadEventsInSpan();
-
-		                        var center = gMap.getCenter(),
-                                    loc = {
-                                        lat: center.lat(),
-                                        lng: center.lng(),
-                                        zoom: gMap.getZoom()
-                                    };
-
-		                        setCookie("last" + user.facebook_id, JSON.stringify(loc));
-		                    }, 1000);
-		                }
-		            });
+		            google.maps.event.addListener(gMap, 'bounds_changed', bounds_changed);
 		        });
 
 		        $(window).off('resize').on('resize', function () {
@@ -970,7 +970,7 @@
             // facebook api
             //// authentication
             initAuthentication = function (callback) {
-                FB.init(prodFbApi);
+                FB.init(testFbApi);
                 fbInitLogin(callback);
             },
             fbInitLogin = function (callback, callbackArgs) {
@@ -1023,10 +1023,15 @@
                     }
                 });
                 headerFilterBtn.off('click').on('click', function (e) {
-                    if (selectedEvent) {
-                        blurCircle.call(selectedEvent);
+                    if (currentPage().data('name') === pageNames.filters) {
+                        exitOverlay();
                     }
-                    setFiltersView();
+                    else {
+                        if (selectedEvent) {
+                            blurCircle.call(selectedEvent);
+                        }
+                        setFiltersView();
+                    }
                 });
                 headerDaySelectPrev.off('click').on('click', function (e) {
                     gotoPrevSpan();
@@ -1159,10 +1164,10 @@
                 return overlayBody.find('> .page.page' + paging);
             },
             //// event detail
-            setEventDetail = function (event, div, pan) {
-                var circle = event.group ? _.find(circleData.groups, function (g) { return g._id === event.group; }).circle : event.circle;
+            setEventDetail = function (cd, div, pan) {
+                var circle = cd.group ? _.find(circleData.groups, function (g) { return g._id === cd.group; }).circle : cd.circle;
 
-                getUserEvent(event._id, function (event) {
+                getUserEvent(cd._id, function (event) {
                     getTemplate('event-detail', event, function (template) {
                         div.html(template);
                         overlayTitle.html('');
@@ -1229,7 +1234,7 @@
                             var friendId = attendingFriends[f],
                                 pic = $('<img>');
 
-                            console.log(friend);
+                            console.log(friendId);
                             pic.attr('src', String.format(fbPhotoUrl, friendId));
 
                             // show friend picture in friendListDiv
@@ -1237,7 +1242,7 @@
                         }
 
                         // only want to pan when the overlay just opened
-                        if (pan) {
+                        if (pan && circle) {
                             // center the event's circle
                             gMap.setCenter(circle.center);
                             gMap.panBy(overlay.width() / 2, 0);
@@ -1380,11 +1385,28 @@
 
                             var where = div.find('.where'),
                                 what = div.find('.what'),
+                                upcomingEvents = div.find('.upcoming-events'),
                                 pastEvents = div.find('.past-events');
 
                             // apply event detail to template
                             where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', place.name, place.vicinity));
                             what.html(place.desc);
+
+                            $.get(urls.placesUpcomingEvents, { placeId: id }, function (response) {
+                                if (response.success) {
+                                    renderEventList(response.body, function (html) {
+                                        upcomingEvents.html(html);
+                                        upcomingEvents.find('.event').off('click').on('click', function (e) {
+                                            var eventId = $(this).data('id'),
+                                                page = navigatePage(1, pageNames.eventList),
+                                                event = _.find(response.body, function (e) { return e._id == eventId; });
+
+                                            showOverlay(event.name);
+                                            setEventDetail(event, page);
+                                        });
+                                    });
+                                }
+                            });
 
                             $.get(urls.placesPastEvents, { placeId: id }, function (response) {
                                 if (response.success) {
@@ -1484,11 +1506,16 @@
                         gMap.panBy(overlay.width() / 2, 0);
 
                         if (circle) {
-                            var page = navigatePage(0, pageNames.eventDetail);
                             focusGroup.call(circle);
                             selectedEvent = circle;
-                            setEventDetail(cd, page);
                         }
+                        if (!cd) {
+                            cd = {
+                                _id: eId
+                            };
+                        }
+                        var page = navigatePage(1, pageNames.eventDetail);
+                        setEventDetail(cd, page);
                     }
                     else {
                         //gMap.setCenter(new google.maps.LatLng(cd.place.loc.coordinates[1], cd.place.loc.coordinates[0]));
@@ -1543,11 +1570,15 @@
                                 }
                                 if (!cd) {
                                     cd = getCdByIdInGroup(newEvent._id);
-                                    var circle = _.find(circleData.groups, function (g) { return g._id === cd.group; }).circle;
-                                    clickGroup.call(circle);
-                                    page = navigatePage(0, pageNames.eventDetail);
-                                    setEventDetail(cd, page);
-                                    // TODO - go straight to event detail
+                                    if (cd) {
+                                        var circle = _.find(circleData.groups, function (g) { return g._id === cd.group; }).circle;
+                                        clickGroup.call(circle);
+                                        page = navigatePage(0, pageNames.eventDetail);
+                                        setEventDetail(cd, page);
+                                    }
+                                }
+                                if (!cd) {
+                                    exitOverlay();
                                 }
                             });
                         }
@@ -1629,7 +1660,6 @@
 
                 var loc = gMap.getCenter(),
                     data = {
-                        key: settings.key,
                         lat: loc.lat(),
                         lng: loc.lng(),
                         name: placeName
@@ -1726,8 +1756,8 @@
 
                                 var select = page.find('select[name="place"]');
                                 userPlacesHandler(places, select, event.place._id);
-                                bindModelToForm(event, page);
                                 bindUi(page);
+                                bindModelToForm(event, page);
 
                                 // create submit click handler
                                 page.find('.glyph.remove').off('click').on('click', deleteEvent);
@@ -2075,16 +2105,27 @@
                     }
 
                     if (input.is('input[type="radio"]')) {
-                        input.removeAttr('checked');
+                        input.prop('checked', false);
                         input.each(function () {
                             var radio = $(this);
                             if (radio.val() === model[p]) {
-                                radio.attr('checked', 'checked');
+                                radio.prop('checked', true);
                             }
                         });
                     }
                     else {
-                        input.val(model[p]);
+                        var value = model[p];
+                        if (Object.prototype.toString.call(value) === '[object Array]' && value.length > 0) {
+                            var strVal = "";
+                            if (value[0]._id) {
+                                value = _.map(value, function (v) { return v._id; });
+                                strVal = value.join(',');
+                            }
+                            else {
+                                strVal = value.join(',');
+                            }
+                        }
+                        input.val(value);
                     }
                 }
 
@@ -2177,7 +2218,7 @@
                                 loc = JSON.parse(lastLoc);
                             }
 
-                            initializeMap(loc, eventLoadingHandler);
+                            initializeMap(loc);
                             applyHeaderHandlers();
                             //applySearchHandlers();
                             setDefaultFilters();

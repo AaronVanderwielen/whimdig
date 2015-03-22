@@ -82,10 +82,11 @@ function init() {
 		var session = socket.request.session;
 
 		socket.on("chat", function (data) {
-			console.log("message sent to server");
-			bl.addMsgToEvent(data.text, data.eventId, session.user.facebook_id, function () {
-				socket.emit('message', { eventId: data.eventId, text: data.text, facebook_id: session.user.facebook_id });
-			});
+		    if (session && session.user) {
+		        bl.addMsgToEvent(data.text, data.eventId, session.user.facebook_id, function () {
+		            socket.emit('message', { eventId: data.eventId, text: data.text, facebook_id: session.user.facebook_id });
+		        });
+		    }
 		});
 	});
 

@@ -106,8 +106,8 @@ button,
 input[type="button"] {
   width: 100%;
   border-radius: 2px;
-  border: 1px solid #005588;
-  background-color: #005588;
+  border: 1px solid #0094ff;
+  background-color: #0094ff;
   color: white;
   padding: 10px;
   margin: 10px 0;
@@ -170,10 +170,10 @@ input[type="button"]:hover {
   color: #666666;
 }
 .multi .options .option.selected .glyph::before {
-  color: #005588;
+  color: #0094ff;
 }
 .multi .options .option.selected .option-text {
-  color: #005588;
+  color: #0094ff;
 }
 .multi .options .option:hover .option-text,
 .multi .options .option:hover .glyph::before {
@@ -232,7 +232,7 @@ input[type="button"]:hover {
   cursor: pointer;
 }
 .map-search .glyph::before {
-  color: #005588;
+  color: #0094ff;
   font-size: 24px;
 }
 .pad {
@@ -248,9 +248,14 @@ input[type="button"]:hover {
   width: 100%;
   height: 55px;
   background-color: #444444;
-  padding: 10px 1%;
+  padding: 10px 12px 10px 10px;
   color: #0094ff;
-  border-bottom: 3px solid #0094ff;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 .header:after {
   content: " ";
@@ -276,11 +281,16 @@ input[type="button"]:hover {
   font-size: 24px;
   font-weight: bold;
   cursor: pointer;
-  padding: 5px 3px;
+  padding: 5px;
 }
 .header > .site-logo > .logo-title {
   top: -5px;
   position: relative;
+}
+.header > .site-logo > .logo-title .letter {
+  font-family: 'Indie Flower', cursive;
+  line-height: 24px;
+  font-size: 36px;
 }
 .header > .site-logo .glyph::before {
   font-size: 16px;
@@ -349,9 +359,8 @@ input[type="button"]:hover {
   right: 0;
   margin: 0;
   z-index: 2;
-  border-left: 3px solid #005588;
   box-shadow: 1px 1px 20px 0px #005588 inset;
-  color: #005588;
+  color: #0094ff;
 }
 .detail-overlay .overlay-header {
   padding: 10px;
@@ -368,7 +377,7 @@ input[type="button"]:hover {
   cursor: pointer;
 }
 .detail-overlay .overlay-header .going::before {
-  color: #005588;
+  color: #0094ff;
   font-size: 36px;
 }
 .detail-overlay .overlay-header .overlay-exit::before {
@@ -386,7 +395,7 @@ input[type="button"]:hover {
   display: block;
 }
 .detail-overlay .overlay-body .link {
-  color: #005588;
+  color: #0094ff;
   font-size: 14px;
   cursor: pointer;
 }
@@ -401,11 +410,11 @@ input[type="button"]:hover {
   cursor: pointer;
 }
 .detail-overlay .overlay-body .selectable:hover {
-  color: #0094ff !important;
+  color: #21b4ff !important;
   background-color: #111111;
 }
 .detail-overlay .overlay-body .selectable:hover .glyph::before {
-  color: #0094ff !important;
+  color: #21b4ff !important;
 }
 .detail-overlay .overlay-body .selectable:last-child {
   border-bottom: none;
@@ -415,7 +424,7 @@ input[type="button"]:hover {
 }
 .detail-overlay .overlay-body .heading {
   display: block;
-  color: #005588;
+  color: #0094ff;
   font-weight: bold;
   padding: 10px 0;
 }
@@ -459,10 +468,10 @@ input[type="button"]:hover {
   width: 100%;
 }
 .detail-overlay .overlay-body .set-filters .tag:not(.disabled) .glyph::before {
-  color: #005588;
+  color: #0094ff;
 }
 .detail-overlay .overlay-body .set-filters .tag:not(.disabled) .tag-label {
-  color: #005588;
+  color: #0094ff;
 }
 .detail-overlay .overlay-body .set-filters .tag.disabled .glyph::before {
   color: #444444;
@@ -516,12 +525,12 @@ input[type="button"]:hover {
 .detail-overlay .overlay-body .event-detail .event-info .event-tags .tag .glyph::before,
 .detail-overlay .overlay-body .place-detail .event-info .event-tags .tag .glyph::before {
   font-size: 30px;
-  color: #005588;
+  color: #0094ff;
 }
 .detail-overlay .overlay-body .event-detail .event-info .event-tags .tag .tag-label,
 .detail-overlay .overlay-body .place-detail .event-info .event-tags .tag .tag-label {
   display: none;
-  color: #005588;
+  color: #0094ff;
 }
 .detail-overlay .overlay-body .event-detail .event-info .event-tags .tag::after,
 .detail-overlay .overlay-body .place-detail .event-info .event-tags .tag::after {
@@ -552,7 +561,7 @@ input[type="button"]:hover {
 }
 .detail-overlay .overlay-body .event-detail .chat > .row .glyph::before,
 .detail-overlay .overlay-body .place-detail .chat > .row .glyph::before {
-  color: #005588;
+  color: #0094ff;
   font-size: 28px;
 }
 .detail-overlay .overlay-body .event-detail .chat .fb-photo,
@@ -606,12 +615,12 @@ input[type="button"]:hover {
   cursor: pointer;
 }
 .detail-overlay .overlay-body .main-menu .map-search .glyph::before {
-  color: #005588;
+  color: #0094ff;
   font-size: 28px;
 }
 .detail-overlay .overlay-body .main-menu .menu-items .create-event {
   margin: 0 -10px;
-  color: #005588;
+  color: #0094ff;
   font-weight: bold;
 }
 .detail-overlay .overlay-body .main-menu .menu-items .create-event .heading {
@@ -625,11 +634,11 @@ input[type="button"]:hover {
   padding: 12px;
 }
 .detail-overlay .overlay-body .main-menu .menu-items .create-event .glyph::before {
-  color: #005588;
+  color: #0094ff;
   font-size: 24px;
 }
 .detail-overlay .overlay-body .main-menu .menu-items .connections > div > div {
-  color: #005588;
+  color: #0094ff;
   font-size: 14px;
 }
 .detail-overlay .overlay-body .main-menu .synced-accounts {
@@ -657,8 +666,8 @@ input[type="button"]:hover {
 }
 .detail-overlay .overlay-body .main-menu .synced-accounts .glyph::before {
   font-size: 80px;
-  width: 78px;
-  height: 78px;
+  width: 77px;
+  height: 77px;
   position: relative;
   border-radius: 7px;
   padding: 0;
@@ -698,12 +707,6 @@ input[type="button"]:hover {
   content: " ";
   display: table;
   clear: both;
-}
-.turq {
-  color: #005588;
-}
-.turq.glyph::before {
-  color: #005588;
 }
 .green {
   color: #009900 !important;
@@ -756,12 +759,8 @@ input[type="button"]:hover {
 @media all and (max-width: 640px) {
   .container.show-overlay .detail-overlay {
     width: 100%;
-    border-left: 3px solid #0094ff;
   }
-  .container.show-overlay .detail-overlay .overlay-body .main-menu .map-search {
-    display: block;
-  }
-  .header .user-controls div.map-search {
+  .header > .site-logo > .logo-title .rest {
     display: none;
   }
 }

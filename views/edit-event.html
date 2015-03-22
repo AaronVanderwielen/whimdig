@@ -29,14 +29,15 @@
         </div>
         <div class="form-input">
             <div class="multi">
-                <div class="label">select tags</div>
+                <span class="ui-icon ui-icon-triangle-1-s"></span>
+                <div class="label">- select tags -</div>
                 <input type="hidden" data-val-el-query=".multi" name="tags" value="" />
                 <div class="options">
                     {% for tag in model %}
-                        <div class="option {% if tag.selected %} selected {% endif %}" data-value="{{ tag.name }}">
-                            <span class="glyph glyphicons {{ tag.glyph}}"></span>
-                            <span class="option-text">{{ tag.label }}</span>
-                        </div>
+                    <div class="option" data-value="{{ tag._id }}">
+                        <span class="glyph glyphicons {{ tag.glyph}}"></span>
+                        <span class="option-text">{{ tag.label }}</span>
+                    </div>
                     {% endfor %}
                 </div>
             </div>

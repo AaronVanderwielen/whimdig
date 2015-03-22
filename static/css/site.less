@@ -39,10 +39,10 @@ input[type="text"], textarea, select {
     line-height: 2;
     font-size: 14px;
 
-	&:focus {
-		border-radius: 5px;
-		border: 1px solid @blue-accent;
-	}
+    &:focus {
+        border-radius: 5px;
+        border: 1px solid @blue-accent;
+    }
 }
 
 &.val-error {
@@ -133,8 +133,8 @@ label {
 button, input[type="button"] {
     width: 100%;
     border-radius: 2px;
-    border: 1px solid @turq;
-    background-color: @turq;
+    border: 1px solid @blue;
+    background-color: @blue;
     color: white;
     padding: 10px;
     margin: 10px 0;
@@ -169,7 +169,7 @@ button, input[type="button"] {
     .label {
         color: @light-blue;
         font-size: 14px;
-		line-height: 2;
+        line-height: 2;
         padding: 5px 10px;
         border-radius: 5px;
         cursor: pointer;
@@ -208,11 +208,11 @@ button, input[type="button"] {
 
             &.selected {
                 .glyph::before {
-                    color: @turq;
+                    color: @blue;
                 }
 
                 .option-text {
-                    color: @turq;
+                    color: @blue;
                 }
             }
 
@@ -290,7 +290,7 @@ button, input[type="button"] {
         cursor: pointer;
 
         &::before {
-            color: @turq;
+            color: @blue;
             font-size: 24px;
         }
     }
@@ -311,9 +311,14 @@ button, input[type="button"] {
     width: 100%;
     height: 55px;
     background-color: @darker;
-    padding: 10px 1%;
+    padding: 10px 12px 10px 10px;
     color: @blue;
-    border-bottom: 3px solid @blue;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 
     &:after {
         content: " ";
@@ -344,11 +349,18 @@ button, input[type="button"] {
         font-size: 24px;
         font-weight: bold;
         cursor: pointer;
-        padding: 5px 3px;
+        padding: 5px;
 
         > .logo-title {
             top: -5px;
             position: relative;
+
+            .letter {
+                font-family: 'Indie Flower', cursive;
+                line-height: 24px;
+                font-size: 36px;
+            }
+            .rest {}
         }
 
         .glyph::before {
@@ -428,9 +440,8 @@ button, input[type="button"] {
     right: 0;
     margin: 0;
     z-index: 2;
-    border-left: 3px solid @turq;
     box-shadow: 1px 1px 20px 0px @turq inset;
-    color: @turq;
+    color: @blue;
 
     .overlay-header {
         padding: 10px;
@@ -449,7 +460,7 @@ button, input[type="button"] {
         }
 
         .going::before {
-            color: @turq;
+            color: @blue;
             font-size: 36px;
         }
 
@@ -471,7 +482,7 @@ button, input[type="button"] {
         display: block;
 
         .link {
-            color: @turq;
+            color: @blue;
             font-size: 14px;
             cursor: pointer;
         }
@@ -479,7 +490,6 @@ button, input[type="button"] {
         .box {
             border-top: 1px solid @darker;
             //padding-bottom: 10px;
-
             .selectable {
                 margin: 0 -10px;
             }
@@ -490,10 +500,10 @@ button, input[type="button"] {
             cursor: pointer;
             //border-bottom: 1px solid @light;
             &:hover {
-                color: @blue !important;
+                color: @blue-accent !important;
 
                 .glyph::before {
-                    color: @blue !important;
+                    color: @blue-accent !important;
                 }
                 //background-color: @light-blue; //@light-gold;
                 background-color: @black-accent;
@@ -510,7 +520,7 @@ button, input[type="button"] {
 
         .heading {
             display: block;
-            color: @turq;
+            color: @blue;
             font-weight: bold;
             padding: 10px 0;
         }
@@ -564,11 +574,11 @@ button, input[type="button"] {
 
                 &:not(.disabled) {
                     .glyph::before {
-                        color: @turq;
+                        color: @blue;
                     }
 
                     .tag-label {
-                        color: @turq;
+                        color: @blue;
                     }
                 }
 
@@ -626,10 +636,10 @@ button, input[type="button"] {
                 }
 
                 .where {
-					
-					.place {
-						font-weight: bold;
-					}
+
+                    .place {
+                        font-weight: bold;
+                    }
                 }
 
                 .event-tags {
@@ -643,13 +653,13 @@ button, input[type="button"] {
 
                             &::before {
                                 font-size: 30px;
-                                color: @turq;
+                                color: @blue;
                             }
                         }
 
                         .tag-label {
                             display: none;
-                            color: @turq;
+                            color: @blue;
                         }
                     }
 
@@ -676,7 +686,7 @@ button, input[type="button"] {
                     .chat-input {
                         width: 100%;
                         margin: 5px 0 0 0;
-						background-color: @black-accent;
+                        background-color: @black-accent;
                     }
 
                     .glyph {
@@ -686,7 +696,7 @@ button, input[type="button"] {
                         cursor: pointer;
 
                         &::before {
-                            color: @turq;
+                            color: @blue;
                             font-size: 28px;
                         }
                     }
@@ -698,7 +708,7 @@ button, input[type="button"] {
                 }
 
                 .chat-list {
-					padding: 10px 0;
+                    padding: 10px 0;
 
                     .fb-photo {
                         margin: 0 10px 10px 0;
@@ -751,7 +761,7 @@ button, input[type="button"] {
                     cursor: pointer;
 
                     &::before {
-                        color: @turq;
+                        color: @blue;
                         font-size: 28px;
                     }
                 }
@@ -761,8 +771,8 @@ button, input[type="button"] {
 
                 .create-event {
                     margin: 0 -10px;
-                    color: @turq;
-					font-weight: bold;
+                    color: @blue;
+                    font-weight: bold;
 
                     .heading {
                         position: relative;
@@ -776,7 +786,7 @@ button, input[type="button"] {
                         padding: 12px;
 
                         &::before {
-                            color: @turq;
+                            color: @blue;
                             font-size: 24px;
                         }
                     }
@@ -788,7 +798,7 @@ button, input[type="button"] {
                 .connections {
 
                     > div > div {
-                        color: @turq;
+                        color: @blue;
                         font-size: 14px;
                     }
                 }
@@ -803,8 +813,8 @@ button, input[type="button"] {
 
                 .glyph::before {
                     font-size: 80px;
-                    width: 78px;
-                    height: 78px;
+                    width: 77px;
+                    height: 77px;
                     position: relative;
                     border-radius: 7px;
                     padding: 0;
@@ -889,14 +899,6 @@ button, input[type="button"] {
     clear: both;
 }
 
-.turq {
-    color: @turq;
-
-    &.glyph::before {
-        color: @turq;
-    }
-}
-
 .green {
     color: @green !important;
 
@@ -974,21 +976,19 @@ button, input[type="button"] {
 
         .detail-overlay {
             width: 100%;
-            border-left: 3px solid @blue;
-
-            .overlay-body .main-menu .map-search {
-                display: block;
-            }
         }
     }
 
     .header {
 
-        .user-controls {
-            div {
+        > .site-logo {
 
-                &.map-search {
-                    display: none;
+            > .logo-title {
+
+                .letter {}
+
+                .rest {
+                    display:none;
                 }
             }
         }
