@@ -60,6 +60,8 @@
 			user,
             selectedEvent,
 			boundChange,
+            prevZoom,
+            circlesResizing,
 			urls = {
 			    // map
 			    mapPlaces: '/map/places',
@@ -143,6 +145,8 @@
 			    gMap = new google.maps.Map(div[0], mapOptions);
 			    gMap.setOptions({ styles: settings.styleArray });
 
+			    prevZoom = mapOptions.zoom;
+
 			    google.maps.event.addListener(gMap, 'zoom_changed', zoom_changed);
 
 			    // after finish load
@@ -150,6 +154,7 @@
 			},
             bounds_changed = function () {
                 window.clearTimeout(boundChange);
+
                 if (gMap.getZoom() > 12) {
                     boundChange = window.setTimeout(function () {
                         moveBoundsToAllowed();
@@ -167,6 +172,21 @@
                 }
             },
             zoom_changed = function (e) {
+                //window.clearTimeout(circlesResizing);
+                //circlesResizing = window.setTimeout(function () {
+                //    var zoom = gMap.getZoom(),
+                //        dir = prevZoom == zoom ? 0 : (prevZoom > zoom ? 0.1 : -0.1);
+
+                //    prevZoom = gMap.getZoom();
+                //    resizeCircles(dir);
+                //}, 500);
+
+                var zoom = gMap.getZoom(),
+                        dir = prevZoom == zoom ? 0 : (prevZoom > zoom ? 0.1 : -0.1);
+
+                prevZoom = gMap.getZoom();
+                resizeCircles(dir);
+
                 var center = gMap.getCenter(),
                     loc = {
                         lat: center.lat(),
@@ -185,68 +205,6 @@
 			resizeGoogleMap = function () {
 			    google.maps.event.trigger(gMap, 'resize');
 			},
-		    circleSizeTo = function (el, targetSize, rate, secondRate, interval, callback) {
-		        el.sizing = window.setInterval(function () {
-		            var newRad = Math.round(rate * el.radius),
-                        increase = newRad - el.radius;
-
-		            if (increase === 0) {
-		                if (rate > 1) {
-		                    newRad++;
-		                }
-		                else {
-		                    newRad--;
-		                }
-		            }
-
-		            el.setOptions({
-		                radius: newRad
-		            });
-
-		            if (newRad === targetSize) {
-		                // circle hit requested size exactly
-		                clearSizing(el);
-
-		                if (callback) {
-		                    callback();
-		                }
-		            }
-		            else {
-		                var tooFar = rate > 1 ? (el.radius > targetSize) : (el.radius < targetSize);
-
-		                if (tooFar) {
-		                    clearSizing(el);
-		                    // circle has gone above requested size, scale back
-		                    if (secondRate) {
-		                        circleSizeTo(el, targetSize, secondRate, null, 100, callback);
-		                    }
-		                    else if (callback) {
-		                        callback();
-		                    }
-		                }
-		            }
-		        }, interval ? interval : 50);
-		    },
-		    circleHover = function (el, cd) {
-		        if (!el.sizing) {
-		            var cd = cd ? cd : getCdById(el.id, el.isGroup),
-                        originalSize = el.isGroup ? getEventCircleSize(_.max(cd.events, function (e) { return e.users.length; })) : getEventCircleSize(cd),
-                        growTo = el.radius + (el.radius / 10);
-
-		            circleSizeTo(el, growTo, 1.3, null, 100, function () {
-		                circleSizeTo(el, originalSize, .9, 1.1, 100, function () {
-		                    clearSizing(el);
-		                });
-		            });
-		        }
-		    },
-		    clearSizing = function (circle) {
-		        // clear sizing events
-		        if (circle.sizing) {
-		            window.clearInterval(circle.sizing);
-		            circle.sizing = false;
-		        }
-		    },
 		    drawGroupedData = function (data) {
 		        var singles = _.filter(data, function (g) { return g.length === 1; }),
                     multis = _.map(data, function (g, k) {
@@ -405,12 +363,13 @@
 		    drawEvent = function (event) {
 		        var colorArray = colorByTime(event[event.intensity_variable]),
                     circleSize = getEventCircleSize(event),
+                    stroke = circleSize / 10,
                     c = {
                         id: event._id,
                         sizing: false,
                         strokeColor: arrayToRGB(getShade(colorArray, -20)),
                         strokeOpacity: 1,
-                        strokeWeight: (circleSize / 10) > 5 ? 5 : (circleSize / 10),
+                        strokeWeight: stroke > 5 ? 5 : stroke < 2 ? 2 : stroke,
                         fillColor: arrayToRGB(colorArray),
                         fillOpacity: settings.blurOpacity,
                         map: gMap,
@@ -600,9 +559,89 @@
 		            }
 		        }
 		    },
+            circleSizeTo = function (el, targetSize, rate, secondRate, interval, callback) {
+                el.sizing = window.setInterval(function () {
+                    var newRad = Math.round(rate * el.radius),
+                        increase = newRad - el.radius;
+
+                    if (increase === 0) {
+                        if (rate > 1) {
+                            newRad++;
+                        }
+                        else {
+                            newRad--;
+                        }
+                    }
+
+                    var stroke = newRad / 10;
+                    el.setOptions({
+                        radius: newRad,
+                        strokeWeight: stroke > 5 ? 5 : stroke < 2 ? 2 : stroke,
+                    });
+
+                    if (newRad === targetSize) {
+                        // circle hit requested size exactly
+                        clearSizing(el);
+
+                        if (callback) {
+                            callback();
+                        }
+                    }
+                    else {
+                        var tooFar = rate > 1 ? (el.radius > targetSize) : (el.radius < targetSize);
+
+                        if (tooFar) {
+                            clearSizing(el);
+                            // circle has gone above requested size, scale back
+                            if (secondRate) {
+                                circleSizeTo(el, targetSize, secondRate, null, 100, callback);
+                            }
+                            else if (callback) {
+                                callback();
+                            }
+                        }
+                    }
+                }, interval ? interval : 50);
+            },
+		    circleHover = function (el, cd) {
+		        if (!el.sizing) {
+		            var cd = cd ? cd : getCdById(el.id, el.isGroup),
+                        originalSize = el.isGroup ? getEventCircleSize(_.max(cd.events, function (e) { return e.users.length; })) : getEventCircleSize(cd),
+                        growTo = el.radius + (el.radius / 10);
+
+		            circleSizeTo(el, growTo, 1.3, null, 100, function () {
+		                circleSizeTo(el, originalSize, .9, 1.1, 100, function () {
+		                    clearSizing(el);
+		                });
+		            });
+		        }
+		    },
+		    clearSizing = function (circle) {
+		        // clear sizing events
+		        if (circle.sizing) {
+		            window.clearInterval(circle.sizing);
+		            circle.sizing = false;
+		        }
+		    },
+            resizeCircles = function () {
+                for (var e in circleData.events) {
+                    var cd = circleData.events[e],
+                        newRad = getEventCircleSize(cd),
+                        newStroke = newRad / 10;
+
+                    clearSizing(cd.circle);
+                    cd.circle.setOptions({
+                        radius: newRad,
+                        strokeWeight: newStroke > 5 ? 5 : newStroke < 2 ? 2 : newStroke,
+                    });
+                }
+                for (var g in circleData.groups) {
+
+                }
+            },
 		    getEventCircleSize = function (cData) {
-		        var min = 20, max = 400,
-                    calc = cData.users.length * 10;
+		        var min = 5, max = 400,
+                    calc = (19 - gMap.getZoom() + cData.users.length) * 10;
 
 		        return calc < min ? min : (calc > max ? max : calc);
 		    },

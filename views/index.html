@@ -15,20 +15,24 @@
     <link type="text/css" rel="stylesheet" href="/css/site.css" />
     <link type="text/css" rel="stylesheet" href="/css/jquery/timepicker.css" />
 
+    <!-- EXTERNAL LIBRARIES -->
     <script src="https://cdn.socket.io/socket.io-1.2.1.js"></script>
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="/js/jquery/ui/jquery-ui.min.js"></script>
-    <script src="/js/modernizr.js"></script>
-    <script src="/js/moment.js"></script>
-    <script src="/js/underscore-min.js"></script>
-    <script src="/js/multiselect.js"></script>
-    <!--
-        PROD : AIzaSyDEQiAImA3u9GB8EiF0NFMZH9Wy10AVTWg
-        TEST : AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54
-    -->
-    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54&sensor=true&libraries=geometry,places"></script>
-    <script type="text/javascript" src="/js/jsatlas.js"></script>
     <script type="text/javascript" src="/js/jquery/ui/external/timepicker.js"></script>
+    <!-- PROD : AIzaSyDEQiAImA3u9GB8EiF0NFMZH9Wy10AVTWg TEST : AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54 -->
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDEQiAImA3u9GB8EiF0NFMZH9Wy10AVTWg&sensor=true&libraries=geometry,places"></script>
+
+        <!-- EXTENSIONS -->
+    <script src="/js/util/extensions.js"></script>
+    <script src="/js/util/underscore-min.js"></script>
+    <script src="/js/util/modernizr.js"></script>
+    <script src="/js/util/moment.js"></script>
+    <script src="/js/util/multiselect.js"></script>
+
+    <!-- MY SCRIPTS -->
+    <script type="text/javascript" src="/js/w-map.js"></script>
+    <script type="text/javascript" src="/js/w-controls.js"></script>
 
     <!--facebook SDK-->
     <script>
@@ -41,40 +45,34 @@
         }(document, 'script', 'facebook-jssdk'));
     </script>
 
-    <!-- init main plugin -->
+    <!-- init main plugins -->
     <script type="text/javascript">
         $(function () {
-            $('.jsatlas').jsatlas();
+            $('.w-controls').wControls();
+            $('.w-map').wMap();
         });
     </script>
 </head>
-<body>
-    <div class="header">
-        <div class="site-logo">
+<body class="w-controls">
+    <div class="app-header noselect">
+        <div class="app-logo">
             <span class="logo-title"><span class="letter">W</span><span class="rest">himdig</span></span>
         </div>
         <div class="user-controls">
-            <div class="filter">
-                <span class="glyph glyphicons filter"></span>
-            </div>
+            <div class="user-image"></div>
             <div class="menu">
                 <span class="glyph halflings align-justify"></span>
             </div>
         </div>
-        <div class="day-select">
+<!--        <div class="day-select">
             <span class="prev glyph glyphicons chevron-left disabled"></span>
             <span class="current">12 hour</span>
             <span class="next glyph glyphicons chevron-right"></span>
-        </div>
+        </div>-->
     </div>
     <div class="container">
-        <div class="jsatlas"></div>
-        <div class="detail-overlay">
-            <div class="overlay-header">
-                <span class="overlay-exit glyphicons chevron-right"></span>
-                <span class="going glyph halflings unchecked"></span>
-                <span class="overlay-title"></span>
-            </div>
+        <div class="w-map"></div>
+        <div class="overlay">
             <div class="overlay-body row">
             </div>
         </div>

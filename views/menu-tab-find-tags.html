@@ -1,0 +1,12 @@
+﻿<div class="header row">
+    <div class="back glyph glyphicons chevron-left"></div>
+    <div class="header-text">what types of events?</div>
+</div>
+<div class="menu-tab-find-tags sidepad">
+        {% for tag in model %}
+        <div class="tag selectable">
+            <span class="glyph glyphicons {{ tag.glyph}}" data-id="{{ tag._id }}"></span>
+            <span class="tag-label">{{ tag.label }}</span>
+        </div>
+        {% endfor %}
+</div>

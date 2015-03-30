@@ -1,33 +1,23 @@
 ﻿<div class="event-detail">
-    <div class="event-info box">
-        <div class="row">
-            <div class="when heading"></div>
-        </div>
-        <div class="where selectable"></div>
-        <div class="event-tags">
-            {% for tag in model.tags %}
-                <div class="tag">
-                    <span class="glyph glyphicons {{ tag.glyph}}" data-name="{{ tag.name }}"></span>
-                    <span class="tag-label">{{ tag.label }}</span>
-                </div>
-            {% endfor %}
-        </div>
-        <div class="what pad"></div>
+    <div class="header row">
+        <div class="back glyph glyphicons chevron-right"></div>
+        <div class="header-text"></div>
     </div>
-    <div class="connections box">
-        <span class="heading">Attendees</span>
-        <div class="connection-info">
-            <span class="num-attending"></span>&nbsp;attending this event. (<span class="friend-count"></span>)
-        <div class="friend-list pad"></div>
+    <div class="tabs row noselect">
+        <div class="tab info-tab">
+            <span class="glyph glyphicons circle_info"></span>
+            <span class="tab-label">info</span>
+        </div>
+        <div class="tab chat-tab">
+            <span class="glyph glyphicons chat"></span>
+            <span class="tab-label">chat</span>
+        </div>
+        <div class="tab empty"></div>
+        <div class="tab star-tab btn">
+            <span class="glyph glyphicons dislikes"></span>
+            <span class="tab-label">10</span>
         </div>
     </div>
-    <div class="chat box">
-        <span class="heading">Chat</span>
-        <div class="row">
-            <img class="fb-photo" />
-            <span class="glyph glyphicons play"></span>
-            <input type="text" class="chat-input" />
-        </div>
-        <div class="chat-list"></div>
+    <div class="tab-content">
     </div>
 </div>

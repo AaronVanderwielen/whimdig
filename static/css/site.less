@@ -4,16 +4,17 @@
 @light: #ccc;
 @lightest: #efefef;
 @blue: #0094ff;
-@turq: #005588;
+@turq: #003966;
+@turq-accent: #005999;
 @green: #009900;
-@gold: #ddbb33;
+@gold: #bb0;
 @blue-accent: #21b4ff;
-@light-blue: #dfefff;
-@light-turq: #efffff;
-@light-green: #cfefef;
-@light-gold: #ffffef;
-@ui-element: #dfeffc;
-@ui-element-accent: #d0e5f5;
+@light-blue: #9fd0f0;
+@white-blue: #daeaff;
+@font-size-normal: 14px;
+@font-size-large: 20px;
+@font-size-larger: 24px;
+@min-width: 270px;
 
 * {
     box-sizing: border-box;
@@ -29,6 +30,8 @@ body,
 
 body {
     margin: 0;
+    font-size: 14px;
+    min-width: @min-width;
 }
 
 input[type="text"], textarea, select {
@@ -37,7 +40,7 @@ input[type="text"], textarea, select {
     color: @light-blue;
     padding: 5px 10px;
     line-height: 2;
-    font-size: 14px;
+    font-size: @font-size-normal;
 
     &:focus {
         border-radius: 5px;
@@ -150,113 +153,6 @@ button, input[type="button"] {
     }
 }
 
-.multi {
-    position: relative;
-    width: 100%;
-    border-radius: 5px;
-    border: 1px solid @blue;
-    color: @light-blue;
-    margin-bottom: 10px;
-
-    .ui-icon {
-        cursor: pointer;
-        right: 0.5em;
-        left: auto;
-        position: absolute;
-        top: 10px;
-    }
-
-    .label {
-        color: @light-blue;
-        font-size: 14px;
-        line-height: 2;
-        padding: 5px 10px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .options {
-        background-color: @black-accent;
-        display: none;
-        max-height: 300px;
-        overflow-y: scroll;
-
-        .option {
-            display: block;
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid @darker;
-
-            .glyph {
-                padding: 25px;
-
-                &::before {
-                    font-size: 50px;
-                }
-            }
-
-            &:not(.selected) {
-
-                .glyph::before {
-                    color: @dark;
-                }
-
-                .option-text {
-                    color: @dark;
-                }
-            }
-
-            &.selected {
-                .glyph::before {
-                    color: @blue;
-                }
-
-                .option-text {
-                    color: @blue;
-                }
-            }
-
-            &:hover {
-                .option-text, .glyph::before {
-                    color: @blue-accent;
-                }
-            }
-
-            &:last-child {
-                border-bottom: none;
-            }
-        }
-
-        .option::after {
-            content: " ";
-            display: table;
-            clear: both;
-        }
-
-        &::-webkit-scrollbar {
-            width: 3px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background-color: @turq;
-        }
-
-        &::-webkit-scrollbar-track-piece {
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background-color: @blue;
-        }
-    }
-
-    &:hover {
-
-        .label {
-            background: #d0e5f5;
-        }
-    }
-}
-
 .remove.glyph {
     padding: 12px;
     cursor: pointer;
@@ -282,22 +178,12 @@ button, input[type="button"] {
     }
 }
 
-.map-search {
-    display: none;
-
-    .glyph {
-        padding: 12px;
-        cursor: pointer;
-
-        &::before {
-            color: @blue;
-            font-size: 24px;
-        }
-    }
-}
-
 .pad {
     padding: 10px;
+}
+
+.sidepad {
+    padding: 0 10px;
 }
 
 .glyph-aligner {
@@ -305,20 +191,24 @@ button, input[type="button"] {
     top: 3px;
 }
 
-.header {
-    position: fixed;
-    z-index: 3;
-    width: 100%;
-    height: 55px;
-    background-color: @darker;
-    padding: 10px 12px 10px 10px;
-    color: @blue;
+.noselect {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+.app-header {
+    position: fixed;
+    z-index: 3;
+    width: 100%;
+    height: 52px;
+    min-width: 180px;
+    background-color: @darker;
+    padding: 10px;
+    color: @blue;
 
     &:after {
         content: " ";
@@ -344,12 +234,14 @@ button, input[type="button"] {
         }
     }
 
-    > .site-logo {
+    > .app-logo {
         float: left;
         font-size: 24px;
+        line-height: 24px;
         font-weight: bold;
         cursor: pointer;
-        padding: 5px;
+        top: 5px;
+        position: relative;
 
         > .logo-title {
             top: -5px;
@@ -357,10 +249,12 @@ button, input[type="button"] {
 
             .letter {
                 font-family: 'Indie Flower', cursive;
-                line-height: 24px;
                 font-size: 36px;
             }
-            .rest {}
+
+            .rest {
+                font-family: 'Indie Flower', cursive;
+            }
         }
 
         .glyph::before {
@@ -375,34 +269,43 @@ button, input[type="button"] {
     }
 
     .user-controls {
-        top: 3px;
         float: right;
         position: relative;
 
         > div {
-            display: inline-block;
-            padding: 0 15px;
+            padding: 0 8px;
             border-right: 1px solid @blue;
-
-            &.map-search {
-                padding: 0 15px 0 0;
-
-                input {
-                    position: relative;
-                    border-radius: 3px;
-                    padding: 3px 7px;
-                    font-size: 1em;
-                }
-            }
 
             &:last-child {
                 border-right: 0;
                 padding-right: 5px;
             }
         }
-    }
 
-    .day-select {
+        .user-image {
+            float: left;
+
+            img {
+                display: block;
+                height: 30px;
+                float: left;
+            }
+        }
+
+        .menu {
+            float: right;
+
+            .glyph {
+                width: 30px;
+                float: right;
+            }
+
+            .glyph::before {
+                font-size: 30px;
+            }
+        }
+    }
+    /*.day-select {
         display: inline-block;
         float: right;
         position: relative;
@@ -416,14 +319,13 @@ button, input[type="button"] {
             font-size: 14px;
             font-weight: bold;
         }
-    }
-
+    }*/
     #login-popup-hack {
         float: right;
     }
 }
 
-.detail-overlay {
+.overlay {
     position: absolute;
     background-color: black;
     opacity: .9;
@@ -436,151 +338,352 @@ button, input[type="button"] {
     width: 0;
     height: 100%;
     top: 0;
-    padding-top: 55px;
+    padding-top: 52px;
     right: 0;
     margin: 0;
     z-index: 2;
-    box-shadow: 1px 1px 20px 0px @turq inset;
+    //box-shadow: 1px 1px 20px 0px @turq inset;
     color: @blue;
 
-    .overlay-header {
-        padding: 10px;
+    .glyph {
+        cursor: pointer;
         display: block;
-
-        .overlay-title {
-            position: relative;
-            font-size: 26px;
-            color: @blue;
-        }
-
-        .going {
-            float: right;
-            padding: 18px;
-            cursor: pointer;
-        }
-
-        .going::before {
-            color: @blue;
-            font-size: 36px;
-        }
-
-        .overlay-exit::before {
-            color: @blue;
-            font-size: 36px;
-        }
-
-        .overlay-exit {
-            cursor: pointer;
-            padding: 18px;
-            float: left;
-            margin-left: -10px;
-        }
+        padding: 0;
     }
 
-    .overlay-body {
-        padding: 0 10px;
-        display: block;
+    .glyph::before {
+        position: relative;
+        color: @blue;
+    }
 
-        .link {
-            color: @blue;
+    .multi {
+        position: relative;
+        width: 100%;
+        border-radius: 5px;
+        border: 1px solid @blue;
+        color: @light-blue;
+        margin-bottom: 10px;
+
+        .ui-icon {
+            cursor: pointer;
+            right: 0.5em;
+            left: auto;
+            position: absolute;
+            top: 10px;
+        }
+
+        .label {
+            color: @light-blue;
             font-size: 14px;
+            line-height: 2;
+            padding: 5px 10px;
+            border-radius: 5px;
             cursor: pointer;
         }
 
-        .box {
-            border-top: 1px solid @darker;
-            //padding-bottom: 10px;
-            .selectable {
-                margin: 0 -10px;
-            }
-        }
+        .options {
+            background-color: @black-accent;
+            display: none;
+            max-height: 300px;
+            overflow-y: scroll;
 
-        .selectable {
-            padding: 15px 10px 15px 30px;
-            cursor: pointer;
-            //border-bottom: 1px solid @light;
-            &:hover {
-                color: @blue-accent !important;
-
-                .glyph::before {
-                    color: @blue-accent !important;
-                }
-                //background-color: @light-blue; //@light-gold;
-                background-color: @black-accent;
-            }
-
-            &:last-child {
-                border-bottom: none;
-            }
-
-            &.small {
-                padding: 10px 10px 10px 20px;
-            }
-        }
-
-        .heading {
-            display: block;
-            color: @blue;
-            font-weight: bold;
-            padding: 10px 0;
-        }
-
-        .page {
-            overflow: hidden;
-            float: right;
-            width: 0;
-            height: 100%;
-            right: 0;
-            padding: 0;
-            margin: 0;
-
-            &.show {
-                width: 100%;
-            }
-        }
-
-        .set-filters {
-
-            .tag {
+            .option {
                 display: block;
-                width: 50%;
-                float: left;
-                padding: 20px 20px 20px 15px;
+                padding: 10px;
                 cursor: pointer;
-                text-align: center;
+                border-bottom: 1px solid @darker;
 
                 .glyph {
-                    display: block;
-                    width: 50px;
-                    margin: 0 auto;
-                    padding: 0;
+                    display: inline-block;
 
                     &::before {
-                        position: relative;
-                        margin: 0 auto;
                         font-size: 50px;
                     }
+                }
 
-                    &::after {
-                        content: " ";
-                        display: table;
-                        clear: both;
+                &:not(.selected) {
+
+                    .glyph::before {
+                        color: @dark;
+                    }
+
+                    .option-text {
+                        color: @dark;
                     }
                 }
 
-                .tag-label {
-                    width: 100%;
-                }
-
-                &:not(.disabled) {
+                &.selected {
                     .glyph::before {
                         color: @blue;
                     }
 
-                    .tag-label {
+                    .option-text {
                         color: @blue;
                     }
                 }
+
+                &:hover {
+                    .option-text, .glyph::before {
+                        color: @blue-accent;
+                    }
+                }
+
+                &:last-child {
+                    border-bottom: none;
+                }
+            }
+
+            .option::after {
+                content: " ";
+                display: table;
+                clear: both;
+            }
+
+            &::-webkit-scrollbar {
+                width: 3px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background-color: @turq;
+            }
+
+            &::-webkit-scrollbar-track-piece {
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background-color: @blue;
+            }
+        }
+
+        &:hover {
+
+            .label {
+                //background: #d0e5f5;
+            }
+        }
+    }
+
+    .overlay-body {
+        display: block;
+
+        .selectable {
+            cursor: pointer;
+
+            &.inline {
+                display: inline-block;
+                vertical-align: middle;
+                padding: 10px;
+                text-align: center;
+
+                .glyph {
+                    width: 30px;
+                    margin: 0 auto;
+                }
+
+                .glyph::before {
+                    margin: 0 auto;
+                    font-size: 30px;
+                }
+            }
+
+            &:not(.inline) {
+                padding: 20px;
+                margin: 0 -10px;
+
+                .glyph {
+                    display: inline-block;
+                }
+            }
+
+            &.editable {
+				position: relative;
+
+                &:hover {
+                    .glyph.edit::before {
+						color: @blue;
+                    }
+                }
+
+                .glyph.edit {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 50px;
+					padding:10px;
+                }
+
+				.glyph.edit::before {
+                    font-size: 30px;
+                }
+
+				.glyph.edit:hover, .glyph.edit:hover::before {
+					color: @light-blue;
+				}                
+            }
+
+            &:hover {
+                color: @blue-accent;
+                background-color: @black-accent;
+
+                .glyph::before {
+                    color: @blue-accent;
+                }
+            }
+        }
+
+        .header {
+            position: relative;
+            min-height: 50px;
+
+            .back {
+                position: absolute;
+                top: 10px;
+                left: 5px;
+                width: 30px;
+
+                &::before {
+                    font-size: 30px;
+                }
+            }
+
+            .header-text {
+                margin: 12px 0 0 40px;
+                font-family: 'Indie Flower', cursive;
+                font-size: @font-size-large;
+                float: left;
+            }
+        }
+
+        .tabs {
+
+            .tab {
+                display: block;
+                padding: 5px;
+                width: 25%;
+                height: 80px;
+                float: left;
+                text-align: center;
+                background-color: @turq; //@blue;
+                .glyph {
+                    width: 50px;
+                    margin: 0 auto;
+                }
+
+                .glyph::before {
+                    font-size: 50px;
+                    margin: 0 auto;
+                }
+
+                .tab-label {
+                }
+
+                &.selected {
+                    background-color: transparent;
+                    opacity: 1;
+
+                    .glyph {
+                        cursor: default;
+                    }
+
+                    .glyph::before {
+                        //color: @light-blue;
+                    }
+
+                    .tab-label {
+                        //color: @blue-accent;
+                    }
+                }
+
+                &:not(.empty):not(.selected) {
+                    cursor: pointer;
+
+                    .glyph::before {
+                        color: @blue-accent;
+                    }
+
+                    .tab-label {
+                        color: @blue-accent;
+                    }
+
+                    &:hover {
+                        background-color: @turq-accent;
+
+                        .glyph::before {
+                            color: @light-blue;
+                        }
+
+                        .tab-label {
+                            color: @light-blue;
+                        }
+                    }
+
+                    &.btn {
+
+                        &.active {
+
+                            .glyph::before {
+                                color: @white-blue;
+                            }
+
+                            .tab-label {
+                                color: @white-blue;
+                            }
+                        }
+
+                        &:hover {
+                            background-color: @turq;
+                        }
+                    }
+                }
+            }
+        }
+
+        .main-menu {
+
+            .menu-tab-find {
+
+                .find-events-header {
+
+                    .event-count {
+                        width: 25%;
+                        height: 65px;
+                        padding: 10px;
+                        text-align: center;
+                        float: left;
+                        font-size: 36px;
+                        line-height: 42px;
+
+                        span {
+                            top: 8px;
+                            position: relative;
+                        }
+                    }
+
+                    .find-event-filters {
+                        width: 75%;
+                        height: 65px;
+                        position: relative;
+                        float: left;
+
+                        .selectable.inline {
+                            float: left;
+                            width: 33.33%;
+                            height: 65px;
+                        }
+                    }
+                }
+            }
+
+            .menu-tab-events {
+            }
+
+            .menu-tab-social {
+            }
+        }
+
+        .menu-tab-find-tags {
+
+            .tag {
 
                 &.disabled {
                     .glyph::before {
@@ -614,15 +717,13 @@ button, input[type="button"] {
                     }
                 }
             }
-
-            .tag::after {
-                content: " ";
-                display: table;
-                clear: both;
-            }
         }
 
         .event-detail, .place-detail {
+
+            .heading {
+                font-weight: bold;
+            }
 
             .event-info {
 
@@ -645,11 +746,11 @@ button, input[type="button"] {
                 .event-tags {
                     .tag {
                         display: inline-block;
-                        padding: 10px 0;
                         margin-right: 10px;
 
                         .glyph {
-                            padding: 15px;
+                            cursor: default;
+                            width: 30px;
 
                             &::before {
                                 font-size: 30px;
@@ -692,7 +793,7 @@ button, input[type="button"] {
                     .glyph {
                         float: right;
                         margin: 12px -30px 0 0;
-                        padding: 14px;
+                        width: 28px;
                         cursor: pointer;
 
                         &::before {
@@ -744,124 +845,6 @@ button, input[type="button"] {
                 }
             }
         }
-
-        .main-menu {
-
-            .map-search {
-                margin-bottom: 5px;
-
-                input {
-                    padding: 10px;
-                    font-size: 16px;
-                    width: 90%;
-                }
-
-                .glyph {
-                    padding: 14px;
-                    cursor: pointer;
-
-                    &::before {
-                        color: @blue;
-                        font-size: 28px;
-                    }
-                }
-            }
-
-            .menu-items {
-
-                .create-event {
-                    margin: 0 -10px;
-                    color: @blue;
-                    font-weight: bold;
-
-                    .heading {
-                        position: relative;
-                        top: 3px;
-                        font-weight: normal;
-                        font-size: 16px;
-                        margin-left: 5px;
-                    }
-
-                    .glyph {
-                        padding: 12px;
-
-                        &::before {
-                            color: @blue;
-                            font-size: 24px;
-                        }
-                    }
-                }
-
-                .schedule {
-                }
-
-                .connections {
-
-                    > div > div {
-                        color: @blue;
-                        font-size: 14px;
-                    }
-                }
-            }
-
-            .synced-accounts {
-                text-align: center;
-
-                .heading {
-                    color: @dark;
-                }
-
-                .glyph::before {
-                    font-size: 80px;
-                    width: 77px;
-                    height: 77px;
-                    position: relative;
-                    border-radius: 7px;
-                    padding: 0;
-                }
-
-                .glyph.not-synced::before {
-                    opacity: .6;
-                    color: @dark;
-                    /*cursor: pointer;*/
-                }
-                /*.glyph.not-synced:hover {
-
-                    &.facebook-logo::before {
-                        color: #3B5998;
-                        background-color: #fff;
-                    }
-
-                    &.google-logo::before {
-                        color: #d34836;
-                        background-color: #2d2d2d;
-                    }
-
-                    &.twitter-logo::before {
-                        color: #4099FF;
-                        background-color: #fff;
-                    }
-                }*/
-                .glyph {
-                    padding: 0 10px;
-                }
-            }
-        }
-
-        .event-list {
-
-            .event {
-
-                .name {
-                    float: left;
-                }
-
-                .date-range {
-                    float: right;
-                    font-style: italic;
-                }
-            }
-        }
     }
 
     &::-webkit-scrollbar {
@@ -882,11 +865,12 @@ button, input[type="button"] {
 
 .container {
     z-index: 1;
-    padding-top: 55px;
+    padding-top: 52px;
+    position: relative;
 
     &.show-overlay {
 
-        .detail-overlay {
+        .overlay {
             width: 40%;
             //height: 100%;
         }
@@ -907,15 +891,15 @@ button, input[type="button"] {
     }
 }
 
+.left {
+    float: left;
+}
+
 .right {
     float: right;
 }
 
-.jsatlas {
-    transition: width .5s;
-    -moz-transition: width .5s; /* Firefox 4 */
-    -webkit-transition: width .5s; /* Safari and Chrome */
-    -o-transition: width .5s; /* Opera */
+.w-map {
     float: left;
     margin: 0 auto;
     width: 100%;
@@ -950,7 +934,7 @@ button, input[type="button"] {
 
         &.show-overlay {
 
-            .detail-overlay {
+            .overlay {
 
                 .overlay-body {
 
@@ -970,25 +954,171 @@ button, input[type="button"] {
     }
 }
 
-@media all and (max-width: 640px) {
+@media all and (max-width: 900px) {
 
     .container.show-overlay {
 
-        .detail-overlay {
+        .overlay {
             width: 100%;
+            min-width: @min-width;
+        }
+    }
+}
+
+@media all and (max-width: 350px) {
+
+    .app-header {
+        padding: 3px;
+        height: 35px;
+
+        .app-logo {
+            font-size: @font-size-large;
+            line-height: 20px;
+            padding: 7px 0 0 5px;
+            top: 0;
+
+            .logo-title {
+                .letter {
+                    font-size: @font-size-larger;
+                    line-height: 20px;
+                }
+
+                .rest {
+                    font-size: @font-size-large;
+                    line-height: 20px;
+                }
+            }
+        }
+
+        .user-controls {
+            .user-image {
+
+                img {
+                    height: 28px;
+                }
+            }
+
+            .menu {
+                .glyph {
+                    width: 28px;
+                    float: right;
+                }
+
+                .glyph::before {
+                    font-size: 28px;
+                }
+            }
         }
     }
 
-    .header {
+    .container {
+        padding-top: 35px;
 
-        > .site-logo {
+        .overlay {
+            padding-top: 35px;
 
-            > .logo-title {
+            .overlay-body {
 
-                .letter {}
+                .header {
+                    min-height: 40px;
 
-                .rest {
-                    display:none;
+                    .back {
+                        width: 20px;
+                    }
+
+                    .back::before {
+                        font-size: 20px;
+                    }
+
+                    .header-text {
+                        margin: 8px 0 0 30px;
+                    }
+                }
+
+                .selectable:not(.inline) {
+                    padding: 10px;
+                    margin: 0 -10px;
+
+                    .glyph {
+                    }
+
+                    .glyph::before {
+                    }
+                }
+
+                .selectable.inline {
+                    padding: 5px;
+                }
+
+                .tabs {
+
+                    .tab {
+                        height: 40px;
+
+                        .glyph {
+                            width: 30px;
+                        }
+
+                        .glyph::before {
+                            font-size: 30px;
+                        }
+
+                        .tab-label {
+                            display: none;
+                        }
+
+                        &.btn {
+
+                            .glyph {
+                                margin: 0;
+								float:right;
+                            }
+
+                            .tab-label {
+								display: block;
+                                float: right;
+								margin-right:3px;
+								top: 4px;
+								position: relative;
+                            }
+                        }
+                    }
+                }
+
+                .main-menu {
+
+                    .tab-content {
+
+                        .glyph-label {
+                            display: none;
+                        }
+
+                        .menu-tab-find .find-events-header {
+
+                            .event-count {
+                                height: 35px;
+                                padding: 5px;
+                                font-size: 18px;
+                                line-height: 24px;
+                            }
+
+                            .find-event-filters {
+                                height: 35px;
+
+                                .selectable.inline {
+                                    height: 35px;
+
+                                    .glyph {
+                                        width: 20px;
+                                    }
+
+                                    .glyph::before {
+                                        font-size: 20px;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

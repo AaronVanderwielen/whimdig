@@ -87,7 +87,14 @@ function init() {
 		            socket.emit('message', { eventId: data.eventId, text: data.text, facebook_id: session.user.facebook_id });
 		        });
 		    }
+		    else {
+                console.log("SOCKET ERROR: socket lost the session" )
+		    }
 		});
+	});
+
+	io.on('disconnect', function () {
+	    console.log("socket disconnect");
 	});
 
 	// form file upload
