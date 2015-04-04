@@ -41,6 +41,8 @@ input[type="text"], textarea, select {
     padding: 5px 10px;
     line-height: 2;
     font-size: @font-size-normal;
+    background-color: @black-accent;
+    width: 100% !important;
 
     &:focus {
         border-radius: 5px;
@@ -470,7 +472,8 @@ button, input[type="button"] {
             cursor: pointer;
 
             &.inline {
-                display: inline-block;
+                display: block;
+                float: left;
                 vertical-align: middle;
                 padding: 10px;
                 text-align: center;
@@ -484,6 +487,19 @@ button, input[type="button"] {
                     margin: 0 auto;
                     font-size: 30px;
                 }
+
+
+                &.half {
+                    width: 50%;
+                }
+
+                &.third {
+                    width: 33.33%;
+                }
+
+                &.quarter {
+                    width: 25%;
+                }
             }
 
             &:not(.inline) {
@@ -496,11 +512,11 @@ button, input[type="button"] {
             }
 
             &.editable {
-				position: relative;
+                position: relative;
 
                 &:hover {
                     .glyph.edit::before {
-						color: @blue;
+                        color: @blue;
                     }
                 }
 
@@ -509,16 +525,16 @@ button, input[type="button"] {
                     top: 0;
                     right: 0;
                     width: 50px;
-					padding:10px;
+                    padding: 10px;
                 }
 
-				.glyph.edit::before {
+                .glyph.edit::before {
                     font-size: 30px;
                 }
 
-				.glyph.edit:hover, .glyph.edit:hover::before {
-					color: @light-blue;
-				}                
+                .glyph.edit:hover, .glyph.edit:hover::before {
+                    color: @light-blue;
+                }
             }
 
             &:hover {
@@ -640,6 +656,17 @@ button, input[type="button"] {
 
         .main-menu {
 
+            .tab-header {
+
+                .header-item {
+                    height: 65px;
+                }
+
+                .selectable.inline {
+                    height: 65px;
+                }
+            }
+
             .menu-tab-find {
 
                 .find-events-header {
@@ -664,12 +691,6 @@ button, input[type="button"] {
                         height: 65px;
                         position: relative;
                         float: left;
-
-                        .selectable.inline {
-                            float: left;
-                            width: 33.33%;
-                            height: 65px;
-                        }
                     }
                 }
             }
@@ -1071,15 +1092,15 @@ button, input[type="button"] {
 
                             .glyph {
                                 margin: 0;
-								float:right;
+                                float: right;
                             }
 
                             .tab-label {
-								display: block;
+                                display: block;
                                 float: right;
-								margin-right:3px;
-								top: 4px;
-								position: relative;
+                                margin-right: 3px;
+                                top: 4px;
+                                position: relative;
                             }
                         }
                     }
@@ -1093,7 +1114,8 @@ button, input[type="button"] {
                             display: none;
                         }
 
-                        .menu-tab-find .find-events-header {
+                        .tab-header {
+                            height: 35px;
 
                             .event-count {
                                 height: 35px;
@@ -1104,17 +1126,17 @@ button, input[type="button"] {
 
                             .find-event-filters {
                                 height: 35px;
+                            }
 
-                                .selectable.inline {
-                                    height: 35px;
+                            .selectable.inline {
+                                height: 35px;
 
-                                    .glyph {
-                                        width: 20px;
-                                    }
+                                .glyph {
+                                    width: 20px;
+                                }
 
-                                    .glyph::before {
-                                        font-size: 20px;
-                                    }
+                                .glyph::before {
+                                    font-size: 20px;
                                 }
                             }
                         }

@@ -1,0 +1,24 @@
+﻿<div class="header row">
+    <div class="back glyph glyphicons chevron-left"></div>
+    <div class="header-text">keep in touch with friends</div>
+</div>
+<div class="menu-tab-social-message pad">
+    <form name="SendMessage" action="/social/sendmessage" method="post">
+        <div class="form-label">
+            To
+        </div>
+        <div class="form-input">
+            <input type="text" name="to" />
+        </div>
+        <div class="form-label">
+            Message
+        </div>
+        <div class="form-input">
+            <textarea name="desc" rows="5"></textarea>
+        </div>
+        <div class="row">
+            <p class="error-message"></p>
+            <input type="button" class="create-btn" value="Send Message" />
+        </div>
+    </form>
+</div>

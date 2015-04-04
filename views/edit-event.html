@@ -1,10 +1,9 @@
 ﻿<div class="header row">
     <div class="back glyph glyphicons chevron-left"></div>
-    <div class="header-text">Edit an Event</div>
+    <div class="header-text">edit this event</div>
 </div>
 <div class="pad">
     <span class="right glyph glyphicons remove glyph-aligner"></span>
-    <span class="heading">Edit Event</span>
     <form name="CreateEvent" action="/event/create" method="post">
         <input type="hidden" name="_id" value="" />
 
@@ -12,7 +11,7 @@
             Place
         </div>
         <div class="form-input">
-            <select name="place" data-val-el-query=".ui-selectmenu-button">
+            <select name="_place" data-val-el-query=".ui-selectmenu-button">
                 <option value="">- select a place -</option>
             </select>
         </div>
@@ -35,7 +34,7 @@
             <div class="multi">
                 <span class="ui-icon ui-icon-triangle-1-s"></span>
                 <div class="label">- select tags -</div>
-                <input type="hidden" data-val-el-query=".multi" name="tags" value="" />
+                <input type="hidden" data-val-el-query=".multi" name="_tags" value="" />
                 <div class="options">
                     {% for tag in model %}
                     <div class="option" data-value="{{ tag._id }}">

@@ -83,8 +83,8 @@ function init() {
 
 		socket.on("chat", function (data) {
 		    if (session && session.user) {
-		        bl.addMsgToEvent(data.text, data.eventId, session.user.facebook_id, function () {
-		            socket.emit('message', { eventId: data.eventId, text: data.text, facebook_id: session.user.facebook_id });
+		        bl.addMsgToEvent(data.text, data.eventId, session.user._id, function () {
+		            socket.emit('message', { eventId: data.eventId, text: data.text, _id: session.user._id });
 		        });
 		    }
 		    else {

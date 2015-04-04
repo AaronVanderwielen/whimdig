@@ -3,9 +3,25 @@
 		var obj = this,
 			socket,
 			socketId,
-            prodFbApi = { appId: '793549090738791', xfbml: true, version: 'v2.2' },
+			debug = true, // true uses testFbApi
+			prodFbApi = { appId: '793549090738791', xfbml: true, version: 'v2.2' },
             testFbApi = { appId: '655662931197377', cookie: true, version: 'v2.0' },
 			user,
+			cityLoc = {
+				myloc: {
+					label: 'My Location'
+				},
+				bellingham: {
+					label: 'Bellingham',
+					lat: 48.7524,
+					lng: -122.4712
+				},
+				seattle: {
+					label: 'Seattle',
+					lat: 47.6036,
+					lng: -122.3294
+				}
+			},
 			allTags,
 			filters = {
 				tags: [],
@@ -92,7 +108,12 @@
 			},
 		    // session/data
 			initAuthentication = function (callback) {
-				FB.init(prodFbApi);
+				if (debug) {
+					FB.init(testFbApi);
+				}
+				else {
+					FB.init(prodFbApi);
+				}
 				fbInitLogin(callback);
 			},
             fbInitLogin = function (callback, callbackArgs) {
@@ -426,11 +447,11 @@
             				starHandler.call(this, event);
             			});
 
-            			starTab.find('.tab-label').html(event.users ? event.users.length : 0);
+            			starTab.find('.tab-label').html(event._users ? event._users.length : 0);
             			// should star be highlighted?
-            			if (event.users) {
-            				// initialize 'going' checkbox by checking if user is in event.users on client
-            				if (_.some(event.users, function (u) { return u === user.facebook_id; })) {
+            			if (event._users) {
+            				// initialize 'going' checkbox by checking if user is in event._users on client
+            				if (_.some(event._users, function (u) { return u._id === user._id; })) {
             					starTab.addClass('active');
             					starTab.find('.glyph').addClass('star').removeClass('dislikes');
             				}
@@ -473,8 +494,8 @@
 					// apply event detail to template
 					when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
 					when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
-					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event.place.name, event.place.vicinity));
-					where.data('id', event.place._id);
+					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event._place.name, event._place.vicinity));
+					where.data('id', event._place._id);
 					where.data('created-by', event.created_by);
 					what.html(event.desc);
 
@@ -484,17 +505,17 @@
 						setPlaceDetail(placeId, 1);
 					});
 
-					numAttending.html(event.users.length);
+					numAttending.html(event._users.length);
 
 					// friends
-					var attendingFriends = _.filter(user.friends, function (f) {
-						if (_.some(event.users, function (u) { return u === f; })) {
+					var attendingFriends = _.filter(user._friends, function (f) {
+						if (_.some(event._users, function (u) { return u._id === f._id; })) {
 							return f;
 						}
 					});
-					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends === 1 ? "" : "s"));
+					friendCount.html(attendingFriends.length + " friend" + (attendingFriends.length === 1 ? "" : "s"));
 					for (var f in attendingFriends) {
-						var friendId = attendingFriends[f],
+						var friendId = attendingFriends[f].facebook_id,
 							pic = $('<img>');
 
 						console.log(friendId);
@@ -517,8 +538,8 @@
 
 					fbPhoto.attr('src', String.format(fbPhotoUrl, user.facebook_id));
 
-					for (var m in event.messages) {
-						writeMessageToChat(event.messages[m], chatlist);
+					for (var m in event._messages) {
+						writeMessageToChat(event._messages[m], chatlist);
 					}
 
 					socket.on('message', function (data) {
@@ -528,23 +549,25 @@
 					});
 
 					chatsend.off('click').on('click', function (e) {
-						sendChat(chatbox, event._id);
+						sendChat(chatbox, event);
 					});
 
 					chatbox.off('keydown').on('keydown', function (e) {
 						if (e.keyCode === 13) {
-							sendChat(chatbox, event._id);
+							sendChat(chatbox, event);
 						}
 					});
 
 					callback(div);
 				});
 			},
-            sendChat = function (input, eventId) {
-            	var msg = input.val();
+            sendChat = function (input, event) {
+            	var msg = input.val(),
+            		data = { eventId: event._id, text: msg };
 
-            	socket.emit('chat', { eventId: eventId, text: msg });
+            	socket.emit('chat', data);
             	input.val('');
+            	event._messages.push(data);
             },
             writeMessageToChat = function (message, div) {
             	if (message) {
@@ -588,18 +611,18 @@
             		if (tab.hasClass('active')) {
             			removeEventUser(event._id, function (response) {
             				if (response.success) {
-            					//var indexOfUser = event.users.indexOf(user.facebook_id),
+            					//var indexOfUser = event._users.indexOf(user.facebook_id),
             					//size = getEventCircleSize(event);
 
             					// remove locally
-            					event.users.splice(indexOfUser, 1);
+            					event._users.splice(indexOfUser, 1);
 
             					//overlayGoing.removeClass('check');
             					//overlayGoing.removeClass('green');
             					//overlayGoing.addClass('unchecked');
             					//clearSizing(cData.circle);
             					//circleSizeTo(cData.circle, size, 0.9, null, 50);
-            					label.html(parseInt(event.users.length, 10));
+            					label.html(parseInt(event._users.length, 10));
             					tab.removeClass('active');
             					glyph.addClass('dislikes').removeClass('star');
             				}
@@ -609,7 +632,7 @@
             			addEventUser(event._id, function (response) {
             				if (response.success) {
             					// add locally
-            					event.users.push(user.facebook_id);
+            					event._users.push(user._id);
             					//var size = getEventCircleSize(cData);
 
             					//overlayGoing.removeClass('unchecked');
@@ -617,7 +640,7 @@
             					//overlayGoing.addClass('green');
             					//clearSizing(cData.circle);
             					//circleSizeTo(cData.circle, size, 1.1, null, 50);
-            					label.html(parseInt(event.users.length, 10));
+            					label.html(parseInt(event._users.length, 10));
             					tab.addClass('active');
             					glyph.addClass('star').removeClass('dislikes');
             				}
@@ -1042,7 +1065,7 @@
 							eventsDiv.empty();
 							eventsDiv.append(list);
 							eventClickHandlers(eventsDiv);
-							
+
 							var edit = $('<span class="glyph glyphicons edit"></span>');
 							eventsDiv.find('.event.editable').append(edit);
 
@@ -1055,7 +1078,7 @@
 			},
 			createEventHandler = function (e) {
 				getAllEventTags(function (tags) {
-					getTemplate("create-event", tags, function (html) {
+					getTemplate("menu-tab-events-create", tags, function (html) {
 						var page = navigatePage(1, pageNames.createEvent);
 						page.html(html);
 						bindUi(page);
@@ -1069,7 +1092,7 @@
 
 						// load in user's places
 						getUserPlaces(function (places) {
-							var select = page.find('select[name="place"]');
+							var select = page.find('select[name="_place"]');
 							userPlacesHandler(places, select);
 						});
 					});
@@ -1090,17 +1113,15 @@
 					success: function (response) {
 						if (response.success) {
 							var newEvent = response.body,
-								latlng = new google.maps.LatLng(newEvent.loc.coordinates[1], newEvent.loc.coordinates[0]);
+								loc = {
+									lat: newEvent.loc.coordinates[1],
+									lng: newEvent.loc.coordinates[0]
+								},
+								pan = -container.width() * .2;
 
-							exitOverlay();
-							loadEventsInBounds(null, function (events) {
-								_map(function (m) {
-									m.clean([]);
-									m.renderEvents(events, function () {
-										m.select(newEvent._id);
-										setEventDetail(newEvent._id, 0);
-									});
-								});
+							_map(function (m) {
+								m.goTo(loc, pan);
+								setEventDetail(newEvent._id, 0);
 							});
 						}
 						else {
@@ -1158,15 +1179,53 @@
 							placeSelect.selectmenu('refresh');
 							getTemplate('add-user-place', null, function (template) {
 								page.html(template);
-								page.find('.back').off('click').on('click', function () {
+								var back = page.find('.back'),
+									areaSelect = page.find('select[name="area"]'),
+									placeInput = page.find('input[name="_place"]'),
+									btn = page.find('input[type=button]'),
+									resultsDiv = page.find('.results');
+
+								back.off('click').on('click', function () {
 									page = navigatePage(-1);
 								});
-								page.find('input[type=button]').off('click').on('click', function (e) {
-									addUserPlaceHandler(function (op) {
-										placeSelect.append(op);
-										placeSelect.selectmenu("refresh");
-										// go back to previous page
-										navigatePage(-1);
+
+								areaSelect.empty();
+
+								_map(function (m) {
+									m.getPosition(function (userPos) {
+
+										for (var c in cityLoc) {
+											var option = $('<option>');
+											option.html(cityLoc[c].label);
+											option.data('lat', cityLoc[c].lat ? cityLoc[c].lat : userPos.lat);
+											option.data('lng', cityLoc[c].lng ? cityLoc[c].lng : userPos.lng);
+
+											areaSelect.append(option);
+										}
+
+										btn.off('click').on('click', function (e) {
+											var data = {
+												lat: areaSelect.find('option:selected').data('lat'),
+												lng: areaSelect.find('option:selected').data('lng'),
+												name: placeInput.val()
+											};
+
+											renderPlacesList(data, function (list) {
+												resultsDiv.empty();
+												resultsDiv.append(list);
+
+												resultsDiv.find('.place').off('click').on('click', function (e) {
+													addUserPlaceClick.call(this, function (op) {
+														placeSelect.append(op);
+														placeSelect.selectmenu("refresh");
+														// go back to previous page
+														navigatePage(-1);
+													});
+												});
+											});
+										});
+
+										bindUi(page);
 									});
 								});
 							});
@@ -1175,36 +1234,21 @@
 				});
 				placeSelect.selectmenu('refresh');
 			},
-			addUserPlaceHandler = function (callback) {
-				var page = currentPage(),
-					placeName = page.find('input[name="place"]').val(),
-					resultsDiv = page.find('.results');
-
-				resultsDiv.html('');
-
-				var loc = gMap.getCenter(),
-					data = {
-						lat: loc.lat(),
-						lng: loc.lng(),
-						name: placeName
-					};
-
+			renderPlacesList = function (data, callback) {
 				// check if lat/lng are within WA
-				if (getAllowedBounds().contains(loc)) {
-					$.post(urls.searchAllPlaces, data, function (response) {
-						if (response.success) {
-							for (var p in response.body) {
-								var place = $(String.format('<div class="result selectable" data-id="{0}" data-name="{1}"><div class="heading">{1}</div><span>{2}</span></div>', response.body[p]._id, response.body[p].name, response.body[p].vicinity));
+				//if (m.getAllowedBounds().contains(loc)) {
+				$.post(urls.searchAllPlaces, data, function (response) {
+					if (response.success) {
+						var list = $('<div class="place-list">');
 
-								place.off('click').on('click', function (e) {
-									addUserPlaceClick.call(this, callback);
-								});
-
-								resultsDiv.append(place);
-							}
+						for (var p in response.body) {
+							var place = $(String.format('<div class="place selectable" data-id="{0}" data-name="{1}"><div class="heading">{1}</div><span>{2}</span></div>', response.body[p]._id, response.body[p].name, response.body[p].vicinity));
+							list.append(place);
 						}
-					});
-				}
+						callback(list);
+					}
+				});
+				//}
 			},
 			addUserPlaceClick = function (callback) {
 				var placeId = $(this).data('id'),
@@ -1233,7 +1277,7 @@
 					type: 'GET',
 					success: function (response) {
 						if (response.success) {
-							callback(response.body.places);
+							callback(response.body._places);
 						}
 					}
 				});
@@ -1265,9 +1309,9 @@
 				getUserEvent(id, function (event) {
 					getAllEventTags(function (tags) {
 						// set selected status here
-						for (var e in event.tags) {
+						for (var e in event._tags) {
 							for (var t in tags) {
-								if (tags[t].name === event.tags[e].name) {
+								if (tags[t].name === event._tags[e].name) {
 									tags[t].selected = true;
 								}
 							}
@@ -1282,8 +1326,8 @@
 									page = navigatePage(-1);
 								});
 
-								var select = page.find('select[name="place"]');
-								userPlacesHandler(places, select, event.place._id);
+								var select = page.find('select[name="_place"]');
+								userPlacesHandler(places, select, event._place._id);
 								bindUi(page);
 								bindModelToForm(event, page);
 
@@ -1409,7 +1453,7 @@
 							friendsList = connections.find('.friend-list'),
 							chatlist = page.find('.chat-list');
 
-						numAttending.html(event.users.length);
+						numAttending.html(event._users.length);
 
 						// click event info goes to place detail
 						where.off('click').on('click', function (e) {
@@ -1419,22 +1463,24 @@
 						});
 
 						// friends
-						var attendingFriends = _.filter(user.friends, function (f) {
-							if (_.some(event.users, function (u) { return u === f.facebook_id; })) {
+						var attendingFriends = _.filter(user._friends, function (f) {
+							if (_.some(event._users, function (u) { return u._id === f._id; })) {
 								return f;
 							}
 						});
-						friendCount.html(attendingFriends.length + " friend" + (attendingFriends.friends === 1 ? "" : "s"));
+						friendCount.html(attendingFriends.length + " friend" + (attendingFriends.length === 1 ? "" : "s"));
 						for (var f in attendingFriends) {
-							var friend = attendingFriends[f],
-								pic = $('<img src="' + friend.picture_url + '">');
+							var friendId = attendingFriends[f].facebook_id,
+								pic = $('<img>');
+
+							pic.attr('src', String.format(fbPhotoUrl, friendId));
 
 							// show friend picture in friendListDiv
 							friendsList.append(pic);
 						}
 
-						for (var m in event.messages) {
-							writeMessageToChat(event.messages[m], chatlist);
+						for (var m in event._messages) {
+							writeMessageToChat(event._messages[m], chatlist);
 						}
 					});
 				});
@@ -1444,21 +1490,12 @@
 				getTemplate('menu-tab-social', null, function (html) {
 					var div = $(html);
 
-					// display friends
-					var friendCountSpan = div.find('.fb-connections .friend-count'),
-						friendListDiv = div.find('.fb-connections .friend-list');
+					var tabHeader = div.find('.tab-header'),
+						messageItem = tabHeader.find('.create-event'),
+						inviteItem = tabHeader.find('.invite');
 
-					friendCountSpan.html(user.friends.length + " friend" + (user.friends > 1 ? "s " :  " "));
-
-					for (var f in user.friends) {
-						var friendId = user.friends[f],
-							pic = $('<img />');
-
-						pic.attr('src', String.format(fbPhotoUrl, friendId));
-
-						// show friend picture in friendListDiv
-						friendListDiv.append(pic);
-					}
+					messageItem.off('click').on('click', renderMessage);
+					inviteItem.off('click').on('click', renderInvite);
 
 					contentDiv.html('');
 					contentDiv.append(div);
@@ -1466,6 +1503,43 @@
 					refreshFilteredList(div);
 
 					contentDiv.fadeIn();
+				});
+			},
+			renderMessage = function () {
+				page = navigatePage(1);
+
+				getTemplate('menu-tab-social-message', null, function (html) {
+					page.html(html);
+
+					page.find('.back').off('click').on('click', function () {
+						page = navigatePage(-1);
+					});
+				});
+			},
+			renderInvite = function () {
+				page = navigatePage(1);
+
+				getTemplate('menu-tab-social-invite', null, function (html) {
+					page.html(html);
+
+					page.find('.back').off('click').on('click', function () {
+						page = navigatePage(-1);
+					});
+
+					var friendCountSpan = page.find('.fb-connections .friend-count'),
+						friendListDiv = page.find('.fb-connections .friend-list');
+
+					friendCountSpan.html(user._friends.length + " friend" + (user._friends.length > 1 ? "s " : " "));
+
+					for (var f in user._friends) {
+						var friendId = user._friends[f].facebook_id,
+							pic = $('<img />');
+
+						pic.attr('src', String.format(fbPhotoUrl, friendId));
+
+						// show friend picture in friendListDiv
+						friendListDiv.append(pic);
+					}
 				});
 			},
 			getAllFilterIds = function (callback) {
@@ -1514,7 +1588,7 @@
 						var e = eventData[event];
 
 						if (e._id) {
-							var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e.place.name, e.loc.coordinates[1], e.loc.coordinates[0]),
+							var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e._place.name, e.loc.coordinates[1], e.loc.coordinates[0]),
 								item = $(eHtml);
 
 							if (e.created_by === user._id) {

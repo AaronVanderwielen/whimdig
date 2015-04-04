@@ -5,7 +5,7 @@
         </div>
         <div class="where selectable "></div>
         <div class="event-tags pad">
-            {% for tag in model.tags %}
+            {% for tag in model._tags %}
                 <div class="tag">
                     <span class="glyph glyphicons {{ tag.glyph}}" data-name="{{ tag.name }}"></span>
                     <span class="tag-label">{{ tag.label }}</span>
