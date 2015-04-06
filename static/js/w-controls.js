@@ -313,17 +313,6 @@
             			setMenuDetail();
             		}
             	});
-            	//headerFilterBtn.off('click').on('click', function (e) {
-            	//	if (currentPage().data('name') === pageNames.filters) {
-            	//		exitOverlay();
-            	//	}
-            	//	else {
-            	//		_map(function (m) {
-            	//			m.deselect();
-            	//		});
-            	//		setFiltersView();
-            	//	}
-            	//});
             	headerDaySelectPrev.off('click').on('click', function (e) {
             		gotoPrevSpan();
             	});
@@ -402,19 +391,6 @@
             		paging += dir;
             	}
 
-            	//if (paging === 0) {
-            	//	overlayExit.removeClass('chevron-left');
-            	//	overlayExit.addClass('chevron-right');
-            	//	overlayExit.off('click').on('click', exitOverlay);
-            	//}
-            	//else {
-            	//	overlayExit.removeClass('chevron-right');
-            	//	overlayExit.addClass('chevron-left');
-            	//	overlayExit.off('click').on('click', function (e) {
-            	//		navigatePage(-1);
-            	//	});
-            	//}
-
             	return currentPage();
             },
             currentPage = function () {
@@ -470,7 +446,7 @@
             			// should star be highlighted?
             			if (event._users) {
             				// initialize 'going' checkbox by checking if user is in event._users on client
-            				if (_.some(event._users, function (u) { return u._id === user._id; })) {
+            				if (_.some(event._users, function (u) { return u === user._id; })) {
             					starTab.addClass('active');
             					starTab.find('.glyph').addClass('star').removeClass('dislikes');
             				}
@@ -528,7 +504,7 @@
 
 					// friends
 					var attendingFriends = _.filter(user._friends, function (f) {
-						if (_.some(event._users, function (u) { return u._id === f._id; })) {
+						if (_.some(event._users, function (u) { return u === f._id; })) {
 							return f;
 						}
 					});
@@ -563,6 +539,7 @@
 
 					socket.on('eventMessage:' + event._id, function (data) {
 						// TODO: instead get update = true, refresh with new ajax call
+						event.messages.push(data);
 						writeMessageToChat(data, chatlist);
 					});
 
@@ -585,7 +562,6 @@
 
             	socket.emit('sendEventMessage', data);
             	input.val('');
-            	event.messages.push(data);
             },
             writeMessageToChat = function (message, div) {
             	if (message) {
@@ -622,14 +598,11 @@
             		glyph = tab.find('.glyph'),
 					label = tab.find('.tab-label');
 
-            	glyph.toggleClass('dislikes').toggleClass('star');
-            	tab.toggleClass('active');
-
             	if (event.created_by !== user._id) {
             		if (tab.hasClass('active')) {
             			removeEventUser(event._id, function (response) {
             				if (response.success) {
-            					//var indexOfUser = event._users.indexOf(user.facebook_id),
+            					var indexOfUser = event._users.indexOf(user._id);
             					//size = getEventCircleSize(event);
 
             					// remove locally
@@ -1184,7 +1157,7 @@
 											var data = {
 												lat: areaSelect.find('option:selected').data('lat'),
 												lng: areaSelect.find('option:selected').data('lng'),
-												name: placeInput.val()
+												keyword: placeInput.val()
 											};
 
 											renderPlacesList(data, function (list) {
@@ -1225,7 +1198,6 @@
 						callback(list);
 					}
 				});
-				//}
 			},
 			addUserPlaceClick = function (callback) {
 				var placeId = $(this).data('id'),
