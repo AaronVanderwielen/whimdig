@@ -13,5 +13,14 @@
             <span class="glyph-label">invite</span>
         </div>
     </div>
-    <div class="messages sidepad"></div>
+    <div class="mailbox sidepad">
+        {% for mail in model %}
+        <div class="mail selectable" data-id="{{mail._id}}">
+            <span class="glyph glyphicons message_flag"></span>
+            <span class="glyph-label">
+                {{mail.to_label}}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
 </div>

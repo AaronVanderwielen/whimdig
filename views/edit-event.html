@@ -31,9 +31,9 @@
             Event Tags
         </div>
         <div class="form-input">
-            <div class="multi">
+            <div class="multi" data-placeholder="- select tags -" data-max="3">
                 <span class="ui-icon ui-icon-triangle-1-s"></span>
-                <div class="label">- select tags -</div>
+                <div class="label"></div>
                 <input type="hidden" data-val-el-query=".multi" name="_tags" value="" />
                 <div class="options">
                     {% for tag in model %}
@@ -80,7 +80,7 @@
         </div>
         <div class="row">
             <p class="error-message"></p>
-            <input type="button" class="create-btn" value="Update Event" />
+            <input type="button" class="create-btn" data-err-msg="Please finish entering your event information!" value="Update Event" />
         </div>
     </form>
 </div>

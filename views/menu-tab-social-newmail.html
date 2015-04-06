@@ -1,0 +1,40 @@
+﻿<div class="header row">
+    <div class="back glyph glyphicons chevron-left"></div>
+    <div class="header-text">keep in touch with friends</div>
+</div>
+<div class="menu-tab-social-newmail sidepad">
+    <form name="SendMessage" action="/account/createMail" method="post">
+        <div class="form-label">
+            To
+        </div>
+        <div class="form-input">
+            <div class="multi" data-placeholder="- select friends to message -" data-max="5">
+                <span class="ui-icon ui-icon-triangle-1-s"></span>
+                <div class="label">- select friends to message -</div>
+                <input type="hidden" data-val-el-query=".multi" name="to" value="" />
+                <div class="options">
+                    {% for friend in model %}
+                        <div class="option" data-value="{{ friend.facebook_id }}">
+                            <img src="{{ friend.picture_url }}" />
+                            <span class="option-text">{{ friend.name }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="form-label">
+            Message
+        </div>
+        <div class="form-input">
+            <textarea name="msg" rows="5"></textarea>
+        </div>
+        <div class="row">
+            <p class="error-message"></p>
+            <input type="button" class="create-btn" data-err-msg="Error, message not sent." value="Send Message" />
+        </div>
+    </form>
+    <div class="fb-connections">
+        <div class="turq">You have <span class="friend-count"></span>using whimdig.</div>
+        <div class="friend-list"></div>
+    </div>
+</div>

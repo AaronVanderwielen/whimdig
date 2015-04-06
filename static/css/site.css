@@ -339,8 +339,14 @@ input[type="button"]:hover {
   cursor: pointer;
   border-bottom: 1px solid #444444;
 }
+.overlay .multi .options .option img {
+  display: inline-block;
+  vertical-align: middle;
+  height: 50px;
+}
 .overlay .multi .options .option .glyph {
   display: inline-block;
+  width: 50px;
 }
 .overlay .multi .options .option .glyph::before {
   font-size: 50px;
@@ -512,6 +518,57 @@ input[type="button"]:hover {
 .overlay .overlay-body .tabs .tab:not(.empty):not(.selected).btn:hover {
   background-color: #003966;
 }
+.overlay .overlay-body .chat > .row {
+  padding: 0 30px 5px 55px;
+}
+.overlay .overlay-body .chat > .row .fb-photo {
+  margin-left: -55px;
+}
+.overlay .overlay-body .chat > .row .chat-input {
+  width: 100%;
+  margin: 5px 0 0 0;
+  background-color: #111111;
+}
+.overlay .overlay-body .chat > .row .glyph {
+  float: right;
+  margin: 12px -30px 0 0;
+  width: 28px;
+  cursor: pointer;
+}
+.overlay .overlay-body .chat > .row .glyph::before {
+  color: #0094ff;
+  font-size: 28px;
+}
+.overlay .overlay-body .chat .fb-photo {
+  float: left;
+  height: 50px;
+}
+.overlay .overlay-body .chat .chat-list {
+  padding: 10px 0;
+}
+.overlay .overlay-body .chat .chat-list .fb-photo {
+  margin: 0 10px 10px 0;
+}
+.overlay .overlay-body .chat .chat-list .chat-msg:not(:last-child) {
+  padding-bottom: 5px;
+  border-bottom: 1px solid #444444;
+}
+.overlay .overlay-body .chat .chat-list .chat-msg:not(:first-child) {
+  padding-top: 5px;
+}
+.overlay .overlay-body .chat .chat-list .chat-msg .chat-photo {
+  float: left;
+  height: 50px;
+  margin: 0 10px 0 0;
+}
+.overlay .overlay-body .chat .chat-list .chat-msg .message-date {
+  float: right;
+  font-style: italic;
+  padding: 0 0 5px 5px;
+}
+.overlay .overlay-body .chat .chat-list .chat-msg .message-text {
+  padding: 2px 0 2px 0;
+}
 .overlay .overlay-body .main-menu .tab-header .header-item {
   height: 65px;
 }
@@ -600,70 +657,6 @@ input[type="button"]:hover {
   content: " ";
   display: table;
   clear: both;
-}
-.overlay .overlay-body .event-detail .chat > .row,
-.overlay .overlay-body .place-detail .chat > .row {
-  padding: 0 30px 5px 55px;
-}
-.overlay .overlay-body .event-detail .chat > .row .fb-photo,
-.overlay .overlay-body .place-detail .chat > .row .fb-photo {
-  margin-left: -55px;
-}
-.overlay .overlay-body .event-detail .chat > .row .chat-input,
-.overlay .overlay-body .place-detail .chat > .row .chat-input {
-  width: 100%;
-  margin: 5px 0 0 0;
-  background-color: #111111;
-}
-.overlay .overlay-body .event-detail .chat > .row .glyph,
-.overlay .overlay-body .place-detail .chat > .row .glyph {
-  float: right;
-  margin: 12px -30px 0 0;
-  width: 28px;
-  cursor: pointer;
-}
-.overlay .overlay-body .event-detail .chat > .row .glyph::before,
-.overlay .overlay-body .place-detail .chat > .row .glyph::before {
-  color: #0094ff;
-  font-size: 28px;
-}
-.overlay .overlay-body .event-detail .chat .fb-photo,
-.overlay .overlay-body .place-detail .chat .fb-photo {
-  float: left;
-  height: 50px;
-}
-.overlay .overlay-body .event-detail .chat .chat-list,
-.overlay .overlay-body .place-detail .chat .chat-list {
-  padding: 10px 0;
-}
-.overlay .overlay-body .event-detail .chat .chat-list .fb-photo,
-.overlay .overlay-body .place-detail .chat .chat-list .fb-photo {
-  margin: 0 10px 10px 0;
-}
-.overlay .overlay-body .event-detail .chat .chat-list .chat-msg:not(:last-child),
-.overlay .overlay-body .place-detail .chat .chat-list .chat-msg:not(:last-child) {
-  padding-bottom: 5px;
-  border-bottom: 1px solid #444444;
-}
-.overlay .overlay-body .event-detail .chat .chat-list .chat-msg:not(:first-child),
-.overlay .overlay-body .place-detail .chat .chat-list .chat-msg:not(:first-child) {
-  padding-top: 5px;
-}
-.overlay .overlay-body .event-detail .chat .chat-list .chat-msg .chat-photo,
-.overlay .overlay-body .place-detail .chat .chat-list .chat-msg .chat-photo {
-  float: left;
-  height: 50px;
-  margin: 0 10px 0 0;
-}
-.overlay .overlay-body .event-detail .chat .chat-list .chat-msg .message-date,
-.overlay .overlay-body .place-detail .chat .chat-list .chat-msg .message-date {
-  float: right;
-  font-style: italic;
-  padding: 0 0 5px 5px;
-}
-.overlay .overlay-body .event-detail .chat .chat-list .chat-msg .message-text,
-.overlay .overlay-body .place-detail .chat .chat-list .chat-msg .message-text {
-  padding: 2px 0 2px 0;
 }
 .overlay::-webkit-scrollbar {
   width: 3px;

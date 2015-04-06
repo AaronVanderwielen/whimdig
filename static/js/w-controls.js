@@ -54,6 +54,10 @@
 				eventDelete: '/event/remove',
 				tags: '/event/tags',
 				review: '/event/review',
+				// user
+				userFriends: '/account/friends',
+				userMail: '/account/mail',
+				userMailMessages: '/account/mailMessages',
 				// views
 				renderTemplate: '/template'
 			},
@@ -69,7 +73,8 @@
 				addReview: 'add-review',
 				placeDetail: 'place-detail',
 				filters: 'filters',
-				menu: 'menu'
+				menu: 'menu',
+				mail: 'mail'
 			},
 			currentSpan = 0,
 			paging = 0,
@@ -169,6 +174,20 @@
 		    		}
 		    	});
 		    },
+			getUserFriends = function (callback) {
+				FB.getLoginStatus(function (auth) {
+					if (auth.status === 'connected') {
+						var data = {
+							token: auth.authResponse.accessToken,
+							id: auth.authResponse.userID
+						};
+
+						$.get(urls.userFriends, data, function (response) {
+							callback(response);
+						});
+					}
+				});
+			},
 		    // events
 			loadEventsInBounds = function (bounds, callback) {
 				if (!bounds) {
@@ -538,14 +557,13 @@
 
 					fbPhoto.attr('src', String.format(fbPhotoUrl, user.facebook_id));
 
-					for (var m in event._messages) {
-						writeMessageToChat(event._messages[m], chatlist);
+					for (var m in event.messages) {
+						writeMessageToChat(event.messages[m], chatlist);
 					}
 
-					socket.on('message', function (data) {
-						if (data.eventId === event._id) {
-							writeMessageToChat(data, chatlist);
-						}
+					socket.on('eventMessage:' + event._id, function (data) {
+						// TODO: instead get update = true, refresh with new ajax call
+						writeMessageToChat(data, chatlist);
 					});
 
 					chatsend.off('click').on('click', function (e) {
@@ -565,9 +583,9 @@
             	var msg = input.val(),
             		data = { eventId: event._id, text: msg };
 
-            	socket.emit('chat', data);
+            	socket.emit('sendEventMessage', data);
             	input.val('');
-            	event._messages.push(data);
+            	event.messages.push(data);
             },
             writeMessageToChat = function (message, div) {
             	if (message) {
@@ -718,7 +736,7 @@
             	});
             },
             // MAIN MENU
-            setMenuDetail = function () {
+            setMenuDetail = function (defaultTab) {
             	if (user) {
             		var page = navigatePage(0, pageNames.menu);
 
@@ -734,9 +752,6 @@
 
             			back.off('click').on('click', exitOverlay);
 
-            			// init first tab
-            			menuTabChange(tabsDiv, findTab, tabContent, renderFindTab, "find something to do");
-
             			findTab.off('click').on('click', function (e) {
             				menuTabChange(tabsDiv, $(this), tabContent, renderFindTab, "find something to do");
             			});
@@ -748,6 +763,14 @@
             			socialTab.off('click').on('click', function (e) {
             				menuTabChange(tabsDiv, $(this), tabContent, renderSocialTab, "people to do stuff with");
             			});
+
+            			// init first tab
+            			if (defaultTab) {
+            				tabsDiv.find(defaultTab).click();
+            			}
+            			else {
+            				findTab.click();
+            			}
             		});
             	}
             },
@@ -1099,63 +1122,17 @@
 				});
 			},
 			createEvent = function (e) {
-				var form = $(this).parents('form:first'),
-					formData = form.serialize();
+				postForm.call(this, function (newEvent) {
+					var loc = {
+							lat: newEvent.loc.coordinates[1],
+							lng: newEvent.loc.coordinates[0]
+						},
+						pan = -container.width() * .2;
 
-				// clear previous errors, if any
-				form.find('.val-error').removeClass('val-error');
-				form.find('.error-message').html('');
-
-				$.ajax({
-					url: urls.eventCreate,
-					type: 'POST',
-					data: formData,
-					success: function (response) {
-						if (response.success) {
-							var newEvent = response.body,
-								loc = {
-									lat: newEvent.loc.coordinates[1],
-									lng: newEvent.loc.coordinates[0]
-								},
-								pan = -container.width() * .2;
-
-							_map(function (m) {
-								m.goTo(loc, pan);
-								setEventDetail(newEvent._id, 0);
-							});
-						}
-						else {
-							var problems = [];
-							if (response.body.path) {
-								problems.push(response.body.path);
-							}
-							for (var p in response.body.errors) {
-								problems.push(p);
-							}
-
-							for (var p in problems) {
-								var input = form.find('[name="' + problems[p] + '"]'),
-									valContainer;
-
-								if (input.is('[type="hidden"]') && input.data('val-el-query')) {
-									valContainer = ancestor(input, input.data('val-el-query'))
-								}
-								else if (input.is('select')) {
-									valContainer = input.parent().find(input.data('val-el-query'));
-								}
-								else {
-									valContainer = input;
-								}
-
-								valContainer.addClass('val-error');
-								valContainer.on('click', function () {
-									$(this).removeClass('val-error');
-								});
-							}
-
-							form.find('.error-message').html("Please finish entering your event information!");
-						}
-					}
+					_map(function (m) {
+						m.goTo(loc, pan);
+						setEventDetail(newEvent._id, 0);
+					});
 				});
 			},
 			userPlacesHandler = function (places, placeSelect, selectedPlaceId) {
@@ -1181,7 +1158,7 @@
 								page.html(template);
 								var back = page.find('.back'),
 									areaSelect = page.find('select[name="area"]'),
-									placeInput = page.find('input[name="_place"]'),
+									placeInput = page.find('input[name="keyword"]'),
 									btn = page.find('input[type=button]'),
 									resultsDiv = page.find('.results');
 
@@ -1406,14 +1383,14 @@
 				getUserPastEvents(function (pastEvents) {
 					var page = navigatePage(1, pageNames.createEvent);
 
-					if (pastEvents.length > 0) {
-						getTemplate("header-list", null, function (html) {
-							page.html(html);
-							page.find('.header-text').html('stuff you may have went to');
-							page.find('.back').off('click').on('click', function () {
-								page = navigatePage(-1);
-							});
+					getTemplate("header-list", null, function (html) {
+						page.html(html);
+						page.find('.header-text').html('stuff you may have went to');
+						page.find('.back').off('click').on('click', function () {
+							page = navigatePage(-1);
+						});
 
+						if (pastEvents.length > 0) {
 							renderEventList(pastEvents, function (html) {
 								page.find('.list-container').append(html);
 
@@ -1423,12 +1400,11 @@
 									setPastEventDetail(eventId, page);
 								});
 							});
-						});
-					}
-					else {
-						var page = navigatePage(nav, pageNames.pastEventList);
-						page.html('<p>You haven\'t gone to any events!</p>');
-					}
+						}
+						else {
+							page.find('.list-container').html('<p>You haven\'t gone to any events!</p>');
+						}
+					});
 				});
 			},
 			setPastEventDetail = function (id) {
@@ -1487,61 +1463,141 @@
 			},
 			// social tab
 			renderSocialTab = function (contentDiv) {
-				getTemplate('menu-tab-social', null, function (html) {
-					var div = $(html);
+				getMailLight(function (mail) {
+					for (var m in mail) {
+						var otherUsers = _.filter(mail[m]._users, function (u) { return u._id !== user._id; }),
+							toArray = _.map(otherUsers, function (u) { return u.first_name; });
 
-					var tabHeader = div.find('.tab-header'),
-						messageItem = tabHeader.find('.create-event'),
-						inviteItem = tabHeader.find('.invite');
+						mail[m].to_label = toArray.join(", ");
+					}
+					getTemplate('menu-tab-social', mail, function (html) {
+						var div = $(html);
 
-					messageItem.off('click').on('click', renderMessage);
-					inviteItem.off('click').on('click', renderInvite);
+						var tabHeader = div.find('.tab-header'),
+							messageItem = tabHeader.find('.create-event'),
+							inviteItem = tabHeader.find('.invite'),
+							mailbox = div.find('.mailbox'),
+							mail = mailbox.find('.mail');
 
-					contentDiv.html('');
-					contentDiv.append(div);
+						messageItem.off('click').on('click', renderCreateMail);
+						inviteItem.off('click').on('click', function () {
+							FB.ui({
+								method: 'send',
+								link: 'http://www.whimdig.com',
+							});
+						});
+						mail.off('click').on('click', openMail);
 
-					refreshFilteredList(div);
+						contentDiv.html('');
+						contentDiv.append(div);
 
-					contentDiv.fadeIn();
-				});
-			},
-			renderMessage = function () {
-				page = navigatePage(1);
+						refreshFilteredList(div);
 
-				getTemplate('menu-tab-social-message', null, function (html) {
-					page.html(html);
-
-					page.find('.back').off('click').on('click', function () {
-						page = navigatePage(-1);
+						contentDiv.fadeIn();
 					});
 				});
 			},
-			renderInvite = function () {
-				page = navigatePage(1);
-
-				getTemplate('menu-tab-social-invite', null, function (html) {
-					page.html(html);
-
-					page.find('.back').off('click').on('click', function () {
-						page = navigatePage(-1);
-					});
-
-					var friendCountSpan = page.find('.fb-connections .friend-count'),
-						friendListDiv = page.find('.fb-connections .friend-list');
-
-					friendCountSpan.html(user._friends.length + " friend" + (user._friends.length > 1 ? "s " : " "));
-
-					for (var f in user._friends) {
-						var friendId = user._friends[f].facebook_id,
-							pic = $('<img />');
-
-						pic.attr('src', String.format(fbPhotoUrl, friendId));
-
-						// show friend picture in friendListDiv
-						friendListDiv.append(pic);
+			getMailLight = function (callback) {
+				$.get(urls.userMail, function (response) {
+					if (response.success) {
+						callback(response.body);
 					}
 				});
 			},
+			openMail = function () {
+				var mailId = $(this).data('id');
+				var page = navigatePage(1, pageNames.mail);
+				getMailMessages(mailId, function (mail) {
+					getTemplate('mail', null, function (html) {
+						page.html(html);
+
+						page.find('.back').off('click').on('click', function () {
+							page = navigatePage(-1);
+						});
+
+						var fbPhoto = page.find('.fb-photo'),
+							chat = page.find('.chat'),
+							chatsend = chat.find('.glyph.play'),
+							chatlist = chat.find('.chat-list'),
+							chatbox = chat.find('.chat-input');
+
+						fbPhoto.attr('src', String.format(fbPhotoUrl, user.facebook_id));
+
+						for (var m in mail.messages) {
+							writeMessageToChat(mail.messages[m], chatlist);
+						}
+
+						socket.on('mailMessage:' + mailId, function (data) {
+							if (data.update) {
+								// refresh mail from server
+							}
+						});
+
+						chatsend.off('click').on('click', function (e) {
+							sendMailMessage(chatbox, chatlist, mail);
+						});
+
+						chatbox.off('keydown').on('keydown', function (e) {
+							if (e.keyCode === 13) {
+								sendMailMessage(chatbox, chatlist, mail);
+							}
+						});
+					});
+				});				
+			},
+			getMailMessages = function (mailId, callback) {
+				$.get(urls.userMailMessages, { mailId: mailId }, function (response) {
+					if (response.success) {
+						callback(response.body);
+					}
+				});
+			},
+			sendMailMessage = function (input, chatlist, mail) {
+				var msg = input.val(),
+            		data = { mailId: mail._id, text: msg, date: new Date(), _created_by: user };
+
+				socket.emit('sendMessage', data);
+				input.val('');
+				mail.messages.push(data);
+				writeMessageToChat(data, chatlist);
+			},
+			renderCreateMail = function () {
+				var page = navigatePage(1);
+
+				getUserFriends(function (friends) {
+					getTemplate('menu-tab-social-newmail', friends, function (html) {
+						page.html(html);
+						bindUi(page);
+
+						page.find('.back').off('click').on('click', function () {
+							page = navigatePage(-1);
+						});
+
+						var friendCountSpan = page.find('.fb-connections .friend-count'),
+							friendListDiv = page.find('.fb-connections .friend-list');
+
+						friendCountSpan.html(user._friends.length + " friend" + (user._friends.length !== 1 ? "s " : " "));
+
+						for (var f in user._friends) {
+							var friendId = user._friends[f].facebook_id,
+								pic = $('<img />');
+
+							pic.attr('src', String.format(fbPhotoUrl, friendId));
+
+							// show friend picture in friendListDiv
+							friendListDiv.append(pic);
+						}
+
+						// create submit click handler
+						page.find('input[type="button"]').off('click').on('click', function (e) {
+							postForm.call(this, function () {
+								setMenuDetail('.tab.social-tab');
+							});
+						});
+					});
+				});
+			},
+			// etc
 			getAllFilterIds = function (callback) {
 				var tags = getAllEventTags(function (tags) {
 					var tagIds = _.map(tags, function (t) { return t._id; });
@@ -1748,6 +1804,57 @@
 				});
 
 				div.tooltip();
+			},
+			postForm = function (callback) {
+				var form = $(this).parents('form:first'),
+					url = form.prop('action'),
+					formData = form.serialize();
+
+				// clear previous errors, if any
+				form.find('.val-error').removeClass('val-error');
+				form.find('.error-message').html('');
+
+				$.ajax({
+					url: url,
+					type: 'POST',
+					data: formData,
+					success: function (response) {
+						if (response.success) {
+							callback(response.body);
+						}
+						else {
+							var problems = [];
+							if (response.body.path) {
+								problems.push(response.body.path);
+							}
+							for (var p in response.body.errors) {
+								problems.push(p);
+							}
+
+							for (var p in problems) {
+								var input = form.find('[name="' + problems[p] + '"]'),
+									valContainer;
+
+								if (input.is('[type="hidden"]') && input.data('val-el-query')) {
+									valContainer = ancestor(input, input.data('val-el-query'))
+								}
+								else if (input.is('select')) {
+									valContainer = input.parent().find(input.data('val-el-query'));
+								}
+								else {
+									valContainer = input;
+								}
+
+								valContainer.addClass('val-error');
+								valContainer.on('click', function () {
+									$(this).removeClass('val-error');
+								});
+							}
+
+							form.find('.error-message').html(errMsg);
+						}
+					}
+				});
 			};
 
 		this.loadMapBoundEvents = function (bounds, callback) {

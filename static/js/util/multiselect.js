@@ -2,6 +2,8 @@
 	var Multi = function (element) {
 		var obj = this,
 			container = element,
+			placeholder = container.data('placeholder'),
+			maxSelect = parseInt(container.data('max'), 10),
 			input = container.find('input[type="hidden"]'),
 			label = container.find('.label, .ui-icon'),
 			optionContainer = container.find('.options'),
@@ -33,7 +35,7 @@
 					}
 				}
 				else {
-					if (valueArray.length === 3) {
+					if (valueArray.length === maxSelect) {
 						label.effect("highlight", { color: 'red' }, 500)
 						option.effect("bounce", 500);
 						return;
@@ -64,7 +66,7 @@
 				    label.html(labels.join(',&nbsp; '));
 				}
 				else {
-                    label.html('- select tags -')
+					label.html(placeholder);
 				}
 			},
 			updateHtml = function () {
@@ -97,6 +99,8 @@
 
 		this.init = function () {
 			applyClickHandlers();
+
+			label.html(placeholder);
 
 			if (input.val() !== "") {
 				updateHtml();

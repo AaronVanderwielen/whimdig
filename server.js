@@ -81,15 +81,26 @@ function init() {
 		console.log("socket connection " + socket.id);
 		var session = socket.request.session;
 
-		socket.on("chat", function (data) {
+		socket.on("sendEventMessage", function (data) {
 		    if (session && session.user) {
-		        bl.addMsgToEvent(data.text, data.eventId, session.user._id, function () {
-		            socket.emit('message', { eventId: data.eventId, text: data.text, _id: session.user._id });
+		        bl.addMsgToEvent(data.text, data.eventId, session.user, function (msg) {
+		        	socket.emit('eventMessage:' + data.eventId, msg);
 		        });
 		    }
 		    else {
                 console.log("SOCKET ERROR: socket lost the session" )
 		    }
+		});
+
+		socket.on("sendMessage", function (data) {
+			if (session && session.user) {
+				bl.addMsgToMail(data.mailId, data.text, session.user, function () {
+					socket.emit('mailMessage:' + data._mail, { newMessage: data.created_by !== session.user._id });
+				});
+			}
+			else {
+				console.log("SOCKET ERROR: socket lost the session")
+			}
 		});
 	});
 
