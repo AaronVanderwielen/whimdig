@@ -4,48 +4,260 @@
 <head>
     <meta charset="utf-8" />
     <title>Admin</title>
+    <link href='http://fonts.googleapis.com/css?family=Indie+Flower' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css' />
+    <link type="text/css" rel="stylesheet" href="/js/jquery/ui/jquery-ui.min.css" />
     <link rel="stylesheet" href="/css/glyphicons.css" />
     <link rel="stylesheet" href="/css/halflings.css" />
     <link rel="stylesheet" href="/css/social.css" />
     <link rel="stylesheet" href="/css/filetypes.css" />
+    <link type="text/css" rel="stylesheet" href="/css/site.css" />
+    <link type="text/css" rel="stylesheet" href="/css/jquery/timepicker.css" />
+
+    <!-- EXTERNAL LIBRARIES -->
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="/js/jquery/ui/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/js/jquery/ui/external/timepicker.js"></script>
+
+        <!-- EXTENSIONS -->
+    <script src="/js/util/extensions.js"></script>
+    <script src="/js/util/underscore-min.js"></script>
+    <script src="/js/util/modernizr.js"></script>
+    <script src="/js/util/moment.js"></script>
+    <script src="/js/util/multiselect.js"></script>
     <script type="text/javascript">
         $(function () {
-            $.get('/admin/events', function (html) {
-                var table = $(html);
-                $('.events').append(table);
-            });
-            $.get('/admin/places', function (html) {
-                var table = $(html);
-                $('.places').append(table);
-            });
-            $.get('/admin/tags', function (html) {
-                var table = $(html);
-                $('.tags').append(table);
-            });
-            $.get('/admin/users', function (html) {
-                var table = $(html);
-                $('.users').append(table);
-            });
+			var cityLoc = {
+				bellingham: {
+					label: 'Bellingham',
+					lat: 48.7524,
+					lng: -122.4712
+				},
+				seattle: {
+					label: 'Seattle',
+					lat: 47.6036,
+					lng: -122.3294
+				}
+			};
+			
+			function bindUi(div) {
+				div.find('.datepicker').each(function () {
+					var input = $(this);
+					if (!input.data('bound')) {
+						input.datetimepicker({
+							timeFormat: timeFormat
+						});
+						input.data('bound', true);
+					}
+				});
+
+				div.find('select').each(function () {
+					var input = $(this);
+					if (!input.data('bound')) {
+						input.selectmenu();
+						input.selectmenu('refresh');
+						input.data('bound', true);
+					}
+				});
+
+				div.find('.autocomplete').each(function () {
+					var input = $(this),
+						type = input.data('type'),
+						url;
+
+					if (!input.data('bound')) {
+						if (type === "place") {
+							url = urls.placesNames;
+						}
+
+						if (url !== null) {
+							// get options
+							$.ajax({
+								url: url,
+								type: 'GET',
+								cache: true,
+								success: function (response) {
+									if (response.success) {
+										input.autocomplete({
+											source: response.body
+										});
+										input.data('bound', true);
+									}
+								}
+							});
+						}
+					}
+				});
+
+				div.find('.multi').multi();
+
+				div.find('.dateformat').each(function () {
+					var span = $(this),
+						date = moment(span.html()),
+						format = span.data('format');
+
+					if (format === "casual") {
+						span.html(date.format(datetimeCasualFormat));
+					}
+					else if (format === "date") {
+						span.html(date.format(datetimeDateFormat));
+					}
+				});
+
+				div.tooltip();
+			}
+			
+			function getView(view, callback) {
+				$.get('/template', { template: view }, function(html) {
+					if (callback) {
+						callback(html);
+					}
+				});
+			}
+			
+			function loadPlacesList() {
+				$.get('/admin/places', function (html) {
+					$('.places-content').html(html);
+					$('a.add-places').on('click', loadPlacesImport);
+				});
+			}
+			
+			function loadPlacesImport() {
+				getView('admin-places-import', function(html) {
+					var div = $('.places-content');
+					div.html(html);
+					
+					var areaSelect = div.find('select[name="area"]'),
+						placeInput = div.find('input[name="keyword"]'),
+						btn = div.find('input[type=button]'),
+						resultsDiv = div.find('.results'),
+						back = div.find('.back');
+						
+					areaSelect.empty();
+
+					for (var c in cityLoc) {
+						var option = $('<option>');
+						option.html(cityLoc[c].label);
+						option.data('lat', cityLoc[c].lat);
+						option.data('lng', cityLoc[c].lng);
+
+						areaSelect.append(option);
+					}
+
+					btn.off('click').on('click', function (e) {
+							var data = {
+								lat: areaSelect.find('option:selected').data('lat'),
+								lng: areaSelect.find('option:selected').data('lng'),
+								keyword: placeInput.val()
+							};
+
+							renderPlacesList(data, function (list) {
+								resultsDiv.empty();
+								resultsDiv.append(list);
+										
+								resultsDiv.find('.place').off('click').on('click', function (e) {
+									importGooglePlace.call(this, function (response) {
+										loadPlacesList();
+									});
+								});
+							});
+						});
+
+					back.on('click', loadPlacesList);
+					
+					bindUi(div);
+				});
+			}
+			
+			function importGooglePlace(callback) {
+				var place = $(this).data('place');
+				$.post('/places/importGooglePlace', { place: place }, function(response) {
+					callback(response);
+				});
+			}
+			
+			function renderPlacesList(data, callback) {
+				// check if lat/lng are within WA
+				//if (m.getAllowedBounds().contains(loc)) {
+				$.post('/places/searchGooglePlaces', data, function (response) {
+					if (response.success) {
+						var list = $('<div class="place-list">');
+
+						for (var p in response.body) {
+							var place = $(String.format('<div class="place selectable"><div class="heading">{0}</div><span>{1}</span></div>', response.body[p].name, response.body[p].vicinity));
+							place.data('place', response.body[p]);
+							list.append(place);
+						}
+						callback(list);
+					}
+				});
+			}
+			
+			loadPlacesList();
         });
     </script>
     <style>
+		html, body {
+			height: 100%;
+			font-family: arial;
+			background-color: #444;
+			color: white;
+		}
+		
+		h2 {
+			margin: 0;
+			padding: 20px 0;
+		}
+		
+		.selectable {
+			cursor: pointer;
+			padding: 10px;
+		}
+		
+		.selectable:hover {
+			background-color: #333;
+		}
+		
+		.admin {
+			background-color: #111;
+			padding: 0 20px;
+			width: 80%;
+			min-height: 100%;
+			margin: 0 auto;
+		}
+		
+		.place-import {
+			width: 400px;
+		}
+		
         .glyph {
             width: 24px;
             top: -12px;
             padding-left: 0;
         }
+		
+		table {
+			padding: 10px 0;
+		}
+		
         th {
-
+			text-align:left;
         }
         td { 
-            padding: 5px 10px;
+            padding: 0 20px 10px 0;
         }
+		a {
+			color: #00ccff;
+			text-decoration: none;
+		}
     </style>
 </head>
-<body style="background-color: #666; color: white;">
+<body>
     <div class="admin">
-        <div class="events">
+		<h2>Administrator</h2>
+		<div class="places-content">
+        </div>
+<!--         <div class="events">
             <h2>Events</h2>
             <div class="event-import">
                 <h4>Import Events CSV</h4>
@@ -56,20 +268,6 @@
             </div>
             <br /><br />
             <table class="ajax-table" data-url="/admin/events"></table>
-        </div>
-        <div class="places">
-            <h2>Places</h2>
-            <div class="place-import">
-                <h4>Import Places</h4>
-                <form action="/admin/importPlaces" method="post">
-                    <input type="hidden" name="key" value="AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54" />
-                    <label>address<input type="text" name="address" /></label><br />
-                    <label>keyword<input type="text" name="keyword" /></label>
-                    <input type="submit" value="Submit" />
-                </form>
-            </div>
-            <br /><br />
-
         </div>
         <div class="tags">
             <h2>Tags</h2>
@@ -90,7 +288,7 @@
         <div class="users">
             <h2>Users</h2>
 
-        </div>
+        </div>-->
     </div>
 </body>
 </html>

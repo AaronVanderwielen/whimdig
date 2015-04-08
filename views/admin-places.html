@@ -1,22 +1,27 @@
-﻿<table class="place-list">
+﻿<a class="add-places" href="#">add more places</a>
+{% if model.places.length > 0 %}
+<table class="place-list">
     <thead>
         <tr>
-            <th>_id</th>
-            <th>place_id</th>
-            <th>name</th>
+            <!--<th>_id</th>-->
+            <!--<th>place_id</th>-->
+            <th>Name</th>
             <!--<th>loc</th>-->
-            <th>vicinity</th>
+            <th>Where</th>
+			<th></th>
         </tr>
     </thead>
     <tbody>
         {% for place in model.places %}
-        <tr>
-            <td>{{place._id.toString()}}</td>
-            <td>{{place.place_id}}</td>
+        <tr data-id="{{place._id}}">
+            <!--<td>{{place._id.toString()}}</td>-->
+            <!--<td>{{place.place_id}}</td>-->
             <td>{{place.name}}</td>
             <!--<td>{{place.loc}}</td>-->
             <td>{{place.vicinity}}</td>
+			<td><a href="#">{{place._events.length}} events</a></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+{% endif %}
