@@ -36,8 +36,8 @@
 				}
 				else {
 					if (valueArray.length === maxSelect) {
-						label.effect("highlight", { color: 'red' }, 500)
-						option.effect("bounce", 500);
+						option.effect("highlight", { color: '#a00' }, 500)
+						//option.effect("bounce", 500);
 						return;
 					}
 					else {

@@ -1,5 +1,6 @@
-﻿<a class="add-places" href="#">add more places</a>
-{% if model.places.length > 0 %}
+﻿<h4>Places</h4>
+<a class="add-places header-link" href="#">add a place</a>
+{% if model.length > 0 %}
 <table class="place-list">
     <thead>
         <tr>
@@ -12,14 +13,14 @@
         </tr>
     </thead>
     <tbody>
-        {% for place in model.places %}
+        {% for place in model %}
         <tr data-id="{{place._id}}">
             <!--<td>{{place._id.toString()}}</td>-->
             <!--<td>{{place.place_id}}</td>-->
             <td>{{place.name}}</td>
             <!--<td>{{place.loc}}</td>-->
             <td>{{place.vicinity}}</td>
-			<td><a href="#">{{place._events.length}} events</a></td>
+			<td><a class="places-events-link" href="#">{{place._events.length}} events</a></td>
         </tr>
         {% endfor %}
     </tbody>

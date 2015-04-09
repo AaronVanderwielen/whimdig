@@ -1,0 +1,22 @@
+﻿<h4>Events</h4>
+<a class="back header-link" href="#">back to places</a>
+<a class="add-event header-link" href="#">add an event</a>
+{% if model.length > 0 %}
+<table class="event-list">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Where</th>
+			<th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for event in model %}
+        <tr data-id="{{place._id}}">
+            <td>{{event.name}}</td>
+			<td><a class="edit" href="#">edit</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

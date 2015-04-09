@@ -1,0 +1,66 @@
+﻿<h4>Add Event</h4>
+<a class="header-link back" href="#">back to list</a>
+<div class="create-event form">
+	<form name="CreateEvent" action="/admin/eventCreate" method="post">
+		<input type="hidden" name="_place" />
+		<input type="hidden" name="privacy" value="public" />
+		<div class="form-label">
+            Event Title
+        </div>
+        <div class="form-input">
+            <input type="text" name="name" value="" />
+        </div>
+        <div class="form-label">
+            Description
+        </div>
+        <div class="form-input">
+            <textarea name="desc" rows="3"></textarea>
+        </div>
+        <div class="form-label">
+            Event Tags
+        </div>
+        <div class="form-input">
+            <div class="multi" data-placeholder="- select tags -" data-max="3">
+                <span class="ui-icon ui-icon-triangle-1-s"></span>
+                <div class="label"></div>
+                <input type="hidden" data-val-el-query=".multi" name="_tags" value="" />
+                <div class="options">
+                    {% for tag in model %}
+                        <div class="option" data-value="{{ tag._id }}">
+                            <span class="glyph glyphicons {{ tag.glyph}}"></span>
+                            <span class="option-text">{{ tag.label }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="form-label">
+            Start
+        </div>
+        <div class="form-input">
+            <input type="text" class="datepicker" name="start" value="" />
+        </div>
+        <div class="form-label">
+            End
+        </div>
+        <div class="form-input">
+            <input type="text" class="datepicker" name="end" value="" />
+        </div>
+        <div class="form-label">
+        </div>
+        <div class="form-input">
+            <label>
+                <input type="radio" name="intensity_variable" value="start" checked="checked" />
+                should try to show up at start
+            </label>
+            <label>
+                <input type="radio" name="intensity_variable" value="end" />
+                can show up anytime before end
+            </label>
+        </div>
+        <div class="row">
+            <p class="error-message"></p>
+            <input type="button" class="create-btn" data-err-msg="Please finish entering your event information!" value="Create Event" />
+        </div>
+    </form>
+</div>

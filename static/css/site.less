@@ -34,6 +34,10 @@ body {
     min-width: @min-width;
 }
 
+.ui-effects-wrapper {
+    display:inline;
+}
+
 input[type="text"], textarea, select {
     border-radius: 5px;
     border: 1px solid @blue;
@@ -193,6 +197,17 @@ button, input[type="button"] {
     top: 3px;
 }
 
+.glyph {
+    cursor: pointer;
+    display: block;
+    padding: 0;
+}
+
+.glyph::before {
+    position: relative;
+    color: @blue;
+}
+
 .noselect {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -218,6 +233,15 @@ button, input[type="button"] {
         clear: both;
     }
 
+    .glyph {
+        width: 12px;
+        cursor: pointer;
+
+        &.disabled {
+            cursor: default;
+        }
+    }
+
     .glyph::before {
         font-size: 24px;
         color: @blue;
@@ -225,15 +249,6 @@ button, input[type="button"] {
 
     .glyph.disabled::before {
         color: @dark;
-    }
-
-    .glyph {
-        padding: 12px;
-        cursor: pointer;
-
-        &.disabled {
-            cursor: default;
-        }
     }
 
     > .app-logo {
@@ -327,6 +342,203 @@ button, input[type="button"] {
     }
 }
 
+.multi {
+    position: relative;
+    width: 100%;
+    border-radius: 5px;
+    border: 1px solid @blue;
+    color: @light-blue;
+    margin-bottom: 10px;
+
+    .ui-icon {
+        cursor: pointer;
+        right: 0.5em;
+        left: auto;
+        position: absolute;
+        top: 10px;
+    }
+
+    .label {
+        color: @light-blue;
+        font-size: 14px;
+        line-height: 2;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .options {
+        background-color: @black-accent;
+        max-height: 300px;
+        overflow-y: scroll;
+
+        .option {
+            display: block;
+            width: 50%;
+            float: left;
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid @darker;
+
+            img {
+                display: inline-block;
+                vertical-align: middle;
+                height: 50px;
+            }
+
+            .glyph {
+                display: inline-block;
+                width: 60px;
+
+                &::before {
+                    font-size: 50px;
+                }
+            }
+
+            .option-text {
+            }
+
+            &:not(.selected) {
+
+                .glyph::before {
+                    color: @dark;
+                }
+
+                .option-text {
+                    color: @dark;
+                }
+            }
+
+            &.selected {
+                .glyph::before {
+                    color: @blue;
+                }
+
+                .option-text {
+                    color: @blue;
+                }
+            }
+
+            &:hover {
+                .option-text, .glyph::before {
+                    color: @blue-accent;
+                }
+            }
+
+            &:last-child {
+                border-bottom: none;
+            }
+        }
+
+        .option::after {
+            content: " ";
+            display: table;
+            clear: both;
+        }
+
+        &::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background-color: @turq;
+        }
+
+        &::-webkit-scrollbar-track-piece {
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: @blue;
+        }
+    }
+
+    &:hover {
+
+        .label {
+            //background: #d0e5f5;
+        }
+    }
+}
+
+.selectable {
+    cursor: pointer;
+
+    &.inline {
+        display: block;
+        float: left;
+        vertical-align: middle;
+        padding: 10px;
+        text-align: center;
+
+        .glyph {
+            width: 30px;
+            margin: 0 auto;
+        }
+
+        .glyph::before {
+            margin: 0 auto;
+            font-size: 30px;
+        }
+
+
+        &.half {
+            width: 50%;
+        }
+
+        &.third {
+            width: 33.33%;
+        }
+
+        &.quarter {
+            width: 25%;
+        }
+    }
+
+    &:not(.inline) {
+        padding: 20px;
+        margin: 0 -10px;
+
+        .glyph {
+            display: inline-block;
+        }
+    }
+
+    &.editable {
+        position: relative;
+
+        &:hover {
+            .glyph.edit::before {
+                color: @blue;
+            }
+        }
+
+        .glyph.edit {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50px;
+            padding: 10px;
+        }
+
+        .glyph.edit::before {
+            font-size: 30px;
+        }
+
+        .glyph.edit:hover, .glyph.edit:hover::before {
+            color: @light-blue;
+        }
+    }
+
+    &:hover {
+        color: @blue-accent;
+        background-color: @black-accent;
+
+        .glyph::before {
+            color: @blue-accent;
+        }
+    }
+}
+
 .overlay {
     position: absolute;
     background-color: black;
@@ -347,215 +559,8 @@ button, input[type="button"] {
     //box-shadow: 1px 1px 20px 0px @turq inset;
     color: @blue;
 
-    .glyph {
-        cursor: pointer;
-        display: block;
-        padding: 0;
-    }
-
-    .glyph::before {
-        position: relative;
-        color: @blue;
-    }
-
-    .multi {
-        position: relative;
-        width: 100%;
-        border-radius: 5px;
-        border: 1px solid @blue;
-        color: @light-blue;
-        margin-bottom: 10px;
-
-        .ui-icon {
-            cursor: pointer;
-            right: 0.5em;
-            left: auto;
-            position: absolute;
-            top: 10px;
-        }
-
-        .label {
-            color: @light-blue;
-            font-size: 14px;
-            line-height: 2;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .options {
-            background-color: @black-accent;
-            display: none;
-            max-height: 300px;
-            overflow-y: scroll;
-
-            .option {
-                display: block;
-                padding: 10px;
-                cursor: pointer;
-                border-bottom: 1px solid @darker;
-
-                img {
-                    display: inline-block;
-                    vertical-align: middle;
-                    height: 50px;
-                }
-
-                .glyph {
-                    display: inline-block;
-                    width: 50px;
-
-                    &::before {
-                        font-size: 50px;
-                    }
-                }
-
-                .option-text {
-                }
-
-                &:not(.selected) {
-
-                    .glyph::before {
-                        color: @dark;
-                    }
-
-                    .option-text {
-                        color: @dark;
-                    }
-                }
-
-                &.selected {
-                    .glyph::before {
-                        color: @blue;
-                    }
-
-                    .option-text {
-                        color: @blue;
-                    }
-                }
-
-                &:hover {
-                    .option-text, .glyph::before {
-                        color: @blue-accent;
-                    }
-                }
-
-                &:last-child {
-                    border-bottom: none;
-                }
-            }
-
-            .option::after {
-                content: " ";
-                display: table;
-                clear: both;
-            }
-
-            &::-webkit-scrollbar {
-                width: 3px;
-            }
-
-            &::-webkit-scrollbar-track {
-                background-color: @turq;
-            }
-
-            &::-webkit-scrollbar-track-piece {
-            }
-
-            &::-webkit-scrollbar-thumb {
-                background-color: @blue;
-            }
-        }
-
-        &:hover {
-
-            .label {
-                //background: #d0e5f5;
-            }
-        }
-    }
-
     .overlay-body {
         display: block;
-
-        .selectable {
-            cursor: pointer;
-
-            &.inline {
-                display: block;
-                float: left;
-                vertical-align: middle;
-                padding: 10px;
-                text-align: center;
-
-                .glyph {
-                    width: 30px;
-                    margin: 0 auto;
-                }
-
-                .glyph::before {
-                    margin: 0 auto;
-                    font-size: 30px;
-                }
-
-
-                &.half {
-                    width: 50%;
-                }
-
-                &.third {
-                    width: 33.33%;
-                }
-
-                &.quarter {
-                    width: 25%;
-                }
-            }
-
-            &:not(.inline) {
-                padding: 20px;
-                margin: 0 -10px;
-
-                .glyph {
-                    display: inline-block;
-                }
-            }
-
-            &.editable {
-                position: relative;
-
-                &:hover {
-                    .glyph.edit::before {
-                        color: @blue;
-                    }
-                }
-
-                .glyph.edit {
-                    position: absolute;
-                    top: 0;
-                    right: 0;
-                    width: 50px;
-                    padding: 10px;
-                }
-
-                .glyph.edit::before {
-                    font-size: 30px;
-                }
-
-                .glyph.edit:hover, .glyph.edit:hover::before {
-                    color: @light-blue;
-                }
-            }
-
-            &:hover {
-                color: @blue-accent;
-                background-color: @black-accent;
-
-                .glyph::before {
-                    color: @blue-accent;
-                }
-            }
-        }
 
         .header {
             position: relative;

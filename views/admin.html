@@ -38,7 +38,9 @@
 					lat: 47.6036,
 					lng: -122.3294
 				}
-			};
+			},
+				div = $('.admin-content'),
+				timeFormat = 'h:mm tt';
 			
 			function bindUi(div) {
 				div.find('.datepicker').each(function () {
@@ -107,8 +109,8 @@
 				div.tooltip();
 			}
 			
-			function getView(view, callback) {
-				$.get('/template', { template: view }, function(html) {
+			function getView(view, model, callback) {
+				$.get('/template', { template: view, model: model }, function(html) {
 					if (callback) {
 						callback(html);
 					}
@@ -116,22 +118,29 @@
 			}
 			
 			function loadPlacesList() {
-				$.get('/admin/places', function (html) {
-					$('.places-content').html(html);
-					$('a.add-places').on('click', loadPlacesImport);
+				$.get('/admin/places', function (response) {
+					var model = JSON.stringify(response.body);
+					getView('admin-places', model, function(html) {
+						div.html(html);
+					
+						$('a.add-places').on('click', loadPlacesImport);
+						div.find('.places-events-link').on('click', function() {
+							var placeId = $(this).parent().data('id');
+							loadPlacesEvents(placeId);
+						});
+					});
 				});
 			}
 			
 			function loadPlacesImport() {
-				getView('admin-places-import', function(html) {
-					var div = $('.places-content');
+				getView('admin-places-import', null, function(html) {
 					div.html(html);
 					
 					var areaSelect = div.find('select[name="area"]'),
 						placeInput = div.find('input[name="keyword"]'),
 						btn = div.find('input[type=button]'),
 						resultsDiv = div.find('.results'),
-						back = div.find('.back');
+						back = div.find('.header-link');
 						
 					areaSelect.empty();
 
@@ -193,6 +202,34 @@
 				});
 			}
 			
+			function loadPlacesEvents(placeId) {				
+				$.get('/admin/placeEvents', { placeId: placeId }, function(response) {
+					getView('admin-place-events', response.body, function(html) {
+						div.html(html);
+					
+						div.find('.header-link.back').on('click', loadPlacesList);
+						div.find('.header-link.add-event').on('click', function() {
+							loadAddEvent(placeId);
+						});
+					});
+				});
+			}
+			
+			function loadAddEvent(placeId) {
+				$.get('/admin/tags', function(response) {
+					var model = JSON.stringify(response.body);
+					getView('admin-place-newevent', model, function(html) {
+						div.html(html);
+						bindUi(div);
+						div.find('.header-link.back').on('click', function() {
+							loadPlacesEvents(placeId);
+						});
+						
+						div.find('[name="_place"]').val(placeId);
+					});
+				});
+			}
+			
 			loadPlacesList();
         });
     </script>
@@ -204,14 +241,28 @@
 			color: white;
 		}
 		
-		h2 {
+		h1,h2,h3,h4,h5,h6,h7 {
 			margin: 0;
+			text-transform: uppercase;
+		}
+		
+		h2 {
 			padding: 20px 0;
 		}
 		
-		.selectable {
-			cursor: pointer;
-			padding: 10px;
+		.glyph {
+            width: 30px;
+            margin: 0 auto;
+        }
+
+        .glyph::before {
+            margin: 0 auto;
+            font-size: 30px;
+        }
+		
+		.header-link {
+			display: block;
+			padding: 10px 0;
 		}
 		
 		.selectable:hover {
@@ -226,18 +277,11 @@
 			margin: 0 auto;
 		}
 		
-		.place-import {
+		.form {
 			width: 400px;
 		}
 		
-        .glyph {
-            width: 24px;
-            top: -12px;
-            padding-left: 0;
-        }
-		
 		table {
-			padding: 10px 0;
 		}
 		
         th {
@@ -255,7 +299,7 @@
 <body>
     <div class="admin">
 		<h2>Administrator</h2>
-		<div class="places-content">
+		<div class="admin-content">
         </div>
 <!--         <div class="events">
             <h2>Events</h2>
