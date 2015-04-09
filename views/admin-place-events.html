@@ -6,15 +6,27 @@
     <thead>
         <tr>
             <th>Name</th>
-            <th>Where</th>
+            <th>Description</th>
+			<th>Start</th>
+			<th>End</th>
+			<th>Tags</th>
 			<th></th>
         </tr>
     </thead>
     <tbody>
         {% for event in model %}
-        <tr data-id="{{place._id}}">
+        <tr data-id="{{event._id}}">
             <td>{{event.name}}</td>
+			<td>{{event.desc}}</td>
+			<td>{{event.start|date('m/d/y g:i a', 480)}}</td>
+			<td>{{event.end|date('m/d/y g:i a', 480)}}</td>
+			<td>
+				{% for tag in event._tags %}
+				{{tag.label}},
+				{% endfor %}
+			</td>
 			<td><a class="edit" href="#">edit</a></td>
+			<td><a class="delete red" href="#">delete</a></td>
         </tr>
         {% endfor %}
     </tbody>

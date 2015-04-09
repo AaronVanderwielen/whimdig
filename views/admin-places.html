@@ -14,13 +14,13 @@
     </thead>
     <tbody>
         {% for place in model %}
-        <tr data-id="{{place._id}}">
+        <tr data-id="{{place._id}}" data-place-name="{{place.name}}">
             <!--<td>{{place._id.toString()}}</td>-->
             <!--<td>{{place.place_id}}</td>-->
             <td>{{place.name}}</td>
             <!--<td>{{place.loc}}</td>-->
             <td>{{place.vicinity}}</td>
-			<td><a class="places-events-link" href="#">{{place._events.length}} events</a></td>
+			<td><a class="places-events-link" href="#">events</a></td>
         </tr>
         {% endfor %}
     </tbody>

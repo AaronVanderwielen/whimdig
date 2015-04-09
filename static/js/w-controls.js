@@ -1595,10 +1595,6 @@
 			},
 			// views
 			getTemplate = function (template, modelData, callback) {
-				if (modelData) {
-					modelData = JSON.stringify(modelData);
-				}
-
 				$.ajax({
 					url: urls.renderTemplate,
 					type: 'GET',

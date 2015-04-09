@@ -40,7 +40,8 @@
 				}
 			},
 				div = $('.admin-content'),
-				timeFormat = 'h:mm tt';
+				timeFormat = 'h:mm tt',
+				datetimeStrictFormat = 'MM/DD/YYYY h:mm a';
 			
 			function bindUi(div) {
 				div.find('.datepicker').each(function () {
@@ -109,6 +110,51 @@
 				div.tooltip();
 			}
 			
+			function bindModelToForm(model, form) {
+				for (var p in model) {
+					var input = form.find(String.format('[name="{0}"]', p));
+
+					if (p === "start" || p === "end") {
+						// parse date
+						model[p] = moment(model[p]).format(datetimeStrictFormat);
+					}
+					else if (p === "place") {
+						model[p] = model[p]._id;
+					}
+
+					if (input.is('input[type="radio"]')) {
+						input.prop('checked', false);
+						input.each(function () {
+							var radio = $(this);
+							if (radio.val() === model[p]) {
+								radio.prop('checked', true);
+							}
+						});
+					}
+					else {
+						var value = model[p];
+						if (Object.prototype.toString.call(value) === '[object Array]' && value.length > 0) {
+							var strVal = "";
+							if (value[0]._id) {
+								value = _.map(value, function (v) { return v._id; });
+								strVal = value.join(',');
+							}
+							else {
+								strVal = value.join(',');
+							}
+						}
+						input.val(value);
+					}
+				}
+
+				form.find('.multi').each(function () {
+					var multi = $(this).data('multi');
+					if (multi) {
+						multi.refreshByInput();
+					}
+				});
+			}
+			
 			function getView(view, model, callback) {
 				$.get('/template', { template: view, model: model }, function(html) {
 					if (callback) {
@@ -119,14 +165,17 @@
 			
 			function loadPlacesList() {
 				$.get('/admin/places', function (response) {
-					var model = JSON.stringify(response.body);
+					var model = response.body;
 					getView('admin-places', model, function(html) {
 						div.html(html);
 					
 						$('a.add-places').on('click', loadPlacesImport);
 						div.find('.places-events-link').on('click', function() {
-							var placeId = $(this).parent().data('id');
-							loadPlacesEvents(placeId);
+							var tr = $(this).parent().parent(),
+								placeId = tr.data('id'),
+								placeName = tr.data('place-name');
+							
+							loadPlacesEvents(placeId, placeName);
 						});
 					});
 				});
@@ -202,31 +251,83 @@
 				});
 			}
 			
-			function loadPlacesEvents(placeId) {				
+			function loadPlacesEvents(placeId, placeName) {				
 				$.get('/admin/placeEvents', { placeId: placeId }, function(response) {
 					getView('admin-place-events', response.body, function(html) {
 						div.html(html);
-					
+						div.find('h4').html(placeName + ' Events');
 						div.find('.header-link.back').on('click', loadPlacesList);
 						div.find('.header-link.add-event').on('click', function() {
-							loadAddEvent(placeId);
+							loadAddEvent(placeId, placeName);
+						});
+						div.find('a.edit').on('click', function(e) {
+							e.preventDefault();
+							var eventId = $(this).parent().parent().data('id');
+							loadEditEvent(placeId, placeName, eventId);
+						});
+						div.find('a.delete').on('click', function(e) {
+							e.preventDefault();
+							var eventId = $(this).parent().parent().data('id');
+							$.post('/admin/deleteEvent', { eventId: eventId }, function(response) {
+								if (response.success) {
+									loadPlacesEvents(placeId, placeName);
+								}
+							});
 						});
 					});
 				});
 			}
 			
-			function loadAddEvent(placeId) {
+			function loadAddEvent(placeId, placeName) {
 				$.get('/admin/tags', function(response) {
-					var model = JSON.stringify(response.body);
+					var model = response.body;
 					getView('admin-place-newevent', model, function(html) {
 						div.html(html);
+						div.find('h4').html('Add Event for ' + placeName);
 						bindUi(div);
 						div.find('.header-link.back').on('click', function() {
-							loadPlacesEvents(placeId);
+							loadPlacesEvents(placeId, placeName);
 						});
 						
 						div.find('[name="_place"]').val(placeId);
+						div.find('.create-btn').off('click').on('click', function(e) {
+							var formData = div.find('form').serialize();
+							$.post('/admin/createEvent', formData, function(response) {
+								if (response.success) {
+									loadPlacesEvents(placeId, placeName);
+								}
+							});
+						});
 					});
+				});
+			}
+			
+			function loadEditEvent(placeId, placeName, eventId) {
+				$.get('/admin/event', { eventId: eventId }, function(response) {
+					if (response.success) {
+						var event = response.body;
+						$.get('/admin/tags', function(response) {
+							var model = response.body;
+							getView('admin-place-editevent', model, function(html) {
+								div.html(html);
+								bindUi(div);
+								bindModelToForm(event, div);
+								
+								div.find('.header-link.back').on('click', function() {
+									loadPlacesEvents(placeId, placeName);
+								});
+						
+								div.find('.create-btn').off('click').on('click', function(e) {
+									var formData = div.find('form').serialize();
+									$.post('/admin/updateEvent', formData, function(response) {
+										if (response.success) {
+											loadPlacesEvents(placeId, placeName);
+										}
+									});
+								});
+							});
+						});
+					}
 				});
 			}
 			
@@ -293,6 +394,9 @@
 		a {
 			color: #00ccff;
 			text-decoration: none;
+		}
+		a.delete {
+			color: #dd0000;
 		}
     </style>
 </head>
