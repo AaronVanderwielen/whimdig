@@ -201,7 +201,7 @@
 						fillColor: "rgb(250, 250, 250)",
 						fillOpacity: 1,
 						map: gMap,
-						center: new google.maps.LatLng(group.events[0].loc.coordinates[1], group.events[0].loc.coordinates[0]),
+						center: new google.maps.LatLng(group.events[0].loc[1], group.events[0].loc[0]),
 						radius: radius
 					};
 
@@ -304,7 +304,7 @@
 						fillColor: arrayToRGB(colorArray),
 						fillOpacity: settings.blurOpacity,
 						map: gMap,
-						center: new google.maps.LatLng(event.loc.coordinates[1], event.loc.coordinates[0]),
+						center: new google.maps.LatLng(event.loc[1], event.loc[0]),
 						radius: circleSize
 					};
 
@@ -616,7 +616,7 @@
 				return String.format("rgb({0}, {1}, {2})", c[0], c[1], c[2]);
 			},
 			createGroupKey = function (event) {
-				var loc = event.loc.coordinates;
+				var loc = event.loc;
 				return String.format("{0},{1}", loc[0], loc[1]);
 			},
 			// events
@@ -861,6 +861,19 @@
 			});
 		};
 
+		this.getNearbyPlaces = function (data, callback) {
+			var request = {
+				location: new google.maps.LatLng(data.lat, data.lng),
+				radius: '5000',
+				keyword: data.keyword,
+				//types: ['store'],
+				rankyBy: google.maps.places.RankBy.DISTANCE
+			};
+
+			service = new google.maps.places.PlacesService(gMap);
+			service.nearbySearch(request, callback);
+		};
+		
 		this.init = function () {
 			if (navigator.geolocation) {
 				navigator.geolocation.getCurrentPosition(function (pos) {

@@ -26,7 +26,7 @@
 			filters = {
 				tags: [],
 				span: 12,
-				radius: 10,
+				radius: 5,
 				loc: null
 			},
 			urls = {
@@ -287,12 +287,7 @@
             			eventId: id
             		},
             		success: function (response) {
-            			//if (response.success) {
-            			callback(response);
-            			//}
-            			//else if (response.statusCode === 401) {
-            			//	reAuthenticate(addEventUser, [id, callback]);
-            			//}
+						callback(response);
             		}
             	});
             },
@@ -932,7 +927,7 @@
 
 					var div = page.find('.menu-tab-find-radius'),
 						radiusList = $('<div class="radius-list">'),
-						miles = [1, 5, 10, 25, 50, 100];
+						miles = [.25, .5, 1, 5, 10, 25];
 
 					page.find('.back').off('click').on('click', function () {
 						page = navigatePage(-1);
@@ -1097,8 +1092,8 @@
 			createEvent = function (e) {
 				postForm.call(this, function (newEvent) {
 					var loc = {
-							lat: newEvent.loc.coordinates[1],
-							lng: newEvent.loc.coordinates[0]
+							lat: newEvent.loc[1],
+							lng: newEvent.loc[0]
 						},
 						pan = -container.width() * .2;
 
@@ -1166,7 +1161,14 @@
 
 												resultsDiv.find('.place').off('click').on('click', function (e) {
 													addUserPlaceClick.call(this, function (op) {
-														placeSelect.append(op);
+														var existingOp = placeSelect.find('option[value="' + op.val() + '"]');
+														if (existingOp.length === 0) {
+															placeSelect.prepend(op);
+														}
+														else {
+															placeSelect.find('option').attr('selected','');
+															existingOp.attr('selected','selected');
+														}
 														placeSelect.selectmenu("refresh");
 														// go back to previous page
 														navigatePage(-1);
@@ -1185,33 +1187,51 @@
 				placeSelect.selectmenu('refresh');
 			},
 			renderPlacesList = function (data, callback) {
-				// check if lat/lng are within WA
-				//if (m.getAllowedBounds().contains(loc)) {
-				$.post(urls.searchAllPlaces, data, function (response) {
-					if (response.success) {
+				_map(function(m) {
+					m.getNearbyPlaces(data, function(places) {
 						var list = $('<div class="place-list">');
 
-						for (var p in response.body) {
-							var place = $(String.format('<div class="place selectable" data-id="{0}" data-name="{1}"><div class="heading">{1}</div><span>{2}</span></div>', response.body[p]._id, response.body[p].name, response.body[p].vicinity));
+						for (var p in places) {
+							var place = $(String.format('<div class="place selectable"><div class="heading">{0}</div><span>{1}</span></div>', 
+								places[p].name, places[p].vicinity));
+							
+							place.data('place', places[p]);
 							list.append(place);
 						}
 						callback(list);
-					}
+					});
 				});
+				// check if lat/lng are within WA
+				//if (m.getAllowedBounds().contains(loc)) {
+				//$.post(urls.searchAllPlaces, data, function (response) {
+					//if (response.success) {
+						//var list = $('<div class="place-list">');
+
+						//for (var p in response.body) {
+							//var place = $(String.format('<div class="place selectable" data-id="{0}" data-name="{1}"><div class="heading">{1}</div><span>{2}</span></div>', response.body[p]._id, response.body[p].name, response.body[p].vicinity));
+							//list.append(place);
+						//}
+						//callback(list);
+					//}
+				//});
 			},
 			addUserPlaceClick = function (callback) {
-				var placeId = $(this).data('id'),
-					name = $(this).data('name');
+				var googlePlace = $(this).data('place'),
+					place = {
+						place_id: googlePlace.place_id,
+						name: googlePlace.name,
+						loc: [ parseFloat(googlePlace.geometry.location.lng(), 15), parseFloat(googlePlace.geometry.location.lat(), 15) ],
+						vicinity: googlePlace.vicinity
+					};
 
 				// add place to user
 				$.ajax({
 					url: urls.userPlaces,
 					type: 'POST',
-					data: { placeId: placeId },
+					data: { place: place },
 					success: function (response) {
 						if (response.success) {
-							var place = response.body,
-								newOption = $(String.format('<option value="{0}" selected="selected">{1}</option>', placeId, name));
+							var newOption = $(String.format('<option value="{0}" selected="selected">{1}</option>', response.body._id, response.body.name));
 
 							if (callback) {
 								callback(newOption);
@@ -1612,7 +1632,7 @@
 						var e = eventData[event];
 
 						if (e._id) {
-							var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e._place.name, e.loc.coordinates[1], e.loc.coordinates[0]),
+							var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e._place.name, e.loc[1], e.loc[0]),
 								item = $(eHtml);
 
 							if (e.created_by === user._id) {
@@ -1830,7 +1850,6 @@
 		}
 
 		this.renderEventList = function (ids, callback) {
-			var pan = !container.hasClass('show-overlay');
 			showOverlay();
 			var page = navigatePage(0, pageNames.eventGroupDetail);
 
@@ -1839,16 +1858,15 @@
 				selectedEvent = clicked;
 				setGroupEventList(events, page);
 				if (callback) {
-					callback(pan ? (-container.width() * .2) : false);
+					callback(-container.width() * .2);
 				}
 			});
 		};
 
 		this.renderEventDetail = function (id, callback) {
-			var pan = !container.hasClass('show-overlay');
 			setEventDetail(id, 0);
 			if (callback) {
-				var panBy = pan ? (-container.width() * .2) : 0;
+				var panBy = (-container.width() * .2);
 				callback(panBy);
 			}
 		};
