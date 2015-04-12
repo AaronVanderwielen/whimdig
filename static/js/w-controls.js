@@ -232,9 +232,6 @@
             		if (response.success) {
             			callback(response);
             		}
-            		else if (response.statusCode === 401) {
-            			reAuthenticate(getUserEvents, [callback]);
-            		}
             	});
             },
             getUserOwnedEvents = function (callback) {
@@ -273,9 +270,6 @@
             			if (response.success) {
             				callback(response);
             			}
-            			else if (response.statusCode === 401) {
-            				reAuthenticate(addEventUser, [id, callback]);
-            			}
             		}
             	});
             },
@@ -287,7 +281,9 @@
             			eventId: id
             		},
             		success: function (response) {
-						callback(response);
+            			if (response.success) {
+            				callback(response);
+            			}
             		}
             	});
             },
@@ -412,6 +408,7 @@
 
             					$(this).off('click').on('click', function () {
             						page = navigatePage(-1);
+            						refreshFilteredList(page);
             					});
             				}
             			});
@@ -473,20 +470,24 @@
 				getTemplate('event-detail-tab-info', event, function (html) {
 					var div = $(html),
 						body = div.find('.event-body'),
-						when = div.find('.when'),
+						time = div.find('.when .time'),
+						intensity = div.find('.when .intensity'),
 						where = div.find('.where'),
+						creatorImg = div.find('.creator-img'),
+						invite = div.find('.invite'),
 						what = div.find('.what'),
-						connections = div.find('.connection-info'),
-						numAttending = connections.find('.num-attending'),
-						friendCount = connections.find('.friend-count'),
-						friendsList = connections.find('.friend-list');
+						friendCount = div.find('.friend-count'),
+						friendsList = div.find('.friend-list');
 
 					// apply event detail to template
-					when.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
-					when.append($(String.format('<div class="intensity">{0}</div>', event.intensity_variable === "end" ? "show up any time before end" : "show up before start")));
+					time.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
+					intensity.html(event.intensity_variable === "end" ? "show up any time before end" : "show up before start");
+
+					creatorImg.attr('src', String.format(fbPhotoUrl, event._created_by.facebook_id));
+
 					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event._place.name, event._place.vicinity));
 					where.data('id', event._place._id);
-					where.data('created-by', event.created_by);
+
 					what.html(event.desc);
 
 					// click event info goes to place detail
@@ -495,7 +496,10 @@
 						setPlaceDetail(placeId, 1);
 					});
 
-					numAttending.html(event._users.length);
+					// invite 
+					invite.off('click').on('click', function (e) {
+
+					});					
 
 					// friends
 					var attendingFriends = _.filter(user._friends, function (f) {
@@ -576,15 +580,17 @@
             },
             setGroupEventList = function (events, div) {
             	renderEventList(events, function (list) {
+            		addStarToListedEvents(events, list);
             		div.html(list);
 
             		div.find('.event').off('click').on('click', function (e) {
-            			var div = $(this),
-                            eventId = div.data('id'),
-                            eventRef = getCdByIdInGroup(eventId);
+            			var target = $(e.target),
+							div = $(this),
+                            eventId = div.data('id');
 
-            			//focusGroup.call(eventRef.circle);
-            			setEventDetail(eventRef, 0);
+            			if (!target.is('.corner-glyph')) {
+            				setEventDetail(eventId, 1);
+            			}
             		});
             	});
             },
@@ -593,21 +599,14 @@
             		glyph = tab.find('.glyph'),
 					label = tab.find('.tab-label');
 
-            	if (event.created_by !== user._id) {
+            	if (event._created_by !== user._id) {
             		if (tab.hasClass('active')) {
             			removeEventUser(event._id, function (response) {
             				if (response.success) {
             					var indexOfUser = event._users.indexOf(user._id);
-            					//size = getEventCircleSize(event);
 
             					// remove locally
             					event._users.splice(indexOfUser, 1);
-
-            					//overlayGoing.removeClass('check');
-            					//overlayGoing.removeClass('green');
-            					//overlayGoing.addClass('unchecked');
-            					//clearSizing(cData.circle);
-            					//circleSizeTo(cData.circle, size, 0.9, null, 50);
             					label.html(parseInt(event._users.length, 10));
             					tab.removeClass('active');
             					glyph.addClass('dislikes').removeClass('star');
@@ -619,13 +618,6 @@
             				if (response.success) {
             					// add locally
             					event._users.push(user._id);
-            					//var size = getEventCircleSize(cData);
-
-            					//overlayGoing.removeClass('unchecked');
-            					//overlayGoing.addClass('check');
-            					//overlayGoing.addClass('green');
-            					//clearSizing(cData.circle);
-            					//circleSizeTo(cData.circle, size, 1.1, null, 50);
             					label.html(parseInt(event._users.length, 10));
             					tab.addClass('active');
             					glyph.addClass('star').removeClass('dislikes');
@@ -677,11 +669,8 @@
             						renderEventList(response.body, function (html) {
             							upcomingEvents.html(html);
             							upcomingEvents.find('.event').off('click').on('click', function (e) {
-            								var eventId = $(this).data('id'),
-                                                event = _.find(response.body, function (e) { return e._id == eventId; });
-
-            								showOverlay(event.name);
-            								setEventDetail(event, 1);
+            								var eventId = $(this).data('id');
+            								setEventDetail(eventId, 1);
             							});
             						});
             					}
@@ -693,8 +682,7 @@
             							pastEvents.html(html);
             							pastEvents.find('.event').off('click').on('click', function (e) {
             								var eventId = $(this).data('id');
-
-            								setPastEventDetail(eventId, page);
+            								setPastEventDetail(eventId);
             							});
             						});
             					}
@@ -828,11 +816,47 @@
 				// load nearby events
 				getUpcomingEvents(data, function (events) {
 					// render nearby events as list
-					renderEventList(events, function (list) {
+					renderEventList(events, function (events, list) {
+						addStarToListedEvents(events, list);
 						callback(list);
 					});
 				});
 			},
+			addStarToListedEvents = function (events, list) {
+				list.find('.event').each(function () {
+					var selectable = $(this),
+						id = selectable.data('id'),
+						eventData = _.find(events, function (e) { return e._id == id; }),
+						star = $(String.format('<span class="glyph glyphicons corner-glyph" data-event-id="{0}">', eventData._id));
+
+					if (eventData._users.indexOf(user._id) > -1) {
+						star.addClass('star');
+					}
+					else {
+						star.addClass('dislikes');
+					}
+
+					if (eventData._created_by != user._id) {
+						star.off('click').on('click', function (e) {
+							var glyph = $(this),
+								eventId = $(this).data('event-id');
+
+							if (glyph.hasClass('star')) {
+								removeEventUser(eventId, function (response) {
+									glyph.addClass('dislikes').removeClass('star');
+								});
+							}
+							else {
+								addEventUser(eventId, function (response) {
+									glyph.addClass('star').removeClass('dislikes');
+								});
+							}
+						});
+					}
+
+					selectable.prepend(star);
+				});
+			},			
 			setFilterTags = function (e) {
 				var filterEl = $(this),
 					page = navigatePage(1);
@@ -1011,10 +1035,13 @@
 				// clicking an event in schedule
 				var events = div.find('.event');
 				events.off('click').on('click', function (e) {
-					var event = $(this),
+					var target = $(e.target),
+						event = $(this),
 						eId = event.data('id'),
 						lat = event.data('lat'),
-						lng = event.data('lng')
+						lng = event.data('lng');
+
+					if (target.is('.corner-glyph')) return;
 
 					_map(function (m) {
 						var loc = {
@@ -1057,7 +1084,7 @@
 							eventsDiv.append(list);
 							eventClickHandlers(eventsDiv);
 
-							var edit = $('<span class="glyph glyphicons edit"></span>');
+							var edit = $('<span class="glyph glyphicons edit corner-glyph"></span>');
 							eventsDiv.find('.event.editable').append(edit);
 
 							contentDiv.empty();
@@ -1461,6 +1488,7 @@
 							toArray = _.map(otherUsers, function (u) { return u.first_name; });
 
 						mail[m].to_label = toArray.join(", ");
+						mail[m].viewed = mail[m].read_log.indexOf(user._id) > -1;
 					}
 					getTemplate('menu-tab-social', mail, function (html) {
 						var div = $(html);
@@ -1470,6 +1498,19 @@
 							inviteItem = tabHeader.find('.invite'),
 							mailbox = div.find('.mailbox'),
 							mail = mailbox.find('.mail');
+
+						mail.each(function () {
+							var m = $(this),
+								glyph = m.find('.glyph'),
+								viewed = m.data('viewed');
+
+							if (viewed) {
+								glyph.addClass('message_empty');
+							}
+							else {
+								glyph.addClass('message_flag');
+							}
+						});						
 
 						messageItem.off('click').on('click', renderCreateMail);
 						inviteItem.off('click').on('click', function () {
@@ -1497,8 +1538,12 @@
 				});
 			},
 			openMail = function () {
-				var mailId = $(this).data('id');
-				var page = navigatePage(1, pageNames.mail);
+				var mailId = $(this).data('id'),
+					glyph = $(this).find('.glyph'),
+					page = navigatePage(1, pageNames.mail);
+
+				glyph.removeClass('message_flag').addClass('message_empty');
+
 				getMailMessages(mailId, function (mail) {
 					getTemplate('mail', null, function (html) {
 						page.html(html);
@@ -1546,7 +1591,7 @@
 			},
 			sendMailMessage = function (input, chatlist, mail) {
 				var msg = input.val(),
-            		data = { mailId: mail._id, text: msg, date: new Date(), _created_by: user };
+            		data = { mailId: mail._id, text: msg, date: new Date(), facebook_id: user.facebook_id, _created_by: user };
 
 				socket.emit('sendMessage', data);
 				input.val('');
@@ -1632,10 +1677,11 @@
 						var e = eventData[event];
 
 						if (e._id) {
-							var eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e._place.name, e.loc[1], e.loc[0]),
+							var tagHtml = renderTagGlyphs(e._tags),
+								eHtml = String.format(template, e._id, e.name, moment(e.start).format(datetimeCasualFormat), moment(e.end).format(datetimeCasualFormat), e._place.name, e.loc[1], e.loc[0], tagHtml),
 								item = $(eHtml);
 
-							if (e.created_by === user._id) {
+							if (e._created_by === user._id) {
 								item.addClass('editable');
 							}
 
@@ -1644,6 +1690,17 @@
 					}
 					callback(div);
 				});
+			},
+			renderTagGlyphs = function (tags) {
+				var html = "";
+
+				for (var t in tags) {
+					if (tags[t] && tags[t].glyph) {
+						html += '<span class="glyph glyphicons ' + tags[t].glyph + '">';
+					}
+				}
+
+				return html;
 			},
 			// utility
 			ancestor = function (el, q) {
@@ -1811,12 +1868,15 @@
 							callback(response.body);
 						}
 						else {
-							var problems = [];
+							var problems = [],
+								errors = [];
+
 							if (response.body.path) {
 								problems.push(response.body.path);
 							}
 							for (var p in response.body.errors) {
 								problems.push(p);
+								errors.push(response.body.errors[p].message);
 							}
 
 							for (var p in problems) {
@@ -1839,7 +1899,9 @@
 								});
 							}
 
-							form.find('.error-message').html(errMsg);
+							if (errors.length > 0) {
+								form.find('.error-message').html(errors.join("<br>"));
+							}
 						}
 					}
 				});
@@ -1850,16 +1912,22 @@
 		}
 
 		this.renderEventList = function (ids, callback) {
-			showOverlay();
-			var page = navigatePage(0, pageNames.eventGroupDetail);
-
 			getEvents(ids, function (events) {
 				var page = navigatePage(0, pageNames.eventGroupDetail);
-				selectedEvent = clicked;
-				setGroupEventList(events, page);
-				if (callback) {
-					callback(-container.width() * .2);
-				}
+
+				getTemplate("header-list", null, function (html) {
+					page.html(html);
+
+					var listDiv = page.find('.list-container'),
+						header = page.find('.header-text');
+
+					header.html('several events here!');
+					setGroupEventList(events, listDiv);
+
+					if (callback) {
+						callback(-container.width() * .2);
+					}
+				});
 			});
 		};
 

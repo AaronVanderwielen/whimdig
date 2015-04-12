@@ -15,10 +15,11 @@
     </div>
     <div class="mailbox sidepad">
         {% for mail in model %}
-        <div class="mail selectable" data-id="{{mail._id}}">
-            <span class="glyph glyphicons message_flag"></span>
+        <div class="mail selectable" data-id="{{mail._id}}" data-viewed="{{mail.viewed}}">
+            <span class="glyph glyphicons selectable-label"></span>
             <span class="glyph-label">
-                {{mail.to_label}}
+                {{mail.to_label}}<br />
+                {{mail.subject}}
             </span>
         </div>
         {% endfor %}

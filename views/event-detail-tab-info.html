@@ -1,24 +1,33 @@
 ﻿<div class="event-detail-tab-info">
-    <div class="event-info pad">
-        <div class="row pad">
-            <div class="when heading"></div>
+    <div class="event-info">
+        <div class="row">
+            <div class="when pad">
+                <div class="time"></div>
+                <div class="intensity"></div>
+            </div>
+            <div class="social-info">
+                <div class="invite selectable inline">
+                    <span class="glyph glyphicons user"></span>
+                    <span class="glyph-label"><span class="friend-count"></span></span>
+                </div>
+                <div class="created-by">
+                    <img class="creator-img" />
+                    <div class="creator-label">created by</div>
+                </div>
+            </div>
         </div>
-        <div class="where selectable "></div>
-        <div class="event-tags pad">
-            {% for tag in model._tags %}
+        <div class="details sidepad">
+            <div class="where selectable"></div>
+            <div class="event-tags pad">
+                {% for tag in model._tags %}
                 <div class="tag">
                     <span class="glyph glyphicons {{ tag.glyph}}" data-name="{{ tag.name }}"></span>
                     <span class="tag-label">{{ tag.label }}</span>
                 </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
+            <div class="what pad"></div>
         </div>
-        <div class="what pad"></div>
-    </div>
-    <div class="connections pad">
-        <span class="heading">Attendees</span>
-        <div class="connection-info pad">
-            <span class="num-attending"></span>&nbsp;attending this event. (<span class="friend-count"></span>)
-        <div class="friend-list pad"></div>
-        </div>
+        <div class="friend-list"></div>
     </div>
 </div>

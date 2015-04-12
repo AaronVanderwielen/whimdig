@@ -191,15 +191,16 @@
 			},
 			drawGroup = function (group) {
 				var radius = getEventCircleSize(_.max(group.events, function (e) { return e._users.length; })),
+					stroke = radius / 10,
 					c = {
 						id: group._id,
 						sizing: false,
 						isGroup: true,
-						strokeColor: "rgb(150, 150, 150)",
+						strokeColor: "rgb(250, 200, 250)",
 						strokeOpacity: 1,
-						strokeWeight: radius / 10,
-						fillColor: "rgb(250, 250, 250)",
-						fillOpacity: 1,
+						strokeWeight: stroke > 5 ? 5 : stroke < 2 ? 2 : stroke,
+						fillColor: "rgb(150, 50, 150)",
+						fillOpacity: settings.blurOpacity,
 						map: gMap,
 						center: new google.maps.LatLng(group.events[0].loc[1], group.events[0].loc[0]),
 						radius: radius
@@ -391,6 +392,8 @@
 				focusGroup.call(clicked, ref);
 				highlightCircle.call(clicked);
 
+				selectedEvent = clicked;
+
 				// load in referenced documents
 				var ids = _.map(ref.events, function (e) { return e._id; });
 
@@ -406,7 +409,7 @@
 
 				this.setOptions({
 					zIndex: 1,
-					strokeColor: "rgb(0, 250, 250)",
+					strokeColor: "rgb(250, 230, 250)",
 				});
 
 				circleHover(circle, ref);
@@ -440,7 +443,7 @@
 					circle.setOptions({
 						radius: defaultSize,
 						zIndex: 0,
-						strokeColor: "rgb(150, 150, 150)",
+						strokeColor: "rgb(250, 200, 250)",
 					});
 				}
 				else {
@@ -572,7 +575,7 @@
 			},
 			getEventCircleSize = function (cData) {
 				var min = 5, max = 400,
-					calc = (19 - gMap.getZoom() + cData._users.length) * 10;
+					calc = (19 - gMap.getZoom() + cData._users.length) * 5;
 
 				return calc < min ? min : (calc > max ? max : calc);
 			},
