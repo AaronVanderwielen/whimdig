@@ -3,7 +3,7 @@
 		var obj = this,
 			socket,
 			socketId,
-			debug = true, // true uses testFbApi
+			debug = false, // true uses testFbApi
 			prodFbApi = { appId: '793549090738791', xfbml: true, version: 'v2.2' },
             testFbApi = { appId: '655662931197377', cookie: true, version: 'v2.0' },
 			user,
@@ -816,7 +816,7 @@
 				// load nearby events
 				getUpcomingEvents(data, function (events) {
 					// render nearby events as list
-					renderEventList(events, function (events, list) {
+					renderEventList(events, function (list) {
 						addStarToListedEvents(events, list);
 						callback(list);
 					});
@@ -1523,8 +1523,6 @@
 
 						contentDiv.html('');
 						contentDiv.append(div);
-
-						refreshFilteredList(div);
 
 						contentDiv.fadeIn();
 					});
