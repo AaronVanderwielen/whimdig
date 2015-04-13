@@ -842,7 +842,7 @@ input[type="button"]:hover {
   .app-header .user-controls .menu .glyph::before {
     font-size: 28px;
   }
-  .container.show-overlay {
+  .container {
     padding-top: 35px;
   }
   .container.show-overlay .overlay {

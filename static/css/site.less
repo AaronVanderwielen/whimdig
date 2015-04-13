@@ -683,12 +683,12 @@ button, input[type="button"] {
         .event-list-item {
             .name {
                 font-size: @font-size-large;
-				line-height: 16px;
+                line-height: 16px;
             }
 
-			.date-range {
-				padding: 5px 0;
-			}
+            .date-range {
+                padding: 5px 0;
+            }
 
             .tags {
                 display: inline-block;
@@ -882,17 +882,17 @@ button, input[type="button"] {
                 }
 
                 .social-info {
-					width: 180px;
+                    width: 180px;
                     float: right;
 
                     .invite {
-						width: 50%;
-						float: left;
+                        width: 50%;
+                        float: left;
                     }
 
                     .created-by {
                         width: 50%;
-						float: left;
+                        float: left;
                         text-align: center;
                         padding: 10px;
 
@@ -1051,14 +1051,14 @@ button, input[type="button"] {
 
                     .event-detail {
 
-						.when {
-							float: none;
-						}
+                        .when {
+                            float: none;
+                        }
 
                         .social-info {
                             float: none;
                             display: block;
-							width: auto;
+                            width: auto;
                         }
                     }
                 }
@@ -1086,7 +1086,7 @@ button, input[type="button"] {
                     .social-info {
                         float: right;
                         display: block;
-						width: 180px;
+                        width: 180px;
                     }
                 }
             }
@@ -1098,11 +1098,11 @@ button, input[type="button"] {
     .container.show-overlay {
         .overlay {
             .overlay-body {
-				.event-detail {
+                .event-detail {
                     .social-info {
                         float: none;
                         display: block;
-						width: auto;
+                        width: auto;
                     }
                 }
             }
@@ -1156,121 +1156,124 @@ button, input[type="button"] {
         }
     }
 
-    .container.show-overlay {
-        padding-top: 35px;
+    .container {
+		padding-top: 35px;
 
-        .overlay {
-            padding-top: 35px;
+        &.show-overlay {
 
-            .overlay-body {
+            .overlay {
+                padding-top: 35px;
 
-                .header {
-                    min-height: 40px;
+                .overlay-body {
 
-                    .back {
-                        width: 20px;
+                    .header {
+                        min-height: 40px;
+
+                        .back {
+                            width: 20px;
+                        }
+
+                        .back::before {
+                            font-size: 20px;
+                        }
+
+                        .header-text {
+                            margin: 8px 0 0 30px;
+                        }
                     }
 
-                    .back::before {
-                        font-size: 20px;
-                    }
-
-                    .header-text {
-                        margin: 8px 0 0 30px;
-                    }
-                }
-
-                .selectable:not(.inline) {
-                    padding: 10px;
-                    margin: 0 -10px;
-
-                    .glyph {
-                    }
-
-                    .glyph::before {
-                    }
-                }
-
-                .selectable.inline {
-                    padding: 5px;
-                }
-
-                .tabs {
-
-                    .tab {
-                        height: 40px;
+                    .selectable:not(.inline) {
+                        padding: 10px;
+                        margin: 0 -10px;
 
                         .glyph {
-                            width: 30px;
                         }
 
                         .glyph::before {
-                            font-size: 30px;
                         }
+                    }
 
-                        .tab-label {
-                            display: none;
-                        }
+                    .selectable.inline {
+                        padding: 5px;
+                    }
 
-                        &.btn {
+                    .tabs {
+
+                        .tab {
+                            height: 40px;
 
                             .glyph {
-                                margin: 0;
-                                float: right;
+                                width: 30px;
+                            }
+
+                            .glyph::before {
+                                font-size: 30px;
                             }
 
                             .tab-label {
-                                display: block;
-                                float: right;
-                                margin-right: 3px;
-                                top: 4px;
-                                position: relative;
-                            }
-                        }
-                    }
-                }
-
-                .main-menu {
-
-                    .tab-content {
-
-                        .tab-header {
-                            height: 35px;
-
-                            .glyph-label {
                                 display: none;
                             }
 
-                            .event-count {
-                                height: 35px;
-                                padding: 5px;
-                                font-size: 18px;
-                                line-height: 24px;
-                            }
-
-                            .find-event-filters {
-                                height: 35px;
-                            }
-
-                            .selectable.inline {
-                                height: 35px;
+                            &.btn {
 
                                 .glyph {
-                                    width: 20px;
+                                    margin: 0;
+                                    float: right;
                                 }
 
-                                .glyph::before {
-                                    font-size: 20px;
+                                .tab-label {
+                                    display: block;
+                                    float: right;
+                                    margin-right: 3px;
+                                    top: 4px;
+                                    position: relative;
                                 }
                             }
                         }
                     }
-                }
 
-                .event-detail {
-                    .social-info {
-                        .created-by {
-                            padding: 5px;
+                    .main-menu {
+
+                        .tab-content {
+
+                            .tab-header {
+                                height: 35px;
+
+                                .glyph-label {
+                                    display: none;
+                                }
+
+                                .event-count {
+                                    height: 35px;
+                                    padding: 5px;
+                                    font-size: 18px;
+                                    line-height: 24px;
+                                }
+
+                                .find-event-filters {
+                                    height: 35px;
+                                }
+
+                                .selectable.inline {
+                                    height: 35px;
+
+                                    .glyph {
+                                        width: 20px;
+                                    }
+
+                                    .glyph::before {
+                                        font-size: 20px;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    .event-detail {
+                        .social-info {
+                            .created-by {
+                                padding: 5px;
+                            }
                         }
                     }
                 }
