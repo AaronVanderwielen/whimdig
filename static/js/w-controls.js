@@ -317,6 +317,11 @@
             	});
             },
             navigatePage = function (dir, newPageName) {
+				overlay.off('swiperight').on('swiperight', function() {
+					currentPage().find('.header .back').click();
+				});
+				overlay.off('swipeleft');
+				
             	var lastPage = overlayBody.find('.page.page' + paging),
                     showProps = {
                     	width: '100%'
@@ -361,7 +366,7 @@
             			prevPage.animate(showProps, speed);
             		}
             		else {
-            			// user is navigating to the next page, hide prev page, create new
+            			// user is navigating to the next page, hide prev page, create new						
             			lastPage.css('float', 'left'); // swipe <---
             			lastPage.animate(hideProps, speed, function () {
             				lastPage.css('display', 'none');
@@ -405,20 +410,23 @@
             			});
 
             			var tabsDiv = page.find('.tabs'),
-							tabContent = page.find('.tab-content'),
             				infoTab = tabsDiv.find('.tab.info-tab'),
 							chatTab = tabsDiv.find('.tab.chat-tab'),
 							starTab = tabsDiv.find('.tab.star-tab');
 
+						// swiping
+						overlay.off('swipeRight').on('swipeRight', tabSwipeRight);
+						overlay.off('swipeLeft').on('swipeLeft', tabSwipeLeft);
+							
             			// init first tab
-            			eventTabChange(tabsDiv, infoTab, tabContent, renderInfoTab, event);
+            			eventTabChange(tabsDiv, infoTab, renderInfoTab, event);
 
             			infoTab.off('click').on('click', function (e) {
-            				eventTabChange(tabsDiv, $(this), tabContent, renderInfoTab, event);
+            				eventTabChange(tabsDiv, $(this), renderInfoTab, event);
             			});
 
             			chatTab.off('click').on('click', function (e) {
-            				eventTabChange(tabsDiv, $(this), tabContent, renderChatTab, event);
+            				eventTabChange(tabsDiv, $(this), renderChatTab, event);
             			});
 
             			starTab.off('click').on('click', function (e) {
@@ -441,7 +449,25 @@
             		});
             	});
             },
-			eventTabChange = function (tabContainer, tab, contentDiv, loadMethod, event) {
+			tabSwipeRight = function (e) {
+				var selectedTab = $(this).find('.tab.selected'),
+					nextTab = selectedTab.prev();
+				if (nextTab.length > 0) {
+					nextTab.click();
+				}
+				else {
+					currentPage().find('.header .back').click();
+				}
+			},
+			tabSwipeLeft = function (e) {
+				var selectedTab = $(this).find('.tab.selected'),
+					nextTab = selectedTab.next();
+				if (nextTab.length > 0) {
+					nextTab.click();
+				}
+			},
+			eventTabChange = function (tabContainer, tab, loadMethod, event) {
+				var tabContent = tabContainer.parent().find('.tab-content');
 				if (!tab.hasClass('selected')) {
 					tabContainer.find('.tab.selected').removeClass('selected');
 
@@ -691,7 +717,6 @@
             			page.html(template);
 
             			var tabsDiv = page.find('.tabs'),
-							tabContent = page.find('.tab-content'),
             				findTab = tabsDiv.find('.tab.find-events-tab'),
 							eventsTab = tabsDiv.find('.tab.my-events-tab'),
 							socialTab = tabsDiv.find('.tab.social-tab'),
@@ -699,16 +724,20 @@
 
             			back.off('click').on('click', exitOverlay);
 
+						// swiping
+						overlay.off('swiperight').on('swiperight', tabSwipeRight);
+						overlay.off('swipeleft').on('swipeleft', tabSwipeLeft);
+						
             			findTab.off('click').on('click', function (e) {
-            				menuTabChange(tabsDiv, $(this), tabContent, renderFindTab, "find something to do");
+            				menuTabChange(tabsDiv, $(this), renderFindTab, "find something to do");
             			});
 
             			eventsTab.off('click').on('click', function (e) {
-            				menuTabChange(tabsDiv, $(this), tabContent, renderEventsTab, "things you'd like to do");
+            				menuTabChange(tabsDiv, $(this), renderEventsTab, "things you'd like to do");
             			});
 
             			socialTab.off('click').on('click', function (e) {
-            				menuTabChange(tabsDiv, $(this), tabContent, renderSocialTab, "people to do stuff with");
+            				menuTabChange(tabsDiv, $(this), renderSocialTab, "people to do stuff with");
             			});
 
             			// init first tab
@@ -721,15 +750,16 @@
             		});
             	}
             },
-			menuTabChange = function (tabContainer, tab, contentDiv, loadMethod, headerText) {
+			menuTabChange = function (tabContainer, tab, loadMethod, headerText) {
+				var tabContent = tabContainer.parent().find('.tab-content');
 				if (!tab.hasClass('selected')) {
 					tabContainer.find('.tab.selected').removeClass('selected');
 
-					contentDiv.fadeOut(25, function () {
+					tabContent.fadeOut(25, function () {
 						tab.addClass('selected');
 						$('.header-text').html(headerText);
 
-						loadMethod.call(this, contentDiv);
+						loadMethod.call(this, tabContent);
 					});
 				}
 			},
