@@ -3,7 +3,7 @@
 		var obj = this,
 			socket,
 			socketId,
-			debug = false, // true uses testFbApi
+			debug = true, // true uses testFbApi
 			prodFbApi = { appId: '793549090738791', xfbml: true, version: 'v2.2' },
             testFbApi = { appId: '655662931197377', cookie: true, version: 'v2.0' },
 			user,
@@ -84,7 +84,7 @@
 			datetimeStrictFormat = 'MM/DD/YYYY h:mm a',
 			timeFormat = 'h:mm tt',
 			fbPhotoUrl = "//graph.facebook.com/{0}/picture",
-			isMobileDevice = navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
+			//isMobileDevice = navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
 			// elements
 			container = $('.container'),
 			//// header 
@@ -113,12 +113,7 @@
 			},
 		    // session/data
 			initAuthentication = function (callback) {
-				if (debug) {
-					FB.init(testFbApi);
-				}
-				else {
-					FB.init(prodFbApi);
-				}
+				FB.init(debug ? testFbApi : prodFbApi);
 				fbInitLogin(callback);
 			},
             fbInitLogin = function (callback, callbackArgs) {
@@ -131,19 +126,15 @@
             			initializeUser(data, callback, callbackArgs);
             		}
             		else {
-            			if (isMobileDevice) {
-            				var loginPopupHack = $('<button id="login-popup-hack">Login</button>');
+						var loginPopup = $('<button class="login-btn">Login</button>');
 
-            				loginPopupHack.off('click').on('click', function () {
-            					fbLoginPrompt(data, callback, callbackArgs);
-            				});
+            			loginPopup.off('click').on('click', function () {
+            				fbLoginPrompt(function(e) {
+								location.reload();
+							});
+            			});
 
-            				header.find('> div:not(".app-logo")').hide();
-            				header.append(loginPopupHack);
-            			}
-            			else {
-            				fbLoginPrompt(callback, callbackArgs);
-            			}
+            			header.append(loginPopup);
             		}
             	});
             },
@@ -1938,8 +1929,11 @@
 		};
 
 		this.init = function () {
+			var headerControls = header.find('> div:not(".app-logo")');
+			headerControls.hide();
 			window.fbAsyncInit = function () {
 				initAuthentication(function () {
+					headerControls.show();
 					applyHeaderHandlers();
 
 					_map(function (m) {
