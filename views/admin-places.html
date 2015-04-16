@@ -1,5 +1,12 @@
 ﻿<h4>Places</h4>
 <a class="add-places header-link" href="#">add a place</a>
+<div class="event-import">
+    <h4>Import Events CSV</h4>
+    <form action="/admin/importEvents" method="post" enctype="multipart/form-data">
+        <input type="file" name="csv" />
+        <input type="submit" value="Upload" />
+    </form>
+</div>
 {% if model.length > 0 %}
 <table class="place-list">
     <thead>
@@ -9,7 +16,7 @@
             <th>Name</th>
             <!--<th>loc</th>-->
             <th>Where</th>
-			<th></th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -20,7 +27,7 @@
             <td>{{place.name}}</td>
             <!--<td>{{place.loc}}</td>-->
             <td>{{place.vicinity}}</td>
-			<td><a class="places-events-link" href="#">events</a></td>
+            <td><a class="places-events-link" href="#">events</a></td>
         </tr>
         {% endfor %}
     </tbody>
