@@ -19,7 +19,7 @@
     <script type="text/javascript" src="/js/jquery/ui/jquery-ui.min.js"></script>
     <script type="text/javascript" src="/js/jquery/ui/external/timepicker.js"></script>
 
-        <!-- EXTENSIONS -->
+    <!-- EXTENSIONS -->
     <script src="/js/util/extensions.js"></script>
     <script src="/js/util/underscore-min.js"></script>
     <script src="/js/util/modernizr.js"></script>
@@ -27,331 +27,359 @@
     <script src="/js/util/multiselect.js"></script>
     <script type="text/javascript">
         $(function () {
-			var cityLoc = {
-				bellingham: {
-					label: 'Bellingham',
-					lat: 48.7524,
-					lng: -122.4712
-				},
-				seattle: {
-					label: 'Seattle',
-					lat: 47.6036,
-					lng: -122.3294
-				}
-			},
+            var cityLoc = {
+                bellingham: {
+                    label: 'Bellingham',
+                    lat: 48.7524,
+                    lng: -122.4712
+                },
+                seattle: {
+                    label: 'Seattle',
+                    lat: 47.6036,
+                    lng: -122.3294
+                }
+            },
 				div = $('.admin-content'),
 				timeFormat = 'h:mm tt',
 				datetimeStrictFormat = 'MM/DD/YYYY h:mm a';
-			
-			function bindUi(div) {
-				div.find('.datepicker').each(function () {
-					var input = $(this);
-					if (!input.data('bound')) {
-						input.datetimepicker({
-							timeFormat: timeFormat
-						});
-						input.data('bound', true);
-					}
-				});
 
-				div.find('select').each(function () {
-					var input = $(this);
-					if (!input.data('bound')) {
-						input.selectmenu();
-						input.selectmenu('refresh');
-						input.data('bound', true);
-					}
-				});
+            function bindUi(div) {
+                div.find('.datepicker').each(function () {
+                    var input = $(this);
+                    if (!input.data('bound')) {
+                        input.datetimepicker({
+                            timeFormat: timeFormat
+                        });
+                        input.data('bound', true);
+                    }
+                });
 
-				div.find('.autocomplete').each(function () {
-					var input = $(this),
+                div.find('select').each(function () {
+                    var input = $(this);
+                    if (!input.data('bound')) {
+                        input.selectmenu();
+                        input.selectmenu('refresh');
+                        input.data('bound', true);
+                    }
+                });
+
+                div.find('.autocomplete').each(function () {
+                    var input = $(this),
 						type = input.data('type'),
 						url;
 
-					if (!input.data('bound')) {
-						if (type === "place") {
-							url = urls.placesNames;
-						}
+                    if (!input.data('bound')) {
+                        if (type === "place") {
+                            url = urls.placesNames;
+                        }
 
-						if (url !== null) {
-							// get options
-							$.ajax({
-								url: url,
-								type: 'GET',
-								cache: true,
-								success: function (response) {
-									if (response.success) {
-										input.autocomplete({
-											source: response.body
-										});
-										input.data('bound', true);
-									}
-								}
-							});
-						}
-					}
-				});
+                        if (url !== null) {
+                            // get options
+                            $.ajax({
+                                url: url,
+                                type: 'GET',
+                                cache: true,
+                                success: function (response) {
+                                    if (response.success) {
+                                        input.autocomplete({
+                                            source: response.body
+                                        });
+                                        input.data('bound', true);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
 
-				div.find('.multi').multi();
+                div.find('.multi').multi();
 
-				div.find('.dateformat').each(function () {
-					var span = $(this),
+                div.find('.dateformat').each(function () {
+                    var span = $(this),
 						date = moment(span.html()),
 						format = span.data('format');
 
-					if (format === "casual") {
-						span.html(date.format(datetimeCasualFormat));
-					}
-					else if (format === "date") {
-						span.html(date.format(datetimeDateFormat));
-					}
-				});
+                    if (format === "casual") {
+                        span.html(date.format(datetimeCasualFormat));
+                    }
+                    else if (format === "date") {
+                        span.html(date.format(datetimeDateFormat));
+                    }
+                });
 
-				div.tooltip();
-			}
-			
-			function bindModelToForm(model, form) {
-				for (var p in model) {
-					var input = form.find(String.format('[name="{0}"]', p));
+                div.tooltip();
+            }
 
-					if (p === "start" || p === "end") {
-						// parse date
-						model[p] = moment(model[p]).format(datetimeStrictFormat);
-					}
-					else if (p === "place") {
-						model[p] = model[p]._id;
-					}
+            function bindModelToForm(model, form) {
+                for (var p in model) {
+                    var input = form.find(String.format('[name="{0}"]', p));
 
-					if (input.is('input[type="radio"]')) {
-						input.prop('checked', false);
-						input.each(function () {
-							var radio = $(this);
-							if (radio.val() === model[p]) {
-								radio.prop('checked', true);
-							}
-						});
-					}
-					else {
-						var value = model[p];
-						if (Object.prototype.toString.call(value) === '[object Array]' && value.length > 0) {
-							var strVal = "";
-							if (value[0]._id) {
-								value = _.map(value, function (v) { return v._id; });
-								strVal = value.join(',');
-							}
-							else {
-								strVal = value.join(',');
-							}
-						}
-						input.val(value);
-					}
-				}
+                    if (p === "start" || p === "end") {
+                        // parse date
+                        model[p] = moment(model[p]).format(datetimeStrictFormat);
+                    }
+                    else if (p === "place") {
+                        model[p] = model[p]._id;
+                    }
 
-				form.find('.multi').each(function () {
-					var multi = $(this).data('multi');
-					if (multi) {
-						multi.refreshByInput();
-					}
-				});
-			}
-			
-			function getView(view, model, callback) {
-				$.get('/template', { template: view, model: model }, function(html) {
-					if (callback) {
-						callback(html);
-					}
-				});
-			}
-			
-			function loadPlacesList() {
-				$.get('/admin/places', function (response) {
-					var model = response.body;
-					getView('admin-places', model, function(html) {
-						div.html(html);
-					
-						$('a.add-places').on('click', loadPlacesImport);
-						div.find('.places-events-link').on('click', function() {
-							var tr = $(this).parent().parent(),
+                    if (input.is('input[type="radio"]')) {
+                        input.prop('checked', false);
+                        input.each(function () {
+                            var radio = $(this);
+                            if (radio.val() === model[p]) {
+                                radio.prop('checked', true);
+                            }
+                        });
+                    }
+                    else {
+                        var value = model[p];
+                        if (Object.prototype.toString.call(value) === '[object Array]' && value.length > 0) {
+                            var strVal = "";
+                            if (value[0]._id) {
+                                value = _.map(value, function (v) { return v._id; });
+                                strVal = value.join(',');
+                            }
+                            else {
+                                strVal = value.join(',');
+                            }
+                        }
+                        input.val(value);
+                    }
+                }
+
+                form.find('.multi').each(function () {
+                    var multi = $(this).data('multi');
+                    if (multi) {
+                        multi.refreshByInput();
+                    }
+                });
+            }
+
+            function getView(view, model, callback) {
+                $.get('/template', { template: view, model: model }, function (html) {
+                    if (callback) {
+                        callback(html);
+                    }
+                });
+            }
+
+            function loadPlacesList() {
+                $.get('/admin/places', function (response) {
+                    var model = response.body;
+                    getView('admin-places', model, function (html) {
+                        div.html(html);
+                        loadTags();
+                        $('.default-tags').click(function (e) {
+                            e.preventDefault();
+                            $.post('/admin/createDefaultTags', function (response) {
+                                location.reload();
+                            });
+                        });
+
+                        $('a.add-places').on('click', loadPlacesImport);
+                        div.find('.places-events-link').on('click', function () {
+                            var tr = $(this).parent().parent(),
 								placeId = tr.data('id'),
 								placeName = tr.data('place-name');
-							
-							loadPlacesEvents(placeId, placeName);
-						});
-					});
-				});
-			}
-			
-			function loadPlacesImport() {
-				getView('admin-places-import', null, function(html) {
-					div.html(html);
-					
-					var areaSelect = div.find('select[name="area"]'),
+
+                            loadPlacesEvents(placeId, placeName);
+                        });
+                    });
+                });
+            }
+
+            function loadPlacesImport() {
+                getView('admin-places-import', null, function (html) {
+                    div.html(html);
+
+                    var areaSelect = div.find('select[name="area"]'),
 						placeInput = div.find('input[name="keyword"]'),
 						btn = div.find('input[type=button]'),
 						resultsDiv = div.find('.results'),
 						back = div.find('.header-link');
-						
-					areaSelect.empty();
 
-					for (var c in cityLoc) {
-						var option = $('<option>');
-						option.html(cityLoc[c].label);
-						option.data('lat', cityLoc[c].lat);
-						option.data('lng', cityLoc[c].lng);
+                    areaSelect.empty();
 
-						areaSelect.append(option);
-					}
+                    for (var c in cityLoc) {
+                        var option = $('<option>');
+                        option.html(cityLoc[c].label);
+                        option.data('lat', cityLoc[c].lat);
+                        option.data('lng', cityLoc[c].lng);
 
-					btn.off('click').on('click', function (e) {
-							var data = {
-								lat: areaSelect.find('option:selected').data('lat'),
-								lng: areaSelect.find('option:selected').data('lng'),
-								keyword: placeInput.val()
-							};
+                        areaSelect.append(option);
+                    }
 
-							renderPlacesList(data, function (list) {
-								resultsDiv.empty();
-								resultsDiv.append(list);
-										
-								resultsDiv.find('.place').off('click').on('click', function (e) {
-									importGooglePlace.call(this, function (response) {
-										loadPlacesList();
-									});
-								});
-							});
-						});
+                    btn.off('click').on('click', function (e) {
+                        var data = {
+                            lat: areaSelect.find('option:selected').data('lat'),
+                            lng: areaSelect.find('option:selected').data('lng'),
+                            keyword: placeInput.val()
+                        };
 
-					back.on('click', loadPlacesList);
-					
-					bindUi(div);
-				});
-			}
-			
-			function importGooglePlace(callback) {
-				var place = $(this).data('place');
-				$.post('/places/importGooglePlace', { place: place }, function(response) {
-					callback(response);
-				});
-			}
-			
-			function renderPlacesList(data, callback) {
-				// check if lat/lng are within WA
-				//if (m.getAllowedBounds().contains(loc)) {
-				$.post('/places/searchGooglePlaces', data, function (response) {
-					if (response.success) {
-						var list = $('<div class="place-list">');
+                        renderPlacesList(data, function (list) {
+                            resultsDiv.empty();
+                            resultsDiv.append(list);
 
-						for (var p in response.body) {
-							var place = $(String.format('<div class="place selectable"><div class="heading">{0}</div><span>{1}</span></div>', response.body[p].name, response.body[p].vicinity));
-							place.data('place', response.body[p]);
-							list.append(place);
-						}
-						callback(list);
-					}
-				});
-			}
-			
-			function loadPlacesEvents(placeId, placeName) {				
-				$.get('/admin/placeEvents', { placeId: placeId }, function(response) {
-					getView('admin-place-events', response.body, function(html) {
-						div.html(html);
-						div.find('h4').html(placeName + ' Events');
-						div.find('.header-link.back').on('click', loadPlacesList);
-						div.find('.header-link.add-event').on('click', function() {
-							loadAddEvent(placeId, placeName);
-						});
-						div.find('a.edit').on('click', function(e) {
-							e.preventDefault();
-							var eventId = $(this).parent().parent().data('id');
-							loadEditEvent(placeId, placeName, eventId);
-						});
-						div.find('a.delete').on('click', function(e) {
-							e.preventDefault();
-							var eventId = $(this).parent().parent().data('id');
-							$.post('/admin/deleteEvent', { eventId: eventId }, function(response) {
-								if (response.success) {
-									loadPlacesEvents(placeId, placeName);
-								}
-							});
-						});
-					});
-				});
-			}
-			
-			function loadAddEvent(placeId, placeName) {
-				$.get('/admin/tags', function(response) {
-					var model = response.body;
-					getView('admin-place-newevent', model, function(html) {
-						div.html(html);
-						div.find('h4').html('Add Event for ' + placeName);
-						bindUi(div);
-						div.find('.header-link.back').on('click', function() {
-							loadPlacesEvents(placeId, placeName);
-						});
-						
-						div.find('[name="_place"]').val(placeId);
-						div.find('.create-btn').off('click').on('click', function(e) {
-							var formData = div.find('form').serialize();
-							$.post('/admin/createEvent', formData, function(response) {
-								if (response.success) {
-									loadPlacesEvents(placeId, placeName);
-								}
-							});
-						});
-					});
-				});
-			}
-			
-			function loadEditEvent(placeId, placeName, eventId) {
-				$.get('/admin/event', { eventId: eventId }, function(response) {
-					if (response.success) {
-						var event = response.body;
-						$.get('/admin/tags', function(response) {
-							var model = response.body;
-							getView('admin-place-editevent', model, function(html) {
-								div.html(html);
-								bindUi(div);
-								bindModelToForm(event, div);
-								
-								div.find('.header-link.back').on('click', function() {
-									loadPlacesEvents(placeId, placeName);
-								});
-						
-								div.find('.create-btn').off('click').on('click', function(e) {
-									var formData = div.find('form').serialize();
-									$.post('/admin/updateEvent', formData, function(response) {
-										if (response.success) {
-											loadPlacesEvents(placeId, placeName);
-										}
-									});
-								});
-							});
-						});
-					}
-				});
-			}
-			
-			loadPlacesList();
+                            resultsDiv.find('.place').off('click').on('click', function (e) {
+                                importGooglePlace.call(this, function (response) {
+                                    loadPlacesList();
+                                });
+                            });
+                        });
+                    });
+
+                    back.on('click', loadPlacesList);
+
+                    bindUi(div);
+                });
+            }
+
+            function importGooglePlace(callback) {
+                var place = $(this).data('place');
+                $.post('/places/importGooglePlace', { place: place }, function (response) {
+                    callback(response);
+                });
+            }
+
+            function renderPlacesList(data, callback) {
+                // check if lat/lng are within WA
+                //if (m.getAllowedBounds().contains(loc)) {
+                $.post('/places/searchGooglePlaces', data, function (response) {
+                    if (response.success) {
+                        var list = $('<div class="place-list">');
+
+                        for (var p in response.body) {
+                            var place = $(String.format('<div class="place selectable"><div class="heading">{0}</div><span>{1}</span></div>', response.body[p].name, response.body[p].vicinity));
+                            place.data('place', response.body[p]);
+                            list.append(place);
+                        }
+                        callback(list);
+                    }
+                });
+            }
+
+            function loadPlacesEvents(placeId, placeName) {
+                $.get('/admin/placeEvents', { placeId: placeId }, function (response) {
+                    getView('admin-place-events', response.body, function (html) {
+                        div.html(html);
+                        div.find('h4').html(placeName + ' Events');
+                        div.find('.header-link.back').on('click', loadPlacesList);
+                        div.find('.header-link.add-event').on('click', function () {
+                            loadAddEvent(placeId, placeName);
+                        });
+                        div.find('a.edit').on('click', function (e) {
+                            e.preventDefault();
+                            var eventId = $(this).parent().parent().data('id');
+                            loadEditEvent(placeId, placeName, eventId);
+                        });
+                        div.find('a.delete').on('click', function (e) {
+                            e.preventDefault();
+                            var eventId = $(this).parent().parent().data('id');
+                            $.post('/admin/deleteEvent', { eventId: eventId }, function (response) {
+                                if (response.success) {
+                                    loadPlacesEvents(placeId, placeName);
+                                }
+                            });
+                        });
+                    });
+                });
+            }
+
+            function loadAddEvent(placeId, placeName) {
+                $.get('/admin/tags', function (response) {
+                    var model = response.body;
+                    getView('admin-place-newevent', model, function (html) {
+                        div.html(html);
+                        div.find('h4').html('Add Event for ' + placeName);
+                        bindUi(div);
+                        div.find('.header-link.back').on('click', function () {
+                            loadPlacesEvents(placeId, placeName);
+                        });
+
+                        div.find('[name="_place"]').val(placeId);
+                        div.find('.create-btn').off('click').on('click', function (e) {
+                            var formData = div.find('form').serialize();
+                            $.post('/admin/createEvent', formData, function (response) {
+                                if (response.success) {
+                                    loadPlacesEvents(placeId, placeName);
+                                }
+                            });
+                        });
+                    });
+                });
+            }
+
+            function loadEditEvent(placeId, placeName, eventId) {
+                $.get('/admin/event', { eventId: eventId }, function (response) {
+                    if (response.success) {
+                        var event = response.body;
+                        $.get('/admin/tags', function (response) {
+                            var model = response.body;
+                            getView('admin-place-editevent', model, function (html) {
+                                div.html(html);
+                                bindUi(div);
+                                bindModelToForm(event, div);
+
+                                div.find('.header-link.back').on('click', function () {
+                                    loadPlacesEvents(placeId, placeName);
+                                });
+
+                                div.find('.create-btn').off('click').on('click', function (e) {
+                                    var formData = div.find('form').serialize();
+                                    $.post('/admin/updateEvent', formData, function (response) {
+                                        if (response.success) {
+                                            loadPlacesEvents(placeId, placeName);
+                                        }
+                                    });
+                                });
+                            });
+                        });
+                    }
+                });
+            }
+
+            function loadTags() {
+                $.get('/admin/tags/', function (response) {
+                    if (response.success) {
+                        var tags = response.body,
+                            tbody = $('table.tags tbody');
+
+                        for (var t in tags) {
+                            var tr = $('<tr>'),
+                                idTd = $(String.format('<td>{0}</td>', tags[t]._id)),
+                                glyphTd = $(String.format('<td><span class="glyph glyphicons {0}"></span></td>', tags[t].glyph)),
+                                labelTd = $(String.format('<td>{0}</td>', tags[t].label));
+
+                            tr.append(idTd);
+                            tr.append(glyphTd);
+                            tr.append(labelTd);
+                            tbody.append(tr);
+                        }
+                    }
+                });
+            }
+
+            loadPlacesList();
         });
     </script>
     <style>
-		html, body {
-			height: 100%;
-			font-family: arial;
-			background-color: #444;
-			color: white;
-		}
-		
-		h1,h2,h3,h4,h5,h6,h7 {
-			margin: 0;
-			text-transform: uppercase;
-		}
-		
-		h2 {
-			padding: 20px 0;
-		}
-		
-		.glyph {
+        html, body {
+            height: 100%;
+            font-family: arial;
+            background-color: #444;
+            color: white;
+        }
+
+        h1, h2, h3, h4, h5, h6, h7 {
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            padding: 20px 0;
+        }
+
+        .glyph {
             width: 30px;
             margin: 0 auto;
         }
@@ -360,77 +388,54 @@
             margin: 0 auto;
             font-size: 30px;
         }
-		
-		.header-link {
-			display: block;
-			padding: 10px 0;
-		}
-		
-		.selectable:hover {
-			background-color: #333;
-		}
-		
-		.admin {
-			background-color: #111;
-			padding: 0 20px;
-			width: 80%;
-			min-height: 100%;
-			margin: 0 auto;
-		}
-		
-		.form {
-			width: 400px;
-		}
-		
-		table {
-		}
-		
-        th {
-			text-align:left;
+
+        .header-link {
+            display: block;
+            padding: 10px 0;
         }
-        td { 
+
+        .selectable:hover {
+            background-color: #333;
+        }
+
+        .admin {
+            background-color: #111;
+            padding: 0 20px;
+            width: 80%;
+            min-height: 100%;
+            margin: 0 auto;
+        }
+
+        .form {
+            width: 400px;
+        }
+
+        table {
+        }
+
+        th {
+            text-align: left;
+        }
+
+        td {
             padding: 0 20px 10px 0;
         }
-		a {
-			color: #00ccff;
-			text-decoration: none;
-		}
-		a.delete {
-			color: #dd0000;
-		}
+
+        a {
+            color: #00ccff;
+            text-decoration: none;
+        }
+
+        a.delete {
+            color: #dd0000;
+        }
     </style>
 </head>
 <body>
     <div class="admin">
-		<h2>Administrator</h2>
-		<div class="admin-content">
+        <h2>Administrator</h2>
+        <div class="admin-content">
         </div>
-<!--         <div class="events">
-            <h2>Events</h2>
-            
-            <br /><br />
-            <table class="ajax-table" data-url="/admin/events"></table>
-        </div>
-        <div class="tags">
-            <h2>Tags</h2>
-            <div class="create-tag">
-                <h4>Create Tag</h4>
-                <form action="/admin/createTag" method="post">
-                    <label>glyph<input type="text" name="glyph" /></label><br />
-                    <label>label<input type="text" name="label" /></label><br />
-                    <input type="submit" value="Create" />
-                </form>
-                <form action="/admin/createDefaultTags" method="post">
-                    <input type="submit" value="Create Default Tags" />
-                </form>
-            </div>
-            <br /><br />
-
-        </div>
-        <div class="users">
-            <h2>Users</h2>
-
-        </div>-->
     </div>
 </body>
 </html>

@@ -1,17 +1,19 @@
-﻿<h4>Places</h4>
-<a class="add-places header-link" href="#">add a place</a>
-<div class="event-import">
+﻿<div class="event-import">
     <h4>Import Events CSV</h4>
     <form action="/admin/importEvents" method="post" enctype="multipart/form-data">
         <input type="file" name="csv" />
         <input type="submit" value="Upload" />
     </form>
 </div>
+<br />
+<br />
+<h4>Places</h4>
+<a class="add-places header-link" href="#">add a place</a>
 {% if model.length > 0 %}
 <table class="place-list">
     <thead>
         <tr>
-            <!--<th>_id</th>-->
+            <th>_id</th>
             <!--<th>place_id</th>-->
             <th>Name</th>
             <!--<th>loc</th>-->
@@ -22,7 +24,7 @@
     <tbody>
         {% for place in model %}
         <tr data-id="{{place._id}}" data-place-name="{{place.name}}">
-            <!--<td>{{place._id.toString()}}</td>-->
+            <td>{{place._id.toString()}}</td>
             <!--<td>{{place.place_id}}</td>-->
             <td>{{place.name}}</td>
             <!--<td>{{place.loc}}</td>-->
@@ -33,3 +35,16 @@
     </tbody>
 </table>
 {% endif %}
+<br />
+<h2>Tags</h2>
+<a href="#" class="default-tags">Create default tags</a>
+<table class="tags">
+    <thead>
+        <tr>
+            <th>_id</th>
+            <th>glyph</th>
+            <th>label</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>

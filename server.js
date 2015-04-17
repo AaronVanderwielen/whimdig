@@ -19,6 +19,7 @@
 	Mongoose = require('mongoose'),
 	Server = require('mongodb').Server,
 	ObjectID = require('mongodb').ObjectID,
+	moment = require("moment"),
 	u = require("underscore"),
 	// objects
 	app = Express(),
@@ -50,7 +51,8 @@ function init() {
 		database: db, 
 		objectID: ObjectID,
 		https: Https, 
-		underscore: u, 
+		underscore: u,
+		moment: moment,
 		facebook: FB,
 		schema: schema
 	});

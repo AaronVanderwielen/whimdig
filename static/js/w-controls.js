@@ -471,14 +471,14 @@
 				if (!tab.hasClass('selected')) {
 					tabContainer.find('.tab.selected').removeClass('selected');
 
-					contentDiv.fadeOut(25, function () {
+					tabContent.fadeOut(25, function () {
 						tab.addClass('selected');
 
 						loadMethod.call(this, event, function (div) {
-							contentDiv.html('');
-							contentDiv.append(div);
+							tabContent.html('');
+							tabContent.append(div);
 
-							contentDiv.fadeIn();
+							tabContent.fadeIn();
 						});
 					});
 				}
@@ -500,7 +500,7 @@
 					time.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
 					intensity.html(event.intensity_variable === "end" ? "show up any time before end" : "show up before start");
 
-					creatorImg.attr('src', String.format(fbPhotoUrl, event._created_by.facebook_id));
+					creatorImg.attr('src', String.format(fbPhotoUrl, event._created_by ? event._created_by.facebook_id : "undefined"));
 
 					where.html(String.format('<div class="place">{0}</div><div class="address">{1}</div>', event._place.name, event._place.vicinity));
 					where.data('id', event._place._id);
