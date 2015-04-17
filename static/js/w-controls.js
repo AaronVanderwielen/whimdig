@@ -772,9 +772,15 @@
 						spanFilter = div.find('.span-filter'),
 						radiusFilter = div.find('.radius-filter'),
 						eventList = div.find('.event-list'),
-						cookie = getCookie('filters');
+						cookie = getCookie('filters'),
+						tfLabel = tagFilter.find('.glyph-label'),
+						spLabel = spanFilter.find('.glyph-label'),
+						rLabel = radiusFilter.find('.glyph-label');
 
 					filters = cookie !== "" ? JSON.parse(cookie) : filters;
+					setFilterTagsLabel(tfLabel);
+					setFilterSpanLabel(spLabel);
+					setFilterRadiusLabel(rLabel);
 
 					// set filter handlers
 					tagFilter.off('click').on('click', setFilterTags);
@@ -1964,11 +1970,14 @@
 			window.fbAsyncInit = function () {
 				initAuthentication(function () {
 					headerControls.show();
-					applyHeaderHandlers();
 
-					_map(function (m) {
-						loadEventsInBounds(null, function (events) {
-							m.renderEvents(events);
+					getAllEventTags(function () {
+						applyHeaderHandlers();
+
+						_map(function (m) {
+							loadEventsInBounds(null, function (events) {
+								m.renderEvents(events);
+							});
 						});
 					});
 				});
