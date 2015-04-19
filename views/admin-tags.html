@@ -2,7 +2,7 @@
     <thead>
         <tr>
             <th>_id</th>
-            <th><span class="glyph glyphicons {{ tag.glyph}}"></span></th>
+            <th><span class="glyphicons {{ tag.glyph}}"></span></th>
             <th>glyph</th>
             <th>label</th>
         </tr>
@@ -11,7 +11,7 @@
         {% for tag in model.tags %}
         <tr>
             <td>{{tag._id.toString()}}</td>
-            <td><span class="glyph glyphicons {{ tag.glyph}}"></span></td>
+            <td><span class="glyphicons {{ tag.glyph}}"></span></td>
             <td>{{tag.glyph}}</td>
             <td>{{tag.label}}</td>
         </tr>

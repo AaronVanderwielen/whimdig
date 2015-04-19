@@ -79,20 +79,20 @@
 			currentSpan = 0,
 			paging = 0,
 			reAuthAttempts = 0,
+			refreshNeeded = false,
 			datetimeCasualFormat = 'ddd h:mm a',
 			datetimeDateFormat = 'MM/DD/YYYY',
 			datetimeStrictFormat = 'MM/DD/YYYY h:mm a',
 			timeFormat = 'h:mm tt',
 			fbPhotoUrl = "//graph.facebook.com/{0}/picture",
-			//isMobileDevice = navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
+			isMobileDevice = navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
 			// elements
 			container = $('.container'),
 			//// header 
 			header = $('.app-header'),
 			headerUserControls = header.find('.user-controls'),
 			headerUserImage = header.find('.user-image'),
-			//headerFilterBtn = headerUserControls.find('.filter .glyph'),
-			headerMenuBtn = headerUserControls.find('.menu .glyph'),
+			headerMenuBtn = headerUserControls.find('.menu .glyphicons'),
 			headerDaySelect = header.find('.day-select'),
 			headerDaySelectPrev = headerDaySelect.find('.prev'),
 			headerDaySelectCurrent = headerDaySelect.find('.current'),
@@ -180,6 +180,20 @@
 				});
 			},
 		    // events
+			refreshMap = function () {
+				var fullscreen = container.width() === overlay.width();
+				if (fullscreen) {
+					// refresh on close
+					refreshNeeded = true;
+				}
+				else {
+					_map(function (m) {
+						loadEventsInBounds(null, function (events) {
+							m.renderEvents(events);
+						});
+					});
+				}
+			},
 			loadEventsInBounds = function (bounds, callback) {
 				if (!bounds) {
 					_map(function (m) {
@@ -313,6 +327,11 @@
             		_map(function (m) {
             			m.deselect();
             			m.resize();
+
+            			if (refreshNeeded) {
+            				refreshNeeded = false;
+            				refreshMap();
+            			}
             		});
             	});
             },
@@ -364,6 +383,12 @@
             				float: 'left',
             			});
             			prevPage.animate(showProps, speed);
+
+            			// if page with tabs, need to reinit swiping
+            			if (prevPage.data('name') === pageNames.eventDetail || prevPage.data('name') === pageNames.menu) {
+            				overlay.off('swiperight').on('swiperight', tabSwipeRight);
+            				overlay.off('swipeleft').on('swipeleft', tabSwipeLeft);
+            			}
             		}
             		else {
             			// user is navigating to the next page, hide prev page, create new						
@@ -415,8 +440,8 @@
 							starTab = tabsDiv.find('.tab.star-tab');
 
 						// swiping
-						overlay.off('swipeRight').on('swipeRight', tabSwipeRight);
-						overlay.off('swipeLeft').on('swipeLeft', tabSwipeLeft);
+						overlay.off('swiperight').on('swiperight', tabSwipeRight);
+						overlay.off('swipeleft').on('swipeleft', tabSwipeLeft);
 							
             			// init first tab
             			eventTabChange(tabsDiv, infoTab, renderInfoTab, event);
@@ -439,11 +464,11 @@
             				// initialize 'going' checkbox by checking if user is in event._users on client
             				if (_.some(event._users, function (u) { return u === user._id; })) {
             					starTab.addClass('active');
-            					starTab.find('.glyph').addClass('star').removeClass('dislikes');
+            					starTab.find('.glyphicons').addClass('glyphicons-star').removeClass('glyphicons-star-empty');
             				}
             				else {
             					starTab.removeClass('active');
-            					starTab.find('.glyph').addClass('dislikes').removeClass('star');
+            					starTab.find('.glyphicons').addClass('glyphicons-star-empty').removeClass('glyphicons-star');
             				}
             			}
             		});
@@ -452,7 +477,7 @@
 			tabSwipeRight = function (e) {
 				var selectedTab = $(this).find('.tab.selected'),
 					nextTab = selectedTab.prev();
-				if (nextTab.length > 0) {
+				if (nextTab.length > 0 && !nextTab.is('.btn, .empty')) {
 					nextTab.click();
 				}
 				else {
@@ -462,7 +487,7 @@
 			tabSwipeLeft = function (e) {
 				var selectedTab = $(this).find('.tab.selected'),
 					nextTab = selectedTab.next();
-				if (nextTab.length > 0) {
+				if (nextTab.length > 0 && !nextTab.is('.btn, .empty')) {
 					nextTab.click();
 				}
 			},
@@ -543,7 +568,7 @@
 					var div = $(html),
 						fbPhoto = div.find('.fb-photo'),
 						chat = div.find('.chat'),
-						chatsend = chat.find('.glyph.play'),
+						chatsend = chat.find('.glyphicons-play'),
 						chatlist = chat.find('.chat-list'),
 						chatbox = chat.find('.chat-input');
 
@@ -613,7 +638,7 @@
             },
             starHandler = function (event) {
             	var tab = $(this),
-            		glyph = tab.find('.glyph'),
+            		glyph = tab.find('.glyphicons'),
 					label = tab.find('.tab-label');
 
             	if (event._created_by !== user._id) {
@@ -626,7 +651,7 @@
             					event._users.splice(indexOfUser, 1);
             					label.html(parseInt(event._users.length, 10));
             					tab.removeClass('active');
-            					glyph.addClass('dislikes').removeClass('star');
+            					glyph.addClass('glyphicons-star-empty').removeClass('glyphicons-star');
             				}
             			});
             		}
@@ -637,7 +662,7 @@
             					event._users.push(user._id);
             					label.html(parseInt(event._users.length, 10));
             					tab.addClass('active');
-            					glyph.addClass('star').removeClass('dislikes');
+            					glyph.addClass('glyphicons-star').removeClass('glyphicons-star-empty');
             				}
             			});
             		}
@@ -721,6 +746,14 @@
 							eventsTab = tabsDiv.find('.tab.my-events-tab'),
 							socialTab = tabsDiv.find('.tab.social-tab'),
 							back = page.find('.back');
+
+						// check if any unread mail
+            			if (_.some(user._mail, function (m) { return m.read_log.indexOf(user._id) > -1; })) {
+            				socialTab.find('.glyphicons').removeClass('glyphicons-message-empty').addClass('glyphicons-message-flag');
+            			}
+            			else {
+            				socialTab.find('.glyphicons').removeClass('glyphicons-message-flag').addClass('glyphicons-message-empty');
+            			}
 
             			back.off('click').on('click', exitOverlay);
 
@@ -854,13 +887,13 @@
 					var selectable = $(this),
 						id = selectable.data('id'),
 						eventData = _.find(events, function (e) { return e._id == id; }),
-						star = $(String.format('<span class="glyph glyphicons corner-glyph" data-event-id="{0}">', eventData._id));
+						star = $(String.format('<span class="glyphicons corner-glyph" data-event-id="{0}">', eventData._id));
 
 					if (eventData._users.indexOf(user._id) > -1) {
-						star.addClass('star');
+						star.addClass('glyphicons-star');
 					}
 					else {
-						star.addClass('dislikes');
+						star.addClass('glyphicons-dislikes');
 					}
 
 					if (eventData._created_by != user._id) {
@@ -868,14 +901,14 @@
 							var glyph = $(this),
 								eventId = $(this).data('event-id');
 
-							if (glyph.hasClass('star')) {
+							if (glyph.hasClass('glyphicons-star')) {
 								removeEventUser(eventId, function (response) {
-									glyph.addClass('dislikes').removeClass('star');
+									glyph.addClass('glyphicons-star-empty').removeClass('glyphicons-star');
 								});
 							}
 							else {
 								addEventUser(eventId, function (response) {
-									glyph.addClass('star').removeClass('dislikes');
+									glyph.addClass('glyphicons-star').removeClass('glyphicons-star-empty');
 								});
 							}
 						});
@@ -1068,7 +1101,7 @@
 						lat = event.data('lat'),
 						lng = event.data('lng');
 
-					if (target.is('.corner-glyph')) return;
+					if (target.is('.glyphicons-star,.glyphicons-star-empty')) return;
 
 					_map(function (m) {
 						var loc = {
@@ -1081,7 +1114,7 @@
 							m.select(eId);
 						});
 
-						if ($(e.target).is('.edit')) {
+						if ($(e.target).is('.glyphicons-edit')) {
 							editEvent(eId);
 						}
 						else {
@@ -1111,7 +1144,7 @@
 							eventsDiv.append(list);
 							eventClickHandlers(eventsDiv);
 
-							var edit = $('<span class="glyph glyphicons edit corner-glyph"></span>');
+							var edit = $('<span class="glyphicons glyphicons-edit corner-glyph"></span>');
 							eventsDiv.find('.event.editable').append(edit);
 
 							contentDiv.empty();
@@ -1152,7 +1185,8 @@
 						pan = -container.width() * .2;
 
 					_map(function (m) {
-						m.goTo(loc, pan);
+						m.goToNoLoad(loc, pan);
+						refreshMap();
 						setEventDetail(newEvent._id, 0);
 					});
 				});
@@ -1345,6 +1379,8 @@
 								page = navigatePage(1, pageNames.editEvent);
 								page.html(html);
 
+								page.find('.glyphicons-bin').appendTo(page.find('.header'));
+
 								page.find('.back').off('click').on('click', function () {
 									page = navigatePage(-1);
 								});
@@ -1355,7 +1391,7 @@
 								bindModelToForm(event, page);
 
 								// create submit click handler
-								page.find('.glyph.remove').off('click').on('click', deleteEvent);
+								page.find('.glyphicons-bin').off('click').on('click', deleteEvent);
 								page.find('input[type="button"]').off('click').on('click', saveEvent);
 							});
 						});
@@ -1377,7 +1413,7 @@
 					success: function (response) {
 						if (response.success) {
 							setEventDetail(response.body._id, 0);
-							loadEventsInBounds();
+							refreshMap();
 						}
 						else {
 							var errorHtml = "";
@@ -1407,8 +1443,8 @@
 						data: { eventId: eventId },
 						success: function (response) {
 							if (response.success) {
-								manageEventsHandler(-1);
-								loadEventsInBounds();
+								setMenuDetail('.my-events-tab');
+								refreshMap();
 							}
 							else {
 								var errorHtml = "";
@@ -1528,14 +1564,14 @@
 
 						mail.each(function () {
 							var m = $(this),
-								glyph = m.find('.glyph'),
+								glyph = m.find('.glyphicons'),
 								viewed = m.data('viewed');
 
 							if (viewed) {
-								glyph.addClass('message_empty');
+								glyph.addClass('glyphicons-message-empty');
 							}
 							else {
-								glyph.addClass('message_flag');
+								glyph.addClass('glyphicons-message-flag');
 							}
 						});						
 
@@ -1564,10 +1600,10 @@
 			},
 			openMail = function () {
 				var mailId = $(this).data('id'),
-					glyph = $(this).find('.glyph'),
+					glyph = $(this).find('.glyphicons'),
 					page = navigatePage(1, pageNames.mail);
 
-				glyph.removeClass('message_flag').addClass('message_empty');
+				glyph.removeClass('glyphicons-message-flag').addClass('glyphicons-message-empty');
 
 				getMailMessages(mailId, function (mail) {
 					getTemplate('mail', null, function (html) {
@@ -1579,7 +1615,7 @@
 
 						var fbPhoto = page.find('.fb-photo'),
 							chat = page.find('.chat'),
-							chatsend = chat.find('.glyph.play'),
+							chatsend = chat.find('.glyphicons-play'),
 							chatlist = chat.find('.chat-list'),
 							chatbox = chat.find('.chat-input');
 
@@ -1721,7 +1757,7 @@
 
 				for (var t in tags) {
 					if (tags[t] && tags[t].glyph) {
-						html += '<span class="glyph glyphicons ' + tags[t].glyph + '">';
+						html += '<span class="glyphicons ' + tags[t].glyph + '">';
 					}
 				}
 
@@ -1812,11 +1848,8 @@
 			bindUi = function (div) {
 				div.find('.datepicker').each(function () {
 					var input = $(this);
-					if (!input.data('bound')) {
-						input.datetimepicker({
-							timeFormat: timeFormat
-						});
-						input.data('bound', true);
+					if (!input.data('weektime')) {
+						input.weektime();
 					}
 				});
 
@@ -1944,7 +1977,10 @@
 					page.html(html);
 
 					var listDiv = page.find('.list-container'),
-						header = page.find('.header-text');
+						header = page.find('.header-text'),
+						back = page.find('.back');
+
+					back.off('click').on('click', exitOverlay);
 
 					header.html('several events here!');
 					setGroupEventList(events, listDiv);

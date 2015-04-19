@@ -159,16 +159,6 @@ button, input[type="button"] {
     }
 }
 
-.remove.glyph {
-    padding: 12px;
-    cursor: pointer;
-
-    &::before {
-        color: red;
-        font-size: 24px;
-    }
-}
-
 .form-label {
     color: @blue;
     font-size: 12px;
@@ -197,15 +187,26 @@ button, input[type="button"] {
     top: 3px;
 }
 
-.glyph {
+.glyphicons {
     cursor: pointer;
     display: block;
     padding: 0;
 }
 
-.glyph::before {
+.glyphicons::before {
     position: relative;
     color: @blue;
+    font-size: 30px;
+}
+
+.glyphicons-bin {
+    padding: 5px;
+    cursor: pointer;
+
+    &::before {
+        color: red;
+        font-size: 24px;
+    }
 }
 
 .noselect {
@@ -227,20 +228,20 @@ button, input[type="button"] {
     padding: 10px;
     color: @blue;
 
-	.login-btn {
+    .login-btn {
         margin: 0;
         padding: 5px;
         float: right;
-		width: 120px;
-	}
-	
+        width: 120px;
+    }
+
     &:after {
         content: " ";
         display: table;
         clear: both;
     }
 
-    .glyph {
+    .glyphicons {
         width: 12px;
         cursor: pointer;
 
@@ -249,12 +250,12 @@ button, input[type="button"] {
         }
     }
 
-    .glyph::before {
+    .glyphicons::before {
         font-size: 24px;
         color: @blue;
     }
 
-    .glyph.disabled::before {
+    .glyphicons.disabled::before {
         color: @dark;
     }
 
@@ -281,11 +282,11 @@ button, input[type="button"] {
             }
         }
 
-        .glyph::before {
+        .glyphicons::before {
             font-size: 16px;
         }
 
-        .glyph {
+        .glyphicons {
             top: 0px;
             margin: 0;
             padding: 8px;
@@ -319,12 +320,12 @@ button, input[type="button"] {
         .menu {
             float: right;
 
-            .glyph {
+            .glyphicons {
                 width: 30px;
                 float: right;
             }
 
-            .glyph::before {
+            .glyphicons::before {
                 font-size: 30px;
             }
         }
@@ -352,62 +353,69 @@ button, input[type="button"] {
 .multi {
     position: relative;
     width: 100%;
-    border-radius: 5px;
-    border: 1px solid @blue;
-    color: @light-blue;
+    //border-radius: 5px;
+    //border: 1px solid @blue;
+    //color: @light-blue;
     margin-bottom: 10px;
-
-    .ui-icon {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /*.ui-icon {
         cursor: pointer;
         right: 0.5em;
         left: auto;
         position: absolute;
         top: 10px;
-    }
-
-    .label {
+    }*/
+    /*.label {
         color: @light-blue;
         font-size: 14px;
         line-height: 2;
         padding: 5px 10px;
         border-radius: 5px;
         cursor: pointer;
-    }
-
+    }*/
     .options {
-        background-color: @black-accent;
-        max-height: 300px;
-        overflow-y: scroll;
+        //background-color: @black-accent;
+        //max-height: 300px;
+        //overflow-y: scroll;
+        &.vertical-limit {
+            max-height: 300px;
+            overflow-y: scroll;
+        }
 
         .option {
-            display: block;
-            width: 50%;
-            float: left;
-            padding: 10px;
+            //display: block;
+            //width: 50%;
+            //float: left;
+            //padding: 10px;
             cursor: pointer;
-            border-bottom: 1px solid @darker;
-
+            //border-bottom: 1px solid @darker;
             img {
                 display: inline-block;
                 vertical-align: middle;
                 height: 50px;
             }
 
-            .glyph {
+            .glyphicons {
                 display: inline-block;
-                width: 60px;
+                width: 40px;
 
                 &::before {
-                    font-size: 50px;
+                    font-size: 30px;
                 }
             }
 
             .option-text {
+                display: block;
             }
 
             &:not(.selected) {
 
-                .glyph::before {
+                .glyphicons::before {
                     color: @dark;
                 }
 
@@ -417,7 +425,7 @@ button, input[type="button"] {
             }
 
             &.selected {
-                .glyph::before {
+                .glyphicons::before {
                     color: @blue;
                 }
 
@@ -427,7 +435,7 @@ button, input[type="button"] {
             }
 
             &:hover {
-                .option-text, .glyph::before {
+                .option-text, .glyphicons::before {
                     color: @blue-accent;
                 }
             }
@@ -467,6 +475,91 @@ button, input[type="button"] {
     }
 }
 
+.multi:after {
+    content: " ";
+    display: table;
+    clear: both;
+}
+
+.splitter {
+    .col {
+        display: inline-block;
+
+        &:not(:last-child) {
+            margin-right: 10%;
+        }
+    }
+}
+
+.splitter:after {
+    content: " ";
+    display: table;
+    clear: both;
+}
+
+.weektime {
+    width: 300px;
+
+    .selector {
+        float: left;
+
+        .select-up, .select-down {
+            text-align: center;
+
+            .glyphicons {
+            }
+
+            .glyphicons::before {
+                font-size: 14px;
+            }
+
+            .glyphicons.disabled {
+                cursor: default;
+            }
+
+            .glyphicons.disabled::before {
+                color: @darker;
+            }
+        }
+
+        .select-up {
+        }
+
+        .select-value {
+            font-size: @font-size-larger;
+            text-align: center;
+        }
+
+        .select-down {
+        }
+
+        &.day-select {
+            width: 180px;
+        }
+
+        &.hour-select {
+            width: 35px;
+        }
+
+        &.min-select {
+            width: 35px;
+        }
+    }
+
+    .mer-label {
+        float: left;
+        width: 25px;
+        padding: 26px 0 0 5px;
+        line-height: 10px;
+    }
+}
+
+.weektime:after {
+    content: " ";
+    display: table;
+    clear: both;
+}
+
 .selectable {
     cursor: pointer;
 
@@ -477,12 +570,12 @@ button, input[type="button"] {
         padding: 10px;
         text-align: center;
 
-        .glyph {
+        .glyphicons {
             width: 30px;
             margin: 0 auto;
         }
 
-        .glyph::before {
+        .glyphicons::before {
             margin: 0 auto;
             font-size: 30px;
         }
@@ -509,13 +602,13 @@ button, input[type="button"] {
         margin: 0 -10px;
         position: relative;
 
-        .glyph.selectable-label {
+        .glyphicons.selectable-label {
             position: absolute;
             top: 50%;
             margin-top: -10px;
         }
 
-        .glyph.corner-glyph {
+        .glyphicons.corner-glyph {
             position: absolute;
             top: 0;
             right: 0;
@@ -523,7 +616,7 @@ button, input[type="button"] {
             padding: 10px;
         }
 
-        .glyph.corner-glyph::before {
+        .glyphicons.corner-glyph::before {
             font-size: 30px;
         }
 
@@ -543,15 +636,15 @@ button, input[type="button"] {
         color: @blue-accent;
         background-color: @black-accent;
 
-        .glyph::before {
+        .glyphicons::before {
             color: @blue-accent;
         }
 
-        .glyph.corner-glyph::before {
+        .glyphicons.corner-glyph::before {
             color: @blue;
         }
 
-        .glyph.corner-glyph:hover, .glyph.corner-glyph:hover::before {
+        .glyphicons.corner-glyph:hover, .glyphicons.corner-glyph:hover::before {
             color: @light-blue;
         }
     }
@@ -576,6 +669,12 @@ button, input[type="button"] {
     z-index: 2;
     //box-shadow: 1px 1px 20px 0px @turq inset;
     color: @blue;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 
     .overlay-body {
         display: block;
@@ -599,7 +698,7 @@ button, input[type="button"] {
                 margin: 12px 0 0 40px;
                 font-family: 'Indie Flower', cursive;
                 font-size: @font-size-large;
-                font-weight:bold;
+                font-weight: bold;
                 float: left;
             }
         }
@@ -610,17 +709,17 @@ button, input[type="button"] {
                 display: block;
                 padding: 5px;
                 width: 25%;
-                height: 80px;
+                height: 75px;
                 float: left;
                 text-align: center;
                 background-color: @turq; //@blue;
-                .glyph {
-                    width: 50px;
-                    margin: 0 auto;
+                .glyphicons {
+                    width: 40px;
+                    margin: 5px auto 0 auto;
                 }
 
-                .glyph::before {
-                    font-size: 50px;
+                .glyphicons::before {
+                    font-size: 40px;
                     margin: 0 auto;
                 }
 
@@ -631,11 +730,11 @@ button, input[type="button"] {
                     background-color: transparent;
                     opacity: 1;
 
-                    .glyph {
+                    .glyphicons {
                         cursor: default;
                     }
 
-                    .glyph::before {
+                    .glyphicons::before {
                         //color: @light-blue;
                     }
 
@@ -647,7 +746,7 @@ button, input[type="button"] {
                 &:not(.empty):not(.selected) {
                     cursor: pointer;
 
-                    .glyph::before {
+                    .glyphicons::before {
                         color: @blue-accent;
                     }
 
@@ -658,7 +757,7 @@ button, input[type="button"] {
                     &:hover {
                         background-color: @turq-accent;
 
-                        .glyph::before {
+                        .glyphicons::before {
                             color: @light-blue;
                         }
 
@@ -668,10 +767,19 @@ button, input[type="button"] {
                     }
 
                     &.btn {
+                        text-align: right;
+
+                        .glyphicons {
+                            margin: 5px 20px 0 auto;
+                        }
+
+                        .tab-label {
+                            margin-right: 35px;
+                        }
 
                         &.active {
 
-                            .glyph::before {
+                            .glyphicons::before {
                                 color: @white-blue;
                             }
 
@@ -701,7 +809,7 @@ button, input[type="button"] {
             .tags {
                 display: inline-block;
 
-                .glyph {
+                .glyphicons {
                     display: inline-block;
                 }
             }
@@ -726,7 +834,7 @@ button, input[type="button"] {
                     background-color: @black-accent;
                 }
 
-                .glyph {
+                .glyphicons {
                     float: right;
                     margin: 12px -30px 0 0;
                     width: 28px;
@@ -834,7 +942,7 @@ button, input[type="button"] {
             .tag {
 
                 &.disabled {
-                    .glyph::before {
+                    .glyphicons::before {
                         color: @darker;
                     }
 
@@ -846,7 +954,7 @@ button, input[type="button"] {
                 &:hover {
                     background-color: @black-accent;
 
-                    .glyph::before {
+                    .glyphicons::before {
                         color: @blue-accent;
                     }
 
@@ -855,7 +963,7 @@ button, input[type="button"] {
                     }
 
                     &.disabled {
-                        .glyph::before {
+                        .glyphicons::before {
                             color: @light;
                         }
 
@@ -925,7 +1033,7 @@ button, input[type="button"] {
                             display: inline-block;
                             margin-right: 10px;
 
-                            .glyph {
+                            .glyphicons {
                                 cursor: default;
                                 width: 30px;
 
@@ -994,7 +1102,7 @@ button, input[type="button"] {
 .green {
     color: @green !important;
 
-    &.glyph::before {
+    &.glyphicons::before {
         color: @green !important;
     }
 }
@@ -1116,6 +1224,38 @@ button, input[type="button"] {
             }
         }
     }
+
+    .weektime {
+        width: 200px;
+
+        .selector {
+            float: left;
+            width: 30%;
+
+            .select-value {
+                font-size: 16px;
+            }
+
+            &.day-select {
+                width: 120px;
+            }
+
+            &.hour-select {
+                width: 30px;
+            }
+
+            &.min-select {
+                width: 30px;
+            }
+        }
+
+        .mer-label {
+            float: left;
+            width: 20px;
+            padding: 20px 0 0 0;
+            line-height: 10px;
+        }
+    }
 }
 
 @media all and (max-width: 350px) {
@@ -1152,12 +1292,12 @@ button, input[type="button"] {
             }
 
             .menu {
-                .glyph {
+                .glyphicons {
                     width: 28px;
                     float: right;
                 }
 
-                .glyph::before {
+                .glyphicons::before {
                     font-size: 28px;
                 }
             }
@@ -1165,7 +1305,7 @@ button, input[type="button"] {
     }
 
     .container {
-		padding-top: 35px;
+        padding-top: 35px;
 
         &.show-overlay {
 
@@ -1194,10 +1334,10 @@ button, input[type="button"] {
                         padding: 10px;
                         margin: 0 -10px;
 
-                        .glyph {
+                        .glyphicons {
                         }
 
-                        .glyph::before {
+                        .glyphicons::before {
                         }
                     }
 
@@ -1208,13 +1348,13 @@ button, input[type="button"] {
                     .tabs {
 
                         .tab {
-                            height: 40px;
+                            height: 50px;
 
-                            .glyph {
+                            .glyphicons {
                                 width: 30px;
                             }
 
-                            .glyph::before {
+                            .glyphicons::before {
                                 font-size: 30px;
                             }
 
@@ -1223,18 +1363,20 @@ button, input[type="button"] {
                             }
 
                             &.btn {
+                                padding: 2px;
+                                text-align: center;
 
-                                .glyph {
+                                .glyphicons {
                                     margin: 0;
-                                    float: right;
+                                    width: 100%;
                                 }
 
                                 .tab-label {
                                     display: block;
-                                    float: right;
-                                    margin-right: 3px;
-                                    top: 4px;
+                                    width: 100%;
                                     position: relative;
+                                    top: -2px;
+                                    margin-right: 0;
                                 }
                             }
                         }
@@ -1265,11 +1407,11 @@ button, input[type="button"] {
                                 .selectable.inline {
                                     height: 35px;
 
-                                    .glyph {
+                                    .glyphicons {
                                         width: 20px;
                                     }
 
-                                    .glyph::before {
+                                    .glyphicons::before {
                                         font-size: 20px;
                                     }
                                 }

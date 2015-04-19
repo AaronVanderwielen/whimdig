@@ -191,8 +191,8 @@
 				}
 			},
 			drawGroup = function (group) {
-				var radius = getEventCircleSize(_.max(group.events, function (e) { return e._users.length; })),
-					stroke = radius / 10,
+				var circleSize = getEventCircleSize(_.max(group.events, function (e) { return e._users.length; })),
+					stroke = circleSize / 10,
 					c = {
 						id: group._id,
 						sizing: false,
@@ -204,7 +204,7 @@
 						fillOpacity: settings.blurOpacity,
 						map: gMap,
 						center: new google.maps.LatLng(group.events[0].loc[1], group.events[0].loc[0]),
-						radius: radius
+						radius: circleSize / 10
 					};
 
 				var circle = new google.maps.Circle(c);
@@ -216,6 +216,8 @@
 					group.events[e].group = group._id;
 					group.events[e].circle = circle;
 				}
+
+				circleSizeTo(circle, circleSize, 1.6, 0.9);
 
 				circleData.groups.push(group);
 
@@ -240,37 +242,18 @@
 					existingGroup.events.push(event);
 				}
 			},
-			transformToGroup = function (event, callback) {
-				destroyCdata(event._id, false, function () {
-					var key = createGroupKey(event),
-						group = {
-							_id: key,
-							circle: null,
-							events: []
-						};
+			transformToGroup = function (event) {
+				destroyCdata(event._id, false);
+				var key = createGroupKey(event),
+					group = {
+						_id: key,
+						circle: null,
+						events: []
+					};
 
-					group.events.push(event);
-					drawGroup(group);
-
-					if (callback) {
-						callback(key);
-					}
-				});
-			},
-			transformToEvent = function (group, callback) {
-				var event = group.events[0];
-
-				// remove reference to parent group
-				delete event.group;
-
-				// remove group circle
-				destroyCdata(group._id, true, function () {
-					drawEvent(event);
-
-					if (callback) {
-						callback(key);
-					}
-				});
+				group.events.push(event);
+				drawGroup(group);
+				return key;
 			},
 			drawEvents = function (data) {
 				for (var d in data) {
@@ -287,9 +270,8 @@
 						addToGroup(key, data[d]);
 					}
 					else if (eventSameLoc) {
-						transformToGroup(eventSameLoc, function (newGroupId) {
-							addToGroup(newGroupId, data[d]);
-						});
+						var newGroupId = transformToGroup(eventSameLoc);
+						addToGroup(newGroupId, data[d]);
 					}
 				}
 			},
@@ -307,7 +289,7 @@
 						fillOpacity: settings.blurOpacity,
 						map: gMap,
 						center: new google.maps.LatLng(event.loc[1], event.loc[0]),
-						radius: circleSize
+						radius: circleSize / 10
 					};
 
 				var circle = new google.maps.Circle(c);
@@ -326,7 +308,7 @@
 					circleClick.call(this, e);
 				});
 
-				circleSizeTo(circle, circleSize, 1.2, 0.9);
+				circleSizeTo(circle, circleSize, 1.6, 0.9);
 
 				event.color = colorArray;
 				event.circle = circle;
@@ -360,6 +342,8 @@
 				return waBounds;
 			},
 			moveBoundsToAllowed = function () {
+				return;
+				// defunct for now
 				var center = gMap.getCenter(),
 					allowed = getAllowedBounds();
 
@@ -493,6 +477,7 @@
 						}
 					}
 				}
+				return false;
 			},
 			circleSizeTo = function (el, targetSize, rate, secondRate, interval, callback) {
 				el.sizing = window.setInterval(function () {
@@ -625,6 +610,8 @@
 			},
 			// events
 			receivedMapEvents = function (events, callback) {
+				if (container.width() === overlay.width()) return;
+
 				var ids = _.map(events, function (e) { return e._id; }),
 					grouped = {};
 
@@ -711,8 +698,9 @@
 					}
 				}
 
-				//var groupIds = _.map(circleData.groups, function (e) { return e._id; });
+				// loop through old cData groups
 				for (var g in circleData.groups) {
+					// loop through events in group
 					for (var e in circleData.groups[g].events) {
 						var eventGone = !_.some(keepIds, function (keepId) { return circleData.groups[g].events[e]._id === keepId; });
 						if (eventGone) {
@@ -720,14 +708,14 @@
 							circleData.groups[g].events.splice(e, 1);
 						}
 					}
-					if (circleData.groups[g].events.length === 0) {
-						// if group is empty, destroy
-						destroyCdata(groupIds[g], true);
+					if (circleData.groups[g].events.length <= 1) {
+						// if group is empty (or has one left, will get redrawn as event later) destroy
+						destroyCdata(circleData.groups[g]._id, true);
 					}
-					else if (circleData.groups[g].events.length === 1) {
-						// if group has one event left, transform to event
-						transformToEvent(circleData.groups[g])
-					}
+					//else if (circleData.groups[g].events.length === 1) {
+					// if group has one event left, transform to event
+					//transformToEvent(circleData.groups[g])
+					//}
 				}
 			},
 			destroyCdata = function (dId, isGroup, callback) {
@@ -754,21 +742,25 @@
 					}
 					circleData.events.splice(index, 1);
 				}
-				clearSizing(cd.circle);
-				circleSizeTo(cd.circle, 0, 0.7, null, 50, function () {
-					// blur
-					if (selectedEvent && cd && selectedEvent === cd.circle) {
-						blurCircle.call(cd.circle);
-						selectedEvent = null;
-						exitOverlay();
-					}
-					// remove circle and cdata
-					cd.circle.setMap(null);
+				if (callback) {
+					clearSizing(cd.circle);
+					circleSizeTo(cd.circle, 0, 0.7, null, 50, function () {
+						// blur
+						if (selectedEvent && cd && selectedEvent === cd.circle) {
+							blurCircle.call(cd.circle);
+							selectedEvent = null;
+						}
+						// remove circle and cdata
+						cd.circle.setMap(null);
 
-					if (callback) {
-						callback();
-					}
-				});
+						if (callback) {
+							callback();
+						}
+					});
+				}
+				else {
+					cd.circle.setMap(null);
+				}
 			},
 			// utility
 			getCookie = function (cname) {
@@ -794,14 +786,25 @@
 			cleanCData(keepers);
 		};
 
-		this.goTo = function (loc, pan, afterEventLoad) {
+		this.goToNoLoad = function (loc, pan) {
 			var latlng = new google.maps.LatLng(loc.lat, loc.lng);
 
+			google.maps.event.clearListeners(gMap, 'bounds_changed');
+			window.clearTimeout(boundChange);
+
 			centerOffset(latlng, pan);
+
+			google.maps.event.addListener(gMap, 'bounds_changed', bounds_changed);
+		};
+
+		this.goTo = function (loc, pan, afterEventLoad) {
+			var latlng = new google.maps.LatLng(loc.lat, loc.lng);
 
 			if (afterEventLoad) {
 				google.maps.event.clearListeners(gMap, 'bounds_changed');
 				window.clearTimeout(boundChange);
+
+				centerOffset(latlng, pan);
 
 				_controls(function (c) {
 					c.loadMapBoundEvents(getBoundsSquare(), function (events) {
@@ -811,6 +814,9 @@
 						});
 					});
 				});
+			}
+			else {
+				centerOffset(latlng, pan);
 			}
 		};
 
@@ -877,7 +883,7 @@
 			service = new google.maps.places.PlacesService(gMap);
 			service.nearbySearch(request, callback);
 		};
-		
+
 		this.init = function () {
 			if (navigator.geolocation) {
 				navigator.geolocation.getCurrentPosition(function (pos) {

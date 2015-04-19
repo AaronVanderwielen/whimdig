@@ -7,7 +7,7 @@
             </div>
             <div class="social-info">
                 <div class="invite selectable inline">
-                    <span class="glyph glyphicons user"></span>
+                    <span class="glyphicons glyphicons-user"></span>
                     <span class="glyph-label"><span class="friend-count"></span></span>
                 </div>
                 <div class="created-by">
@@ -21,7 +21,7 @@
             <div class="event-tags pad">
                 {% for tag in model._tags %}
                 <div class="tag">
-                    <span class="glyph glyphicons {{ tag.glyph}}" data-name="{{ tag.name }}"></span>
+                    <span class="glyphicons {{ tag.glyph}}" data-name="{{ tag.name }}"></span>
                     <span class="tag-label">{{ tag.label }}</span>
                 </div>
                 {% endfor %}

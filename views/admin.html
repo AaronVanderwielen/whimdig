@@ -347,7 +347,7 @@
                         for (var t in tags) {
                             var tr = $('<tr>'),
                                 idTd = $(String.format('<td>{0}</td>', tags[t]._id)),
-                                glyphTd = $(String.format('<td><span class="glyph glyphicons {0}"></span></td>', tags[t].glyph)),
+                                glyphTd = $(String.format('<td><span class="glyphicons {0}"></span></td>', tags[t].glyph)),
                                 labelTd = $(String.format('<td>{0}</td>', tags[t].label));
 
                             tr.append(idTd);
@@ -379,12 +379,12 @@
             padding: 20px 0;
         }
 
-        .glyph {
+        .glyphicons {
             width: 30px;
             margin: 0 auto;
         }
 
-        .glyph::before {
+        .glyphicons::before {
             margin: 0 auto;
             font-size: 30px;
         }

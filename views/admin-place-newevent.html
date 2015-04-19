@@ -21,13 +21,11 @@
         </div>
         <div class="form-input">
             <div class="multi" data-placeholder="- select tags -" data-max="3">
-                <span class="ui-icon ui-icon-triangle-1-s"></span>
-                <div class="label"></div>
                 <input type="hidden" data-val-el-query=".multi" name="_tags" value="" />
                 <div class="options">
                     {% for tag in model %}
                         <div class="option" data-value="{{ tag._id }}">
-                            <span class="glyph glyphicons {{ tag.glyph}}"></span>
+                            <span class="glyphicons {{ tag.glyph}}"></span>
                             <span class="option-text">{{ tag.label }}</span>
                         </div>
                     {% endfor %}
