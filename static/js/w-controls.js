@@ -893,7 +893,7 @@
 						star.addClass('glyphicons-star');
 					}
 					else {
-						star.addClass('glyphicons-dislikes');
+						star.addClass('glyphicons-star-empty');
 					}
 
 					if (eventData._created_by != user._id) {

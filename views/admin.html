@@ -165,9 +165,22 @@
 
             function loadPlacesList() {
                 $.get('/admin/places', function (response) {
-                    var model = response.body;
-                    getView('admin-places', model, function (html) {
+                    var places = response.body;
+                    getView('admin-places', null, function (html) {
                         div.html(html);
+                        var table = div.find('.place-list');
+
+                        for (var p in places) {
+                            var tr = $(String.format('<tr data-id="{0}" data-place-name="{0}">', places[p]._id, places[p].name)),
+                                tdId = $(String.format('<td>{0}</td>', places[p]._id)),
+                                tdN = $(String.format('<td>{0}</td>', places[p].name)),
+                                tdV = $(String.format('<td>{0}</td>', places[p].vicinity)),
+                                link = $('<td><a class="places-events-link" href="#">events</a></td>');
+
+                            tr.append(tdId).append(tdN).append(tdV).append(link);
+                            table.find('tbody').append(tr);
+                        }
+                        
                         loadTags();
                         $('.default-tags').click(function (e) {
                             e.preventDefault();
