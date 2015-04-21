@@ -4,7 +4,7 @@
 			gMap,
 			mapLoaded = false,
 			resizeTimer,
-			debug = true,
+			debug = false,
             prodGoogleKey = 'AIzaSyDEQiAImA3u9GB8EiF0NFMZH9Wy10AVTWg',
             testGoogleKey = 'AIzaSyB9EARriTjyHo7LupKAHvazcG245a04c54',
 			settings = {

@@ -3,7 +3,7 @@
 		var obj = this,
 			socket,
 			socketId,
-			debug = true, // true uses testFbApi
+			debug = false, // true uses testFbApi
 			prodFbApi = { appId: '793549090738791', xfbml: true, version: 'v2.2' },
             testFbApi = { appId: '655662931197377', cookie: true, version: 'v2.0' },
 			user,
@@ -748,7 +748,7 @@
 							back = page.find('.back');
 
 						// check if any unread mail
-            			if (_.some(user._mail, function (m) { return m.read_log.indexOf(user._id) > -1; })) {
+            			if (_.some(user._mail, function (m) { return m.read_log.indexOf(user._id) === -1; })) {
             				socialTab.find('.glyphicons').removeClass('glyphicons-message-empty').addClass('glyphicons-message-flag');
             			}
             			else {
