@@ -561,7 +561,7 @@
 			},
 			getEventCircleSize = function (cData) {
 				var min = 5, max = 400,
-					calc = (19 - gMap.getZoom() + cData._users.length) * 5;
+					calc = (19 - gMap.getZoom() + cData._users.length) * 10;
 
 				return calc < min ? min : (calc > max ? max : calc);
 			},

@@ -2011,9 +2011,7 @@
 						applyHeaderHandlers();
 
 						_map(function (m) {
-							loadEventsInBounds(null, function (events) {
-								m.renderEvents(events);
-							});
+							refreshMap();
 						});
 					});
 				});
