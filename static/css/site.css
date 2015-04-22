@@ -471,6 +471,9 @@ input[type="button"]:hover {
   margin: 0 -10px;
   position: relative;
 }
+.selectable:not(.inline).has-corner-glyph {
+  padding: 15px 45px 15px 20px;
+}
 .selectable:not(.inline) .glyphicons.selectable-label {
   position: absolute;
   top: 50%;
@@ -973,6 +976,9 @@ input[type="button"]:hover {
   .container.show-overlay .overlay .overlay-body .selectable:not(.inline) {
     padding: 10px;
     margin: 0 -10px;
+  }
+  .container.show-overlay .overlay .overlay-body .selectable:not(.inline).has-corner-glyph {
+    padding: 10px 40px 10px 10px;
   }
   .container.show-overlay .overlay .overlay-body .selectable.inline {
     padding: 5px;

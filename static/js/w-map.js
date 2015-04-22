@@ -104,7 +104,7 @@
 
             				_controls(function (c) {
             					c.loadMapBoundEvents(getBoundsSquare(), function (events) {
-            						receivedMapEvents(events);
+            						receivedMapEvents(events, null, true);
             					});
             				});
 
@@ -609,11 +609,29 @@
 				return String.format("{0},{1}", loc[0], loc[1]);
 			},
 			// events
-			receivedMapEvents = function (events, callback) {
+			receivedMapEvents = function (events, callback, keepOld) {
 				if (container.width() === overlay.width()) return;
 
 				var ids = _.map(events, function (e) { return e._id; }),
 					grouped = {};
+
+				if (keepOld) {
+					// add cData ids to keepIds
+					for (var e in circleData.events) {
+						if (ids.indexOf(circleData.events[e]._id) === -1) {
+							ids.push(circleData.events[e]._id);
+						}
+					}
+					for (var g in circleData.groups) {
+						var group = circleData.groups[g];
+
+						for (var e in group.events) {
+							if (ids.indexOf(group.events[e]._id) === -1) {
+								ids.push(group.events[e]._id);
+							}
+						}
+					}
+				}
 
 				// convert to grouped format, group by location
 				for (var e in events) {
@@ -820,8 +838,8 @@
 			}
 		};
 
-		this.renderEvents = function (events, callback) {
-			receivedMapEvents(events, callback);
+		this.renderEvents = function (events, callback, keepOld) {
+			receivedMapEvents(events, callback, keepOld);
 		};
 
 		this.select = function (id) {

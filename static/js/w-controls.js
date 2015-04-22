@@ -79,7 +79,10 @@
 			currentSpan = 0,
 			paging = 0,
 			reAuthAttempts = 0,
-			refreshNeeded = false,
+			pendingRefresh = {
+				needed: false,
+				keepOld: false
+			},
 			datetimeCasualFormat = 'ddd h:mm a',
 			datetimeDateFormat = 'MM/DD/YYYY',
 			datetimeStrictFormat = 'MM/DD/YYYY h:mm a',
@@ -180,16 +183,19 @@
 				});
 			},
 		    // events
-			refreshMap = function () {
+			refreshMap = function (keepOld) {
 				var fullscreen = container.width() === overlay.width();
 				if (fullscreen) {
 					// refresh on close
-					refreshNeeded = true;
+					pendingRefresh = {
+						needed: true,
+						keepOld: keepOld
+					};
 				}
 				else {
 					_map(function (m) {
 						loadEventsInBounds(null, function (events) {
-							m.renderEvents(events);
+							m.renderEvents(events, keepOld);
 						});
 					});
 				}
@@ -328,9 +334,9 @@
             			m.deselect();
             			m.resize();
 
-            			if (refreshNeeded) {
-            				refreshNeeded = false;
-            				refreshMap();
+            			if (pendingRefresh.needed) {
+            				pendingRefresh.needed = false;
+            				refreshMap(pendingRefresh.keepOld);
             			}
             		});
             	});
@@ -889,6 +895,8 @@
 						eventData = _.find(events, function (e) { return e._id == id; }),
 						star = $(String.format('<span class="glyphicons corner-glyph" data-event-id="{0}">', eventData._id));
 
+					selectable.addClass('has-corner-glyph');
+
 					if (eventData._users.indexOf(user._id) > -1) {
 						star.addClass('glyphicons-star');
 					}
@@ -1011,7 +1019,7 @@
 
 					var div = page.find('.menu-tab-find-radius'),
 						radiusList = $('<div class="radius-list">'),
-						miles = [.25, .5, 1, 5, 10, 25];
+						miles = [.25, .5, 1, 5, 10, 25, 100];
 
 					page.find('.back').off('click').on('click', function () {
 						page = navigatePage(-1);
@@ -1145,7 +1153,7 @@
 							eventClickHandlers(eventsDiv);
 
 							var edit = $('<span class="glyphicons glyphicons-edit corner-glyph"></span>');
-							eventsDiv.find('.event.editable').append(edit);
+							eventsDiv.find('.event.editable').addClass('has-corner-glyph').append(edit);
 
 							contentDiv.empty();
 							contentDiv.append(div);
@@ -1186,7 +1194,7 @@
 
 					_map(function (m) {
 						m.goToNoLoad(loc, pan);
-						refreshMap();
+						refreshMap(true);
 						setEventDetail(newEvent._id, 0);
 					});
 				});
