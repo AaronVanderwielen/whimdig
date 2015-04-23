@@ -1765,7 +1765,7 @@
 
 				for (var t in tags) {
 					if (tags[t] && tags[t].glyph) {
-						html += '<span class="glyphicons ' + tags[t].glyph + '">';
+						html += '<span class="glyphicons ' + tags[t].glyph + '"></span>';
 					}
 				}
 

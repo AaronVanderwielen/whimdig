@@ -633,6 +633,7 @@ input[type="button"]:hover {
   display: inline-block;
 }
 .overlay .overlay-body .event-list-item .tags .glyphicons {
+  margin-right: 10px;
   display: inline-block;
 }
 .overlay .overlay-body .event-list-item .place {
