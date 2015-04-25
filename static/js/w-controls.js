@@ -88,7 +88,8 @@
 			datetimeStrictFormat = 'MM/DD/YYYY h:mm a',
 			timeFormat = 'h:mm tt',
 			fbPhotoUrl = "//graph.facebook.com/{0}/picture",
-			isMobileDevice = navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
+			// used to include ipad navigator.userAgent.match(/iPad|iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
+			isMobileDevice = navigator.userAgent.match(/iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
 			// elements
 			container = $('.container'),
 			//// header 
@@ -524,8 +525,8 @@
 						creatorImg = div.find('.creator-img'),
 						invite = div.find('.invite'),
 						what = div.find('.what'),
-						friendCount = div.find('.friend-count'),
-						friendsList = div.find('.friend-list');
+						friendCount = div.find('.friend-count');
+						//friendsList = div.find('.friend-list');
 
 					// apply event detail to template
 					time.html(moment(event.start).format(datetimeCasualFormat) + " - " + moment(event.end).format(datetimeCasualFormat));
@@ -551,7 +552,7 @@
 
 					// friends
 					var attendingFriends = _.filter(user._friends, function (f) {
-						if (_.some(event._users, function (u) { return u === f._id; })) {
+						if (_.some(event._users, function (u) { return u === f; })) {
 							return f;
 						}
 					});
@@ -1613,6 +1614,9 @@
 
 				glyph.removeClass('glyphicons-message-flag').addClass('glyphicons-message-empty');
 
+				refreshMailMessages(mailId, page);
+			},
+			refreshMailMessages = function (mailId, page) {
 				getMailMessages(mailId, function (mail) {
 					getTemplate('mail', null, function (html) {
 						page.html(html);
@@ -1634,8 +1638,9 @@
 						}
 
 						socket.on('mailMessage:' + mailId, function (data) {
-							if (data.update) {
+							if (data) {
 								// refresh mail from server
+								refreshMailMessages(mailId, page);
 							}
 						});
 
@@ -1649,7 +1654,7 @@
 							}
 						});
 					});
-				});				
+				});
 			},
 			getMailMessages = function (mailId, callback) {
 				$.get(urls.userMailMessages, { mailId: mailId }, function (response) {
@@ -1664,8 +1669,8 @@
 
 				socket.emit('sendMessage', data);
 				input.val('');
-				mail.messages.push(data);
-				writeMessageToChat(data, chatlist);
+				//mail.messages.push(data);
+				//writeMessageToChat(data, chatlist);
 			},
 			renderCreateMail = function () {
 				var page = navigatePage(1);
@@ -1684,8 +1689,8 @@
 
 						friendCountSpan.html(user._friends.length + " friend" + (user._friends.length !== 1 ? "s " : " "));
 
-						for (var f in user._friends) {
-							var friendId = user._friends[f].facebook_id,
+						for (var f in friends) {
+							var friendId = friends[f].facebook_id,
 								pic = $('<img />');
 
 							pic.attr('src', String.format(fbPhotoUrl, friendId));

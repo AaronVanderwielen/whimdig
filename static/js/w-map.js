@@ -48,6 +48,7 @@
 				events: [],
 				groups: []
 			},
+			isMobileDevice = navigator.userAgent.match(/iPhone|iPod|Android|BlackBerry|webOS/i) !== null,
 			// elements
 			container = $('.container'),
 			overlay = $('.overlay'),
@@ -204,7 +205,7 @@
 						fillOpacity: settings.blurOpacity,
 						map: gMap,
 						center: new google.maps.LatLng(group.events[0].loc[1], group.events[0].loc[0]),
-						radius: circleSize / 10
+						radius: isMobileDevice ? circleSize : circleSize / 10
 					};
 
 				var circle = new google.maps.Circle(c);
@@ -217,7 +218,9 @@
 					group.events[e].circle = circle;
 				}
 
-				circleSizeTo(circle, circleSize, 1.6, 0.9);
+				if (!isMobileDevice) {
+					circleSizeTo(circle, circleSize, 1.6, 0.9);
+				}
 
 				circleData.groups.push(group);
 
@@ -289,7 +292,7 @@
 						fillOpacity: settings.blurOpacity,
 						map: gMap,
 						center: new google.maps.LatLng(event.loc[1], event.loc[0]),
-						radius: circleSize / 10
+						radius: isMobileDevice ? circleSize : circleSize / 10
 					};
 
 				var circle = new google.maps.Circle(c);
@@ -308,7 +311,9 @@
 					circleClick.call(this, e);
 				});
 
-				circleSizeTo(circle, circleSize, 1.6, 0.9);
+				if (!isMobileDevice) {
+					circleSizeTo(circle, circleSize, 1.6, 0.9);
+				}
 
 				event.color = colorArray;
 				event.circle = circle;
@@ -822,16 +827,35 @@
 				google.maps.event.clearListeners(gMap, 'bounds_changed');
 				window.clearTimeout(boundChange);
 
-				centerOffset(latlng, pan);
-
-				_controls(function (c) {
-					c.loadMapBoundEvents(getBoundsSquare(), function (events) {
-						google.maps.event.addListener(gMap, 'bounds_changed', bounds_changed);
-						receivedMapEvents(events, function () {
-							afterEventLoad();
+				if (gMap.getZoom() <= 12) {
+					gMap.setZoom(13);
+					google.maps.event.addListenerOnce(gMap, 'idle', function () {
+						centerOffset(latlng, pan);
+						google.maps.event.addListenerOnce(gMap, 'idle', function () {
+							_controls(function (c) {
+								c.loadMapBoundEvents(getBoundsSquare(), function (events) {
+									google.maps.event.addListener(gMap, 'bounds_changed', bounds_changed);
+									receivedMapEvents(events, function () {
+										afterEventLoad();
+									});
+								});
+							});
 						});
 					});
-				});
+				}
+				else {
+					centerOffset(latlng, pan);
+					google.maps.event.addListenerOnce(gMap, 'idle', function () {
+						_controls(function (c) {
+							c.loadMapBoundEvents(getBoundsSquare(), function (events) {
+								google.maps.event.addListener(gMap, 'bounds_changed', bounds_changed);
+								receivedMapEvents(events, function () {
+									afterEventLoad();
+								});
+							});
+						});
+					});
+				}
 			}
 			else {
 				centerOffset(latlng, pan);

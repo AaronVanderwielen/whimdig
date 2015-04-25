@@ -86,7 +86,7 @@ function init() {
 		socket.on("sendEventMessage", function (data) {
 		    if (session && session.user) {
 		        bl.addMsgToEvent(data.text, data.eventId, session.user, function (msg) {
-		        	socket.emit('eventMessage:' + data.eventId, msg);
+		        	io.emit('eventMessage:' + data.eventId, msg);
 		        });
 		    }
 		    else {
@@ -95,9 +95,13 @@ function init() {
 		});
 
 		socket.on("sendMessage", function (data) {
+			console.log('hit sendMessage');
 			if (session && session.user) {
+				console.log('session stable');
 				bl.addMsgToMail(data.mailId, data.text, session.user, function () {
-					socket.emit('mailMessage:' + data._mail, { newMessage: data.created_by !== session.user._id });
+					console.log('emit to socket'); 
+					console.log('mailMessage:' + data.mailId);
+					io.emit('mailMessage:' + data.mailId, true);
 				});
 			}
 			else {
