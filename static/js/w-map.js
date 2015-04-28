@@ -933,6 +933,20 @@
 			service.nearbySearch(request, callback);
 		};
 
+		this.onReady = function (callback, attempt) {
+			if (mapLoaded || attempt < 20) {
+				callback();
+			}
+			else {
+				if (!attempt) attempt = 1;
+
+				attempt++;
+				window.setTimeout(function () {
+					obj.onReady(callback, attempt);
+				}, 50 * attempt);
+			}
+		};
+
 		this.init = function () {
 			if (navigator.geolocation) {
 				navigator.geolocation.getCurrentPosition(function (pos) {

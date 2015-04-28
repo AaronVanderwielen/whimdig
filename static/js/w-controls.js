@@ -138,17 +138,20 @@
             			//});
 
             			//header.append(loginPopup);
-
-            			var loginOverlay = $('<div id="login-overlay">');
-            			loginOverlay.appendTo($('.w-map'));
-            			getTemplate('login-overlay', null, function (html) {
-            				var overlayLoginDiv = $(html);
-            				overlayLoginDiv.appendTo($('body'));
-            				loginOverlay.fadeTo(200, .8);
-            				overlayLoginDiv.fadeTo(200, 1);
-            				overlayLoginDiv.find('img').on('click', function (e) {
-            					fbLoginPrompt(function (e) {
-            						location.reload();
+            			_map(function (m) {
+            				m.onReady(function () {
+            					var loginOverlay = $('<div id="login-overlay">');
+            					loginOverlay.appendTo($('.w-map'));
+            					getTemplate('login-overlay', null, function (html) {
+            						var overlayLoginDiv = $(html);
+            						overlayLoginDiv.appendTo($('body'));
+            						loginOverlay.fadeTo(200, .8);
+            						overlayLoginDiv.fadeTo(200, 1);
+            						overlayLoginDiv.find('img').on('click', function (e) {
+            							fbLoginPrompt(function (e) {
+            								location.reload();
+            							});
+            						});
             					});
             				});
             			});
