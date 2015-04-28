@@ -76,7 +76,6 @@
 				menu: 'menu',
 				mail: 'mail'
 			},
-			currentSpan = 0,
 			paging = 0,
 			reAuthAttempts = 0,
 			pendingRefresh = {
@@ -130,15 +129,29 @@
             			initializeUser(data, callback, callbackArgs);
             		}
             		else {
-						var loginPopup = $('<button class="login-btn">Login</button>');
+						//var loginPopup = $('<button class="login-btn">Login</button>');
 
-            			loginPopup.off('click').on('click', function () {
-            				fbLoginPrompt(function(e) {
-								location.reload();
-							});
+            			//loginPopup.off('click').on('click', function () {
+            			//	fbLoginPrompt(function(e) {
+						//		location.reload();
+						//	});
+            			//});
+
+            			//header.append(loginPopup);
+
+            			var loginOverlay = $('<div id="login-overlay">');
+            			loginOverlay.appendTo($('.w-map'));
+            			getTemplate('login-overlay', null, function (html) {
+            				var overlayLoginDiv = $(html);
+            				overlayLoginDiv.appendTo($('body'));
+            				loginOverlay.fadeTo(200, .8);
+            				overlayLoginDiv.fadeTo(200, 1);
+            				overlayLoginDiv.find('img').on('click', function (e) {
+            					fbLoginPrompt(function (e) {
+            						location.reload();
+            					});
+            				});
             			});
-
-            			header.append(loginPopup);
             		}
             	});
             },
@@ -212,7 +225,7 @@
 					url: urls.eventsForBounds,
 					type: 'GET',
 					data: {
-						span: currentSpan,
+						span: filters.span,
 						bounds: bounds
 					},
 					success: function (response) {
@@ -1804,15 +1817,6 @@
 				d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
 				var expires = "expires=" + d.toUTCString();
 				document.cookie = cname + "=" + cvalue + "; " + expires;
-			},
-			withinSelectedSpan = function (event) {
-				var now = moment(),
-					hours = currentSpan === 0 ? 12 : (currentSpan === 1 ? 24 : 48),
-					high = moment().add(hours, 'h'),
-					startDate = moment(event.start),
-					endDate = moment(event.end);
-
-				return startDate.isBefore(high) && endDate.isAfter(now);
 			},
 			bindModelToForm = function (model, form) {
 				for (var p in model) {
