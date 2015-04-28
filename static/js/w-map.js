@@ -192,7 +192,7 @@
 				}
 			},
 			drawGroup = function (group) {
-				var circleSize = getEventCircleSize(_.max(group.events, function (e) { return e._users.length; })),
+				var circleSize = getGroupCircleSize(group),
 					stroke = circleSize / 10,
 					c = {
 						id: group._id,
@@ -424,7 +424,7 @@
 			blurCircle = function (e) {
 				var circle = this,
 					ref = getCdById(circle.id, circle.isGroup),
-					defaultSize = circle.isGroup ? getEventCircleSize(_.max(ref.events, function (e) { return e._users.length; })) : getEventCircleSize(ref);
+					defaultSize = circle.isGroup ? getGroupCircleSize(ref) : getEventCircleSize(ref);
 
 				clearSizing(circle)
 
@@ -531,7 +531,7 @@
 			circleHover = function (el, cd) {
 				if (!el.sizing) {
 					var cd = cd ? cd : getCdById(el.id, el.isGroup),
-						originalSize = el.isGroup ? getEventCircleSize(_.max(cd.events, function (e) { return e._users.length; })) : getEventCircleSize(cd),
+						originalSize = el.isGroup ? getGroupCircleSize(cd) : getEventCircleSize(cd),
 						growTo = el.radius + (el.radius / 10);
 
 					circleSizeTo(el, growTo, 1.3, null, 100, function () {
@@ -564,9 +564,16 @@
 
 				}
 			},
+			getGroupCircleSize = function (cData) {
+				var total = _.reduce(cData.events, function (sum, e) { return sum + e._users.length; }, 0);
+				return getCircleSize(total);
+			},
 			getEventCircleSize = function (cData) {
+				return getCircleSize(cData._users.length);
+			},
+			getCircleSize = function (length) {
 				var min = 5, max = 400,
-					calc = (19 - gMap.getZoom() + cData._users.length) * 10;
+					calc = (19 - gMap.getZoom() + length) * 10;
 
 				return calc < min ? min : (calc > max ? max : calc);
 			},

@@ -12,6 +12,32 @@ body {
   font-size: 14px;
   min-width: 270px;
 }
+#login-overlay {
+  opacity: 0;
+  position: absolute;
+  z-index: 1;
+  height: 100%;
+  width: 100%;
+  background-color: #000;
+}
+.login-overlay-container {
+  opacity: 0;
+  position: absolute;
+  z-index: 2;
+  top: 30%;
+  width: 100%;
+  text-align: center;
+}
+.login-overlay-container div {
+  font-family: 'Indie Flower', cursive;
+  color: white;
+  font-size: 36px;
+}
+.login-overlay-container img {
+  cursor: pointer;
+  width: 300px;
+  display: inline-block;
+}
 .ui-effects-wrapper {
   display: inline;
 }
@@ -516,7 +542,6 @@ input[type="button"]:hover {
   position: absolute;
   background-color: black;
   opacity: .9;
-  overflow-y: scroll;
   transition: width .2s;
   -moz-transition: width .2s;
   /* Firefox 4 */
@@ -822,6 +847,7 @@ input[type="button"]:hover {
   position: relative;
 }
 .container.show-overlay .overlay {
+  overflow-y: scroll;
   width: 40%;
 }
 .row:after {
