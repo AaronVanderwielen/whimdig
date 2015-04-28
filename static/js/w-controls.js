@@ -129,15 +129,6 @@
             			initializeUser(data, callback, callbackArgs);
             		}
             		else {
-						//var loginPopup = $('<button class="login-btn">Login</button>');
-
-            			//loginPopup.off('click').on('click', function () {
-            			//	fbLoginPrompt(function(e) {
-						//		location.reload();
-						//	});
-            			//});
-
-            			//header.append(loginPopup);
             			_map(function (m) {
             				m.onReady(function () {
             					var loginOverlay = $('<div id="login-overlay">');
@@ -153,6 +144,17 @@
             							});
             						});
             					});
+            				}, function () {
+								// failover
+            					var loginPopup = $('<button class="login-btn">Login</button>');
+
+            					loginPopup.off('click').on('click', function () {
+            						fbLoginPrompt(function(e) {
+            							location.reload();
+            						});
+            					});
+
+            					header.append(loginPopup);
             				});
             			});
             		}

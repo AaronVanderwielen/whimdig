@@ -933,17 +933,22 @@
 			service.nearbySearch(request, callback);
 		};
 
-		this.onReady = function (callback, attempt) {
-			if (mapLoaded || attempt < 20) {
+		this.onReady = function (callback, attempt, failover) {
+			if (mapLoaded) {
 				callback();
 			}
 			else {
 				if (!attempt) attempt = 1;
 
 				attempt++;
-				window.setTimeout(function () {
-					obj.onReady(callback, attempt);
-				}, 50 * attempt);
+				if (attempt <= 20) {
+					window.setTimeout(function () {
+						obj.onReady(callback, attempt);
+					}, 50 * attempt);
+				}
+				else {
+					failover();
+				}
 			}
 		};
 
