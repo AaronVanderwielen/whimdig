@@ -933,7 +933,7 @@
 			service.nearbySearch(request, callback);
 		};
 
-		this.onReady = function (callback, attempt, failover) {
+		this.onReady = function (callback, failover, attempt) {
 			if (mapLoaded) {
 				callback();
 			}
@@ -943,10 +943,10 @@
 				attempt++;
 				if (attempt <= 20) {
 					window.setTimeout(function () {
-						obj.onReady(callback, attempt);
+						obj.onReady(callback, failover, attempt);
 					}, 50 * attempt);
 				}
-				else {
+				else if (failover) {
 					failover();
 				}
 			}
