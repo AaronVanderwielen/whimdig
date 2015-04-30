@@ -2033,7 +2033,7 @@
 						applyHeaderHandlers();
 
 						_map(function (m) {
-							refreshMap();
+							m.onReady(refreshMap);
 						});
 					});
 				});
